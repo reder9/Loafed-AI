@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Loafed — Feline Posture & Silhouette Certification</title>
+  <meta name="description" content="Precision feline loaf grading system. Multi-angle computer vision evaluation of paw concealment, aerodynamic drag, and bilateral symmetry.">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23d97706' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M3 11c0-4.4 3.6-8 8-8s8 3.6 8 8v7a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3v-7z'/><circle cx='8.5' cy='11.5' r='1.5'/><circle cx='15.5' cy='11.5' r='1.5'/></svg>">
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            bread: {
+              50: '#fefdfb',
+              100: '#fffaf5',
+              200: '#fbeedb',
+              300: '#f6d9b4',
+              400: '#eeb87d',
+              500: '#e49449',
+              600: '#d97706',
+              700: '#b45309',
+              800: '#92400e',
+              900: '#451a03',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="text-stone-800 antialiased selection:bg-amber-200 selection:text-amber-900 pb-16">
+
+  <!-- Navigation Bar -->
+  <header class="border-b border-stone-200/80 bg-white/90 backdrop-blur-md sticky top-0 z-40">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/25 flex items-center justify-center text-amber-700 shadow-sm">
+          <i data-lucide="scale" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="font-extrabold text-xl tracking-tight text-stone-900">Loafed<span class="text-amber-600 font-black">AI</span></span>
+            <span class="text-[10px] font-bold uppercase tracking-wider bg-stone-100 text-stone-700 px-2 py-0.5 rounded-full border border-stone-200">Gemini 3.8 Flash</span>
+          </div>
+          <p class="text-xs text-stone-500 hidden sm:block">Feline Posture & Silhouette Certification Bureau</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2.5">
+        <button id="soundToggleBtn" class="p-2 rounded-lg text-stone-600 hover:text-stone-900 hover:bg-stone-100 transition-colors text-sm flex items-center gap-1.5" title="Toggle Sound">
+          <i data-lucide="volume-2" class="w-4 h-4" id="soundIcon"></i>
+        </button>
+        <button id="openSettingsBtn" class="px-3.5 py-1.5 rounded-lg border border-stone-200 bg-white hover:bg-stone-50 text-stone-700 text-xs font-semibold flex items-center gap-1.5 shadow-sm transition-all hover:border-amber-300">
+          <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5"></i>
+          <span id="settingsStatusText">Configuration</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-5xl mx-auto px-4 sm:px-6 pt-8">
+    
+    <!-- Hero Header -->
+    <div class="text-center max-w-2xl mx-auto mb-8">
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-stone-100 text-stone-700 text-xs font-semibold mb-3 border border-stone-200">
+        <span class="w-1.5 h-1.5 rounded-full bg-amber-600"></span>
+        <span>Multi-Angle Feline Kinematics & Posture Audit</span>
+      </div>
+      <h1 class="text-3xl sm:text-5xl font-black text-stone-900 tracking-tight leading-tight">
+        Grade Your Cat's <span class="font-serif italic font-normal text-amber-700 underline decoration-amber-400 decoration-2 underline-offset-4">Loaf Score</span>
+      </h1>
+      <p class="mt-3 text-stone-600 text-sm sm:text-base leading-relaxed">
+        Upload 1 to 3 orthographic photos (front, side, and top-down). The vision engine evaluates undercarriage paw concealment, tail aerodynamic drag, and bilateral boule symmetry.
+      </p>
+
+      <!-- Preset Quick Demo Bar -->
+      <div class="mt-5 flex items-center justify-center gap-2 flex-wrap">
+        <span class="text-xs font-semibold text-stone-500">Benchmark Test:</span>
+        <button id="loadButtercupBtn" class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-900 text-xs font-semibold border border-amber-200/80 transition-all hover:border-amber-300 shadow-sm">
+          <i data-lucide="flask-conical" class="w-3.5 h-3.5 text-amber-700"></i>
+          <span>Load Buttercup Dataset (3-Angle Baseline)</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Main Inspection Form -->
+    <div id="inspectorBay" class="bakery-card p-5 sm:p-8 mb-10">
+      
+      <!-- Cat Name Input -->
+      <div class="mb-6 flex flex-col sm:flex-row gap-3 sm:items-center justify-between pb-6 border-b border-stone-100">
+        <div>
+          <label for="catNameInput" class="block text-sm font-bold text-stone-800">Subject Identifier</label>
+          <p class="text-xs text-stone-500">Appears on the official certificate and technical evaluation</p>
+        </div>
+        <div class="relative sm:w-72">
+          <input 
+            type="text" 
+            id="catNameInput" 
+            placeholder="e.g., Buttercup, Mochi, Oliver" 
+            class="w-full px-3.5 py-2 rounded-xl border border-stone-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-200 outline-none text-sm transition-all"
+          >
+        </div>
+      </div>
+
+      <!-- 3-Angle Upload Grid -->
+      <div class="mb-4">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-base font-bold text-stone-900 flex items-center gap-2">
+            <i data-lucide="camera" class="w-4 h-4 text-amber-700"></i>
+            <span>Orthographic Inspection Bay</span>
+          </h2>
+          <span class="text-xs text-stone-600 bg-stone-100 px-2.5 py-1 rounded-md font-medium border border-stone-200">
+            1 to 3 planes accepted
+          </span>
+        </div>
+        <p class="text-xs text-stone-500 mb-4">
+          Submitting all three planes provides high-fidelity tail wrap validation, dorsal boule symmetry, and a <strong class="text-amber-800">+5 Multi-Angle Inspection Bonus</strong>.
+        </p>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          
+          <!-- Slot 1: Front View -->
+          <div class="upload-slot p-4 flex flex-col items-center justify-center text-center min-h-[220px]" id="slotFront" data-slot="front">
+            <input type="file" id="inputFront" accept="image/*" class="hidden">
+            
+            <!-- Empty state -->
+            <div class="slot-empty flex flex-col items-center">
+              <div class="w-12 h-12 rounded-full bg-amber-50 text-amber-700 border border-amber-200/60 flex items-center justify-center mb-2.5 shadow-sm">
+                <i data-lucide="eye" class="w-5 h-5"></i>
+              </div>
+              <span class="font-bold text-stone-800 text-sm">Front Elevation</span>
+              <span class="text-[11px] text-stone-500 mt-1 max-w-[180px]">Front paw concealment, chest width, chin alignment</span>
+              <span class="mt-3 px-3 py-1 bg-white border border-stone-200 rounded-lg text-xs font-semibold text-stone-700 shadow-sm hover:border-amber-400">
+                Select Photo
+              </span>
+            </div>
+
+            <!-- Preview state (hidden by default) -->
+            <div class="slot-preview hidden w-full h-full absolute inset-0 bg-stone-900 flex flex-col">
+              <img class="preview-img w-full h-full object-cover" src="" alt="Front Preview">
+              <div class="absolute inset-0 bg-gradient-to-t from-stone-950/80 via-transparent to-transparent flex items-end justify-between p-2.5 text-white">
+                <span class="text-xs font-bold flex items-center gap-1.5">
+                  <i data-lucide="eye" class="w-3.5 h-3.5"></i> Front Elevation
+                </span>
+                <button type="button" class="remove-btn bg-stone-900/80 hover:bg-red-600 text-white rounded-md p-1.5 text-xs transition-colors" title="Remove image">
+                  <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Slot 2: Side View -->
+          <div class="upload-slot p-4 flex flex-col items-center justify-center text-center min-h-[220px]" id="slotSide" data-slot="side">
+            <input type="file" id="inputSide" accept="image/*" class="hidden">
+            
+            <!-- Empty state -->
+            <div class="slot-empty flex flex-col items-center">
+              <div class="w-12 h-12 rounded-full bg-amber-50 text-amber-700 border border-amber-200/60 flex items-center justify-center mb-2.5 shadow-sm">
+                <i data-lucide="move-horizontal" class="w-5 h-5"></i>
+              </div>
+              <span class="font-bold text-stone-800 text-sm">Lateral Profile</span>
+              <span class="text-[11px] text-stone-500 mt-1 max-w-[180px]">Tail wrap, elbow compression, flank curvature</span>
+              <span class="mt-3 px-3 py-1 bg-white border border-stone-200 rounded-lg text-xs font-semibold text-stone-700 shadow-sm hover:border-amber-400">
+                Select Photo
+              </span>
+            </div>
+
+            <!-- Preview state -->
+            <div class="slot-preview hidden w-full h-full absolute inset-0 bg-stone-900 flex flex-col">
+              <img class="preview-img w-full h-full object-cover" src="" alt="Side Preview">
+              <div class="absolute inset-0 bg-gradient-to-t from-stone-950/80 via-transparent to-transparent flex items-end justify-between p-2.5 text-white">
+                <span class="text-xs font-bold flex items-center gap-1.5">
+                  <i data-lucide="move-horizontal" class="w-3.5 h-3.5"></i> Lateral Profile
+                </span>
+                <button type="button" class="remove-btn bg-stone-900/80 hover:bg-red-600 text-white rounded-md p-1.5 text-xs transition-colors" title="Remove image">
+                  <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Slot 3: Top View -->
+          <div class="upload-slot p-4 flex flex-col items-center justify-center text-center min-h-[220px]" id="slotTop" data-slot="top">
+            <input type="file" id="inputTop" accept="image/*" class="hidden">
+            
+            <!-- Empty state -->
+            <div class="slot-empty flex flex-col items-center">
+              <div class="w-12 h-12 rounded-full bg-amber-50 text-amber-700 border border-amber-200/60 flex items-center justify-center mb-2.5 shadow-sm">
+                <i data-lucide="compass" class="w-5 h-5"></i>
+              </div>
+              <span class="font-bold text-stone-800 text-sm">Dorsal Projection</span>
+              <span class="text-[11px] text-stone-500 mt-1 max-w-[180px]">Boule symmetry, spinal alignment, zero splay</span>
+              <span class="mt-3 px-3 py-1 bg-white border border-stone-200 rounded-lg text-xs font-semibold text-stone-700 shadow-sm hover:border-amber-400">
+                Select Photo
+              </span>
+            </div>
+
+            <!-- Preview state -->
+            <div class="slot-preview hidden w-full h-full absolute inset-0 bg-stone-900 flex flex-col">
+              <img class="preview-img w-full h-full object-cover" src="" alt="Top Preview">
+              <div class="absolute inset-0 bg-gradient-to-t from-stone-950/80 via-transparent to-transparent flex items-end justify-between p-2.5 text-white">
+                <span class="text-xs font-bold flex items-center gap-1.5">
+                  <i data-lucide="compass" class="w-3.5 h-3.5"></i> Dorsal Projection
+                </span>
+                <button type="button" class="remove-btn bg-stone-900/80 hover:bg-red-600 text-white rounded-md p-1.5 text-xs transition-colors" title="Remove image">
+                  <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Quick multi-file dropzone -->
+      <div class="text-center py-2">
+        <label for="multiInput" class="inline-flex items-center gap-1.5 text-xs text-stone-500 hover:text-stone-800 cursor-pointer underline decoration-dotted transition-colors">
+          <i data-lucide="folder-up" class="w-3.5 h-3.5"></i>
+          <span>Or select 1 to 3 images at once (drag-and-drop or paste via Ctrl+V)</span>
+        </label>
+        <input type="file" id="multiInput" accept="image/*" multiple class="hidden">
+      </div>
+
+      <!-- Action Button -->
+      <div class="mt-6 pt-4 border-t border-stone-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="text-xs text-stone-500 flex items-center gap-2">
+          <span id="photoCountBadge" class="font-semibold text-stone-600 bg-stone-100 px-2 py-0.5 rounded border border-stone-200">0 images selected</span>
+          <span class="hidden sm:inline">• Multimodal Computer Vision Engine</span>
+        </div>
+
+        <button 
+          id="gradeLoafBtn" 
+          disabled
+          class="w-full sm:w-auto px-8 py-3.5 rounded-xl font-bold text-sm text-white bg-stone-300 cursor-not-allowed shadow-sm transition-all flex items-center justify-center gap-2"
+        >
+          <i data-lucide="cpu" class="w-4 h-4"></i>
+          <span>Execute Loaf Audit</span>
+        </button>
+      </div>
+
+    </div>
+
+    <!-- Inspecting Loading State -->
+    <div id="loadingState" class="hidden bakery-card p-10 text-center max-w-xl mx-auto my-12">
+      <div class="w-16 h-16 mx-auto rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-700 flex items-center justify-center mb-5">
+        <i data-lucide="loader-2" class="w-8 h-8 animate-spin"></i>
+      </div>
+      <h3 class="text-xl font-bold text-stone-900 mb-1">Performing Kinematic Inspection...</h3>
+      <p id="loadingPhrase" class="text-amber-800 font-semibold text-sm h-6">Scanning undercarriage for limb protrusions...</p>
+      
+      <!-- Progress Bar -->
+      <div class="w-full bg-stone-100 h-2 rounded-full overflow-hidden mt-6 max-w-sm mx-auto border border-stone-200">
+        <div id="loadingProgressBar" class="h-full bg-amber-600 w-1/3 transition-all duration-500 rounded-full"></div>
+      </div>
+      <p class="text-[11px] text-stone-400 mt-3">Evaluating paw concealment, lateral drag, and dorsal curvature</p>
+    </div>
+
+    <!-- Results Display -->
+    <div id="resultsSection" class="hidden space-y-6">
+      
+      <!-- Top Score Hero Card -->
+      <div class="bakery-card p-6 sm:p-10 relative overflow-hidden bg-gradient-to-b from-white to-stone-50/60">
+        
+        <div class="flex flex-col lg:flex-row items-center justify-between gap-8">
+          
+          <!-- Score Dial + Stamp -->
+          <div class="flex flex-col sm:flex-row items-center gap-6 sm:gap-8 text-center sm:text-left">
+            <div class="relative w-44 h-44 flex-shrink-0 flex items-center justify-center">
+              <svg class="score-circle-svg w-full h-full" viewBox="0 0 200 200">
+                <circle cx="100" cy="100" r="90" class="stroke-stone-100" stroke-width="14" fill="transparent" />
+                <circle id="scoreMeterCircle" cx="100" cy="100" r="90" class="score-circle-meter stroke-amber-600" stroke-width="14" stroke-linecap="round" fill="transparent" />
+              </svg>
+              <div class="absolute flex flex-col items-center justify-center">
+                <span id="scoreNumber" class="text-5xl font-black tracking-tight text-stone-900">0</span>
+                <span class="text-xs uppercase tracking-widest font-extrabold text-stone-400 mt-0.5">/ 100</span>
+              </div>
+            </div>
+
+            <div>
+              <div class="flex items-center gap-3 mb-2 justify-center sm:justify-start flex-wrap">
+                <span id="gradeStamp" class="stamp text-amber-800 border-amber-800 text-lg">A+</span>
+                <span id="multiAngleBadge" class="text-xs font-bold bg-amber-50 text-amber-900 px-2.5 py-1 rounded-md border border-amber-200/80 flex items-center gap-1.5">
+                  <i data-lucide="shield-check" class="w-3.5 h-3.5 text-amber-700"></i>
+                  <span>+5 Multi-Angle Bonus</span>
+                </span>
+                <span id="oarBadge" class="hidden text-xs font-bold bg-red-50 text-red-800 px-2.5 py-1 rounded-md border border-red-200 flex items-center gap-1.5">
+                  <i data-lucide="alert-triangle" class="w-3.5 h-3.5 text-red-600"></i>
+                  <span>Asymmetrical Limb Flare (Oar Detected)</span>
+                </span>
+              </div>
+
+              <h2 id="resultCatName" class="text-2xl sm:text-3xl font-black text-stone-900 tracking-tight">
+                Buttercup
+              </h2>
+              <div class="text-amber-800 font-bold text-lg mt-0.5" id="resultHonoraryRank">
+                Grandmaster Artisan Loaf
+              </div>
+              <div class="inline-flex items-center gap-1.5 text-stone-600 text-sm mt-1 bg-stone-100 px-3 py-1 rounded-lg">
+                <i data-lucide="tag" class="w-3.5 h-3.5 text-stone-500"></i>
+                <span class="font-semibold text-stone-800" id="resultBreadClass">Toasted Golden Brioche</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Action Buttons -->
+          <div class="flex flex-col sm:flex-row lg:flex-col gap-2.5 w-full lg:w-auto">
+            <button id="downloadCertificateBtn" class="px-5 py-2.5 bg-amber-700 hover:bg-amber-800 text-white rounded-xl font-bold text-xs shadow-sm transition-all flex items-center justify-center gap-2">
+              <i data-lucide="download" class="w-3.5 h-3.5"></i>
+              <span>Export Certificate (PNG)</span>
+            </button>
+            <button id="copySummaryBtn" class="px-5 py-2.5 bg-white hover:bg-stone-50 border border-stone-200 text-stone-700 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-2 hover:border-amber-300">
+              <i data-lucide="copy" class="w-3.5 h-3.5" id="copyIcon"></i>
+              <span id="copyBtnText">Copy Technical Summary</span>
+            </button>
+            <button id="resetInspectorBtn" class="px-5 py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-xl font-semibold text-xs transition-all flex items-center justify-center gap-2">
+              <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+              <span>New Inspection</span>
+            </button>
+          </div>
+
+        </div>
+
+        <!-- Auditor's Summary Box -->
+        <div class="mt-8 p-4 sm:p-5 rounded-xl bg-amber-50/70 border border-amber-200/70 relative">
+          <div class="flex items-start gap-3">
+            <div class="p-2 rounded-lg bg-amber-100 text-amber-800 shrink-0">
+              <i data-lucide="clipboard-check" class="w-4 h-4"></i>
+            </div>
+            <div>
+              <h4 class="text-xs font-bold uppercase tracking-wider text-amber-900 mb-1">Chief Auditor's Findings</h4>
+              <p id="resultSummaryCritique" class="text-stone-800 text-sm leading-relaxed font-serif italic">
+                "A masterclass in feline bakery arts. Buttercup demonstrates peerless geometry with zero paw visibility across all three inspected planes..."
+              </p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- 4 Inspection Criteria Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+        
+        <!-- Criterion 1: Paw Tuck -->
+        <div class="bakery-card p-5 sm:p-6">
+          <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center gap-2.5">
+              <div class="w-9 h-9 rounded-xl bg-amber-50 border border-amber-200/60 text-amber-700 flex items-center justify-center">
+                <i data-lucide="shield" class="w-4 h-4"></i>
+              </div>
+              <div>
+                <h3 class="font-bold text-stone-900 text-sm">Paw Tuck & Undercarriage</h3>
+                <span id="pawStatusTag" class="text-[11px] font-semibold text-amber-800">100% Peet Concealment</span>
+              </div>
+            </div>
+            <div class="text-right">
+              <span id="pawScoreNum" class="text-xl font-black text-stone-900">25</span>
+              <span class="text-xs font-bold text-stone-400">/ 25</span>
+            </div>
+          </div>
+          <!-- Progress bar -->
+          <div class="w-full bg-stone-100 h-2 rounded-full overflow-hidden mb-3">
+            <div id="pawBar" class="h-full bg-amber-600 rounded-full" style="width: 100%;"></div>
+          </div>
+          <p id="pawCritique" class="text-xs text-stone-600 mb-3 leading-relaxed">
+            Front and rear peet are completely tucked beneath the chest.
+          </p>
+          <ul id="pawObservations" class="space-y-1 text-[11px] text-stone-500">
+            <!-- Dynamic bullets -->
+          </ul>
+        </div>
+
+        <!-- Criterion 2: Tail Tuck -->
+        <div class="bakery-card p-5 sm:p-6">
+          <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center gap-2.5">
+              <div class="w-9 h-9 rounded-xl bg-amber-50 border border-amber-200/60 text-amber-700 flex items-center justify-center">
+                <i data-lucide="wind" class="w-4 h-4"></i>
+              </div>
+              <div>
+                <h3 class="font-bold text-stone-900 text-sm">Tail Aerodynamics & Drag</h3>
+                <span id="tailStatusTag" class="text-[11px] font-semibold text-amber-800">Zero Drag Flank Wrap</span>
+              </div>
+            </div>
+            <div class="text-right">
+              <span id="tailScoreNum" class="text-xl font-black text-stone-900">24</span>
+              <span class="text-xs font-bold text-stone-400">/ 25</span>
+            </div>
+          </div>
+          <div class="w-full bg-stone-100 h-2 rounded-full overflow-hidden mb-3">
+            <div id="tailBar" class="h-full bg-amber-600 rounded-full" style="width: 96%;"></div>
+          </div>
+          <div class="flex items-center gap-2 mb-2">
+            <span class="text-[10px] font-bold uppercase tracking-wider bg-stone-100 text-stone-600 px-2 py-0.5 rounded">
+              Drag Coefficient: <span id="dragCoeffNum" class="text-amber-800 font-extrabold">0.03</span>
+            </span>
+          </div>
+          <p id="tailCritique" class="text-xs text-stone-600 mb-3 leading-relaxed">
+            Tail is seamlessly curled flush along the starboard flank.
+          </p>
+          <ul id="tailObservations" class="space-y-1 text-[11px] text-stone-500">
+            <!-- Dynamic bullets -->
+          </ul>
+        </div>
+
+        <!-- Criterion 3: Elbows & Compactness -->
+        <div class="bakery-card p-5 sm:p-6">
+          <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center gap-2.5">
+              <div class="w-9 h-9 rounded-xl bg-amber-50 border border-amber-200/60 text-amber-700 flex items-center justify-center">
+                <i data-lucide="maximize-2" class="w-4 h-4"></i>
+              </div>
+              <div>
+                <h3 class="font-bold text-stone-900 text-sm">Flank Compression & Form</h3>
+                <span id="elbowStatusTag" class="text-[11px] font-semibold text-amber-800">Artisanal Dough Fold</span>
+              </div>
+            </div>
+            <div class="text-right">
+              <span id="elbowScoreNum" class="text-xl font-black text-stone-900">24</span>
+              <span class="text-xs font-bold text-stone-400">/ 25</span>
+            </div>
+          </div>
+          <div class="w-full bg-stone-100 h-2 rounded-full overflow-hidden mb-3">
+            <div id="elbowBar" class="h-full bg-amber-600 rounded-full" style="width: 96%;"></div>
+          </div>
+          <p id="elbowCritique" class="text-xs text-stone-600 mb-3 leading-relaxed">
+            Elbows pulled inwards against ribcage with zero lateral flare.
+          </p>
+          <ul id="elbowObservations" class="space-y-1 text-[11px] text-stone-500">
+            <!-- Dynamic bullets -->
+          </ul>
+        </div>
+
+        <!-- Criterion 4: Crust & Symmetry -->
+        <div class="bakery-card p-5 sm:p-6">
+          <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center gap-2.5">
+              <div class="w-9 h-9 rounded-xl bg-amber-50 border border-amber-200/60 text-amber-700 flex items-center justify-center">
+                <i data-lucide="sparkles" class="w-4 h-4"></i>
+              </div>
+              <div>
+                <h3 class="font-bold text-stone-900 text-sm">Dorsal Symmetry & Crust</h3>
+                <span id="crustStatusTag" class="text-[11px] font-semibold text-amber-800">Dorsal Boule Symmetry</span>
+              </div>
+            </div>
+            <div class="text-right">
+              <span id="crustScoreNum" class="text-xl font-black text-stone-900">25</span>
+              <span class="text-xs font-bold text-stone-400">/ 25</span>
+            </div>
+          </div>
+          <div class="w-full bg-stone-100 h-2 rounded-full overflow-hidden mb-3">
+            <div id="crustBar" class="h-full bg-amber-600 rounded-full" style="width: 100%;"></div>
+          </div>
+          <p id="crustCritique" class="text-xs text-stone-600 mb-3 leading-relaxed">
+            Overhead inspection reveals a textbook oval boule with uniform dorsal coat distribution.
+          </p>
+          <ul id="crustObservations" class="space-y-1 text-[11px] text-stone-500">
+            <!-- Dynamic bullets -->
+          </ul>
+        </div>
+
+      </div>
+
+      <!-- Submitted Angles Review Strip -->
+      <div id="angleReviewStrip" class="bakery-card p-5">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-stone-500 mb-3 flex items-center gap-1.5">
+          <i data-lucide="layers" class="w-3.5 h-3.5 text-stone-600"></i>
+          <span>Orthographic Plane Observations</span>
+        </h3>
+        <div id="angleReviewGrid" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- Badges & Advice Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+        
+        <!-- Badges Card -->
+        <div class="bakery-card p-5">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-stone-500 mb-3 flex items-center gap-1.5">
+            <i data-lucide="award" class="w-3.5 h-3.5 text-stone-600"></i>
+            <span>Certified Accolades & Demerits</span>
+          </h3>
+          <div id="badgesContainer" class="flex flex-wrap gap-2">
+            <!-- Badges -->
+          </div>
+        </div>
+
+        <!-- Tips for Cat Card -->
+        <div class="bakery-card p-5">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-stone-500 mb-3 flex items-center gap-1.5">
+            <i data-lucide="lightbulb" class="w-3.5 h-3.5 text-stone-600"></i>
+            <span>Kinematic Recommendations</span>
+          </h3>
+          <ul id="tipsList" class="space-y-2 text-xs text-stone-700">
+            <!-- Tips -->
+          </ul>
+        </div>
+
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- Settings Modal -->
+  <div id="settingsModal" class="hidden fixed inset-0 z-50 bg-stone-950/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bakery-card max-w-md w-full p-6 sm:p-7 relative bg-white shadow-2xl">
+      <button id="closeSettingsBtn" class="absolute right-4 top-4 text-stone-400 hover:text-stone-700 p-1">
+        <i data-lucide="x" class="w-4 h-4"></i>
+      </button>
+
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-10 h-10 rounded-xl bg-amber-50 border border-amber-200/60 text-amber-700 flex items-center justify-center">
+          <i data-lucide="sliders" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <h3 class="text-base font-bold text-stone-900">Engine Configuration</h3>
+          <p class="text-xs text-stone-500">Gemini Vision AI integration settings</p>
+        </div>
+      </div>
+
+      <div id="serverKeyStatus" class="mb-4 p-3 rounded-xl bg-stone-50 border border-stone-200 text-xs flex items-center justify-between">
+        <span>Server Configuration:</span>
+        <span id="serverKeyBadge" class="font-bold text-stone-600">Verifying...</span>
+      </div>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-stone-800 mb-1">Google Gemini API Key</label>
+          <input 
+            type="password" 
+            id="apiKeyInput" 
+            placeholder="AIzaSy..." 
+            class="w-full px-3 py-2 rounded-xl border border-stone-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-200 outline-none text-xs font-mono transition-all"
+          >
+          <p class="text-[11px] text-stone-500 mt-1.5 leading-relaxed">
+            Keys are retained locally in client storage. Free keys available at 
+            <a href="https://aistudio.google.com/" target="_blank" rel="noopener" class="text-amber-800 font-bold underline hover:text-amber-900">aistudio.google.com</a>.
+          </p>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-stone-800 mb-1">Active Model</label>
+          <select id="modelSelect" class="w-full px-3 py-2 rounded-xl border border-stone-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-200 outline-none text-xs font-medium bg-white">
+            <option value="gemini-3.8-flash" selected>gemini-3.8-flash (Recommended • Multimodal Vision)</option>
+            <option value="gemini-3.5-flash-lite">gemini-3.5-flash-lite (High Speed)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="mt-6 pt-4 border-t border-stone-100 flex items-center justify-between gap-3">
+        <button id="clearKeyBtn" class="px-3 py-2 text-xs font-semibold text-stone-500 hover:text-red-600">
+          Reset Key
+        </button>
+        <button id="saveSettingsBtn" class="px-5 py-2 rounded-xl bg-amber-700 hover:bg-amber-800 text-white font-bold text-xs shadow-sm transition-all">
+          Save Settings
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Capacity Notice Modal -->
+  <div id="ovenAlertModal" class="hidden fixed inset-0 z-50 bg-stone-950/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bakery-card max-w-md w-full p-6 sm:p-7 relative bg-white shadow-2xl text-center">
+      <div class="w-14 h-14 mx-auto rounded-2xl bg-amber-50 border border-amber-200/60 text-amber-800 flex items-center justify-center mb-3">
+        <i data-lucide="clock" class="w-7 h-7"></i>
+      </div>
+      <h3 class="text-lg font-bold text-stone-900 mb-1" id="ovenAlertTitle">Evaluation Capacity Reached</h3>
+      <p class="text-xs text-stone-600 leading-relaxed mb-6" id="ovenAlertBody">
+        The public evaluation limit has been reached for today. Please wait for the quota reset, or provide your free API key in Settings.
+      </p>
+      <div class="flex flex-col gap-2">
+        <button id="ovenAlertPresetBtn" class="w-full py-2.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 font-bold text-xs border border-stone-200 transition-colors">
+          View Buttercup Baseline Dataset
+        </button>
+        <button id="ovenAlertSettingsBtn" class="w-full py-2.5 rounded-xl bg-amber-700 hover:bg-amber-800 text-white font-bold text-xs transition-colors shadow-sm">
+          Enter Personal API Key
+        </button>
+        <button id="closeOvenAlertBtn" class="w-full py-2 text-stone-400 hover:text-stone-600 font-semibold text-xs transition-colors mt-1">
+          Dismiss
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2.5 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
+
+  <!-- Offscreen Canvas for generating shareable Loaf Certificate -->
+  <canvas id="certificateCanvas" class="hidden" width="1200" height="800"></canvas>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

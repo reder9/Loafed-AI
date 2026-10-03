@@ -1,0 +1,150 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,600&display=swap');
+
+:root {
+  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --font-serif: 'Playfair Display', Georgia, serif;
+  
+  --bg-warm: #faf7f2;
+  --bg-card: #ffffff;
+  --crust-dark: #291b12;
+  --crust-warm: #452a1a;
+  --crust-gold: #d97706;
+  --crust-light: #fef3c7;
+  --crust-amber: #f59e0b;
+  --toast-border: #ebd9c8;
+  --text-primary: #292524;
+  --text-muted: #78716c;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--bg-warm);
+  color: var(--text-primary);
+  background-image: 
+    radial-gradient(#d9770615 1px, transparent 1px),
+    radial-gradient(#d9770608 1px, #faf7f2 1px);
+  background-size: 24px 24px;
+  background-position: 0 0, 12px 12px;
+  min-height: 100vh;
+}
+
+.font-serif {
+  font-family: var(--font-serif);
+}
+
+/* Glassmorphism & Warm Card styling */
+.bakery-card {
+  background: #ffffff;
+  border: 1px solid var(--toast-border);
+  box-shadow: 0 10px 30px -10px rgba(69, 42, 26, 0.08), 0 4px 6px -2px rgba(69, 42, 26, 0.03);
+  border-radius: 1.25rem;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.bakery-card:hover {
+  box-shadow: 0 20px 35px -10px rgba(69, 42, 26, 0.12), 0 6px 12px -2px rgba(69, 42, 26, 0.04);
+}
+
+/* Slot upload box */
+.upload-slot {
+  position: relative;
+  border: 2px dashed #e2cebc;
+  background-color: #fffaf5;
+  border-radius: 1rem;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.upload-slot:hover {
+  border-color: #d97706;
+  background-color: #fef7ec;
+  transform: translateY(-2px);
+}
+
+.upload-slot.drag-over {
+  border-color: #b45309;
+  background-color: #fef3c7;
+  transform: scale(1.02);
+}
+
+.upload-slot.has-image {
+  border-style: solid;
+  border-color: #f59e0b;
+  background-color: #ffffff;
+}
+
+/* Score Circle / Meter */
+.score-circle-svg {
+  transform: rotate(-90deg);
+  transform-origin: 50% 50%;
+}
+
+.score-circle-meter {
+  stroke-dasharray: 565.48;
+  stroke-dashoffset: 565.48;
+  transition: stroke-dashoffset 1.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Stamp Effect */
+.stamp {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  text-transform: uppercase;
+  font-weight: 800;
+  border: 3px solid currentColor;
+  border-radius: 0.5rem;
+  transform: rotate(-6deg);
+  mask-image: linear-gradient(135deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,1) 50%, rgba(0,0,0,0.85) 100%);
+}
+
+/* Animations */
+@keyframes pulse-gentle {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.03); }
+}
+
+.animate-pulse-gentle {
+  animation: pulse-gentle 3s infinite ease-in-out;
+}
+
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+.animate-float {
+  animation: float-slow 4s infinite ease-in-out;
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #f5eee6;
+}
+::-webkit-scrollbar-thumb {
+  background: #d6beaa;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #bfa38b;
+}
+
+/* Toast Notifications */
+.toast-card {
+  pointer-events: auto;
+  transform: translateY(12px) scale(0.97);
+  opacity: 0;
+  transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.toast-card.show {
+  transform: translateY(0) scale(1);
+  opacity: 1;
+}
+.toast-card.hide {
+  transform: translateY(8px) scale(0.95);
+  opacity: 0;
+}
