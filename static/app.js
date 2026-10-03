@@ -286,7 +286,49 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  function setSlotFile(slotKey, file) {
+  async function optimizeImage(file, maxDimension = 1280, quality = 0.85) {
+    if (!file || !file.type.startsWith('image/')) return file;
+    return new Promise((resolve) => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        let { width, height } = img;
+        if (width <= maxDimension && height <= maxDimension && file.size < 800 * 1024) {
+          return resolve(file);
+        }
+        if (width > height) {
+          if (width > maxDimension) {
+            height = Math.round((height * maxDimension) / width);
+            width = maxDimension;
+          }
+        } else {
+          if (height > maxDimension) {
+            width = Math.round((width * maxDimension) / height);
+            height = maxDimension;
+          }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        canvas.toBlob((blob) => {
+          if (!blob) return resolve(file);
+          const optimizedFile = new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' });
+          resolve(optimizedFile);
+        }, 'image/jpeg', quality);
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        resolve(file);
+      };
+      img.src = url;
+    });
+  }
+
+  async function setSlotFile(slotKey, rawFile) {
+    const file = await optimizeImage(rawFile);
     const slotEl = document.getElementById(`slot${slotKey.charAt(0).toUpperCase() + slotKey.slice(1)}`);
     const emptyState = slotEl.querySelector('.slot-empty');
     const previewState = slotEl.querySelector('.slot-preview');
