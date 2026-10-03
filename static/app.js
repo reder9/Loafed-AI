@@ -492,6 +492,12 @@ document.addEventListener('DOMContentLoaded', () => {
     formData.append('cat_name', catNameInput.value.trim() || 'Anonymous Subject');
     formData.append('model', state.model);
     
+    // Anti-bot honeypot check
+    const honeypot = document.getElementById('honeypotInput');
+    if (honeypot && honeypot.value) {
+      formData.append('website_url_check', honeypot.value);
+    }
+
     if (state.apiKey) {
       formData.append('api_key', state.apiKey);
     }
@@ -520,6 +526,7 @@ document.addEventListener('DOMContentLoaded', () => {
       stopLoadingAnimation();
       state.currentResult = data.result;
       renderResults(data.result, data.demo_mode);
+      saveLoafToHistory(data.result);
       playTone('complete');
 
       if (data.demo_mode && data.message) {
@@ -1021,7 +1028,262 @@ Certified by Loafed Inspection Engine`;
     });
   }
 
+  // Local History Manager (0 login required, stored locally in browser)
+  const historyBadgeCount = document.getElementById('historyBadgeCount');
+  const historyModal = document.getElementById('historyModal');
+  const openHistoryBtn = document.getElementById('openHistoryBtn');
+  const closeHistoryBtn = document.getElementById('closeHistoryBtn');
+  const dismissHistoryBtn = document.getElementById('dismissHistoryBtn');
+  const clearAllHistoryBtn = document.getElementById('clearAllHistoryBtn');
+  const historyListContainer = document.getElementById('historyListContainer');
+
+  function getSavedHistory() {
+    try {
+      return JSON.parse(localStorage.getItem('loafed_history') || '[]');
+    } catch {
+      return [];
+    }
+  }
+
+  function updateHistoryBadge() {
+    const history = getSavedHistory();
+    if (historyBadgeCount) {
+      historyBadgeCount.textContent = history.length;
+    }
+  }
+
+  function saveLoafToHistory(result) {
+    if (!result) return;
+    try {
+      const history = getSavedHistory();
+      const entry = {
+        id: Date.now().toString(),
+        cat_name: result.cat_name || 'Anonymous Subject',
+        overall_score: result.overall_score || 0,
+        grade_letter: result.grade_letter || 'N/A',
+        loaf_rank: result.loaf_rank || 'Unclassified',
+        bread_classification: result.bread_classification || 'Standard Loaf',
+        summary_critique: result.summary_critique || '',
+        timestamp: new Date().toISOString(),
+        result: result
+      };
+      history.unshift(entry);
+      if (history.length > 30) history.length = 30;
+      localStorage.setItem('loafed_history', JSON.stringify(history));
+      updateHistoryBadge();
+    } catch (e) {
+      console.warn('Could not save history to localStorage', e);
+    }
+  }
+
+  function renderHistoryModal() {
+    const history = getSavedHistory();
+    if (!historyListContainer) return;
+
+    if (history.length === 0) {
+      historyListContainer.innerHTML = `
+        <div class="py-10 text-center text-stone-400">
+          <i data-lucide="inbox" class="w-8 h-8 mx-auto mb-2 text-stone-300"></i>
+          <p class="text-xs font-semibold text-stone-600">No saved inspections yet</p>
+          <p class="text-[11px] text-stone-400 mt-1">Upload photos and inspect a cat to log your first score.</p>
+        </div>
+      `;
+      refreshIcons();
+      return;
+    }
+
+    historyListContainer.innerHTML = history.map((item) => {
+      const formattedDate = new Date(item.timestamp).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit'
+      });
+
+      return `
+        <div class="p-3.5 rounded-xl border border-stone-200 bg-stone-50/70 hover:bg-stone-50 transition-colors flex items-center justify-between gap-3" data-id="${item.id}">
+          <div class="flex items-center gap-3 min-w-0">
+            <div class="w-11 h-11 rounded-lg bg-white border border-stone-200 flex flex-col items-center justify-center shrink-0 shadow-xs">
+              <span class="text-xs font-black text-amber-700">${item.overall_score}</span>
+              <span class="text-[9px] font-bold text-stone-400 leading-none">${item.grade_letter}</span>
+            </div>
+            <div class="min-w-0">
+              <div class="text-xs font-bold text-stone-900 truncate">${item.cat_name}</div>
+              <div class="text-[11px] text-stone-500 truncate">${item.loaf_rank} &bull; ${item.bread_classification}</div>
+              <div class="text-[10px] text-stone-400 mt-0.5">${formattedDate}</div>
+            </div>
+          </div>
+          <div class="flex items-center gap-1.5 shrink-0">
+            <button class="view-history-entry-btn px-2.5 py-1.5 rounded-lg bg-white hover:bg-amber-50 text-stone-700 hover:text-amber-900 text-xs font-bold border border-stone-200 transition-colors" data-id="${item.id}">
+              View
+            </button>
+            <button class="delete-history-entry-btn p-1.5 text-stone-400 hover:text-rose-600 transition-colors" data-id="${item.id}" title="Delete">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    refreshIcons();
+
+    historyListContainer.querySelectorAll('.view-history-entry-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const id = e.currentTarget.getAttribute('data-id');
+        const entry = history.find(h => h.id === id);
+        if (entry && entry.result) {
+          playTone('click');
+          state.currentResult = entry.result;
+          historyModal.classList.add('hidden');
+          renderResults(entry.result, false);
+          showToast({
+            type: 'info',
+            title: 'Report Loaded',
+            message: `Loaded past inspection report for ${entry.cat_name}.`
+          });
+        }
+      });
+    });
+
+    historyListContainer.querySelectorAll('.delete-history-entry-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        playTone('click');
+        const id = e.currentTarget.getAttribute('data-id');
+        const updated = history.filter(h => h.id !== id);
+        localStorage.setItem('loafed_history', JSON.stringify(updated));
+        updateHistoryBadge();
+        renderHistoryModal();
+      });
+    });
+  }
+
+  if (openHistoryBtn) {
+    openHistoryBtn.addEventListener('click', () => {
+      playTone('click');
+      renderHistoryModal();
+      historyModal.classList.remove('hidden');
+      refreshIcons();
+    });
+  }
+
+  if (closeHistoryBtn) {
+    closeHistoryBtn.addEventListener('click', () => {
+      playTone('click');
+      historyModal.classList.add('hidden');
+    });
+  }
+
+  if (dismissHistoryBtn) {
+    dismissHistoryBtn.addEventListener('click', () => {
+      playTone('click');
+      historyModal.classList.add('hidden');
+    });
+  }
+
+  if (clearAllHistoryBtn) {
+    clearAllHistoryBtn.addEventListener('click', () => {
+      playTone('click');
+      localStorage.removeItem('loafed_history');
+      updateHistoryBadge();
+      renderHistoryModal();
+      showToast({
+        type: 'info',
+        title: 'History Cleared',
+        message: 'All saved local inspections removed.'
+      });
+    });
+  }
+
+  // Legal Modal & Policies (Privacy Policy & Terms of Service)
+  const legalModal = document.getElementById('legalModal');
+  const closeLegalBtn = document.getElementById('closeLegalBtn');
+  const dismissLegalBtn = document.getElementById('dismissLegalBtn');
+  const tabPrivacyBtn = document.getElementById('tabPrivacyBtn');
+  const tabTermsBtn = document.getElementById('tabTermsBtn');
+  const legalModalBody = document.getElementById('legalModalBody');
+  const openPrivacyBtn = document.getElementById('openPrivacyBtn');
+  const openTermsBtn = document.getElementById('openTermsBtn');
+
+  const privacyPolicyContent = `
+    <div>
+      <h4 class="font-bold text-stone-900 text-xs mb-1">1. Zero Personal Data Collection</h4>
+      <p class="text-stone-600 leading-relaxed">Loafed AI is freeware created strictly for feline appreciation and recreational entertainment. We do not require account registration, and we do not collect your name, email address, phone number, location, or payment information.</p>
+    </div>
+    <div>
+      <h4 class="font-bold text-stone-900 text-xs mb-1">2. In-Memory Image Evaluation (No Persistent Storage)</h4>
+      <p class="text-stone-600 leading-relaxed">Uploaded cat photographs are transferred over encrypted HTTPS and streamed in-memory to Google Gemini Vision API solely to generate your real-time posture report. Photos are never saved to persistent server disks, never archived into public storage buckets, and never shared, sold, or used for model training by RederSoft.</p>
+    </div>
+    <div>
+      <h4 class="font-bold text-stone-900 text-xs mb-1">3. Local Device Storage Only</h4>
+      <p class="text-stone-600 leading-relaxed">Any client preferences (such as audio mute state, past score history, or an optional client-provided API key) remain stored exclusively in your browser local storage (localStorage) on your own device. They are never sent to our servers.</p>
+    </div>
+    <div>
+      <h4 class="font-bold text-stone-900 text-xs mb-1">4. No Tracking, Profiling, or Advertising</h4>
+      <p class="text-stone-600 leading-relaxed">We do not employ third-party advertising trackers, cross-site profiling pixels, or marketing analytics. Your browsing activity on this service remains private.</p>
+    </div>
+    <div>
+      <h4 class="font-bold text-stone-900 text-xs mb-1">5. Third-Party AI Services</h4>
+      <p class="text-stone-600 leading-relaxed">Visual inspection is processed via Google Gemini API in accordance with Google API terms and standard privacy guidelines.</p>
+    </div>
+  `;
+
+  const termsOfServiceContent = `
+    <div>
+      <h4 class="font-bold text-stone-900 text-xs mb-1">1. Entertainment & Appreciation Purpose</h4>
+      <p class="text-stone-600 leading-relaxed">Loafed AI is provided as free, open novelty software. All scores (including aerodynamic drag coefficients, boule symmetry percentages, and dough classifications) are humorous computer vision evaluations intended solely for personal entertainment.</p>
+    </div>
+    <div>
+      <h4 class="font-bold text-stone-900 text-xs mb-1">2. Not Veterinary or Medical Advice</h4>
+      <p class="text-stone-600 leading-relaxed">The analysis generated by this engine does not constitute veterinary medical diagnosis, orthopedic assessment, or health advice. If your cat demonstrates sudden changes in resting posture, gait abnormalities, or tucks its limbs due to pain or illness, please consult a licensed veterinarian immediately.</p>
+    </div>
+    <div>
+      <h4 class="font-bold text-stone-900 text-xs mb-1">3. Permitted Content</h4>
+      <p class="text-stone-600 leading-relaxed">You agree to submit only images of cats that you own or have permission to inspect. Submissions of unlawful, abusive, or non-feline graphic content are strictly prohibited.</p>
+    </div>
+    <div>
+      <h4 class="font-bold text-stone-900 text-xs mb-1">4. Fair Use & Abuse Prevention</h4>
+      <p class="text-stone-600 leading-relaxed">To ensure this service remains 100% free for everyone, automated scraping, bot submissions, high-frequency script attacks, or attempts to circumvent rate-limiting guardrails are prohibited.</p>
+    </div>
+    <div>
+      <h4 class="font-bold text-stone-900 text-xs mb-1">5. Disclaimer of Warranty ("As-Is")</h4>
+      <p class="text-stone-600 leading-relaxed">Loafed AI is provided on an "as-is" and "as-available" basis without warranties of any kind, either express or implied.</p>
+    </div>
+  `;
+
+  function setLegalTab(tab) {
+    if (tab === 'privacy') {
+      tabPrivacyBtn.className = 'px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all bg-amber-50 text-amber-900 border border-amber-200/80';
+      tabTermsBtn.className = 'px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all text-stone-600 hover:text-stone-900 border border-transparent';
+      legalModalBody.innerHTML = privacyPolicyContent;
+    } else {
+      tabTermsBtn.className = 'px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all bg-amber-50 text-amber-900 border border-amber-200/80';
+      tabPrivacyBtn.className = 'px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all text-stone-600 hover:text-stone-900 border border-transparent';
+      legalModalBody.innerHTML = termsOfServiceContent;
+    }
+  }
+
+  function openLegalModal(tab = 'privacy') {
+    playTone('click');
+    setLegalTab(tab);
+    legalModal.classList.remove('hidden');
+    refreshIcons();
+  }
+
+  function closeLegalModal() {
+    playTone('click');
+    legalModal.classList.add('hidden');
+  }
+
+  if (openPrivacyBtn) openPrivacyBtn.addEventListener('click', () => openLegalModal('privacy'));
+  if (openTermsBtn) openTermsBtn.addEventListener('click', () => openLegalModal('terms'));
+  if (tabPrivacyBtn) tabPrivacyBtn.addEventListener('click', () => setLegalTab('privacy'));
+  if (tabTermsBtn) tabTermsBtn.addEventListener('click', () => setLegalTab('terms'));
+  if (closeLegalBtn) closeLegalBtn.addEventListener('click', closeLegalModal);
+  if (dismissLegalBtn) dismissLegalBtn.addEventListener('click', closeLegalModal);
+
   // Initial Boot
   checkServerStatus();
+  updateHistoryBadge();
   refreshIcons();
 });

@@ -281,9 +281,14 @@ async def grade_loaf(
     top: Optional[UploadFile] = File(None),
     images: Optional[List[UploadFile]] = File(None),
     api_key: Optional[str] = Form(None),
-    x_gemini_api_key: Optional[str] = Header(None)
+    x_gemini_api_key: Optional[str] = Header(None),
+    website_url_check: Optional[str] = Form(None)
 ):
     """Grades uploaded cat photos using Gemini 3.8 Flash Vision."""
+    if website_url_check:
+        logger.warning("Automated bot submission dropped via honeypot.")
+        raise HTTPException(status_code=400, detail="Automated submission blocked.")
+
     effective_api_key = api_key or x_gemini_api_key or os.getenv("GEMINI_API_KEY", "").strip()
     
     # Collect all uploaded files and organize by angle

@@ -52,13 +52,18 @@
         </div>
       </div>
 
-      <div class="flex items-center gap-2.5">
+      <div class="flex items-center gap-2">
+        <button id="openHistoryBtn" class="px-3 py-1.5 rounded-lg border border-stone-200 bg-white hover:bg-stone-50 text-stone-700 text-xs font-semibold flex items-center gap-1.5 shadow-sm transition-all hover:border-amber-300">
+          <i data-lucide="history" class="w-3.5 h-3.5 text-stone-600"></i>
+          <span class="hidden sm:inline">Past Loaves</span>
+          <span id="historyBadgeCount" class="px-1.5 py-0.2 rounded-full bg-stone-100 text-[10px] font-bold text-stone-600 border border-stone-200">0</span>
+        </button>
         <button id="soundToggleBtn" class="p-2 rounded-lg text-stone-600 hover:text-stone-900 hover:bg-stone-100 transition-colors text-sm flex items-center gap-1.5" title="Toggle Sound">
           <i data-lucide="volume-2" class="w-4 h-4" id="soundIcon"></i>
         </button>
-        <button id="openSettingsBtn" class="px-3.5 py-1.5 rounded-lg border border-stone-200 bg-white hover:bg-stone-50 text-stone-700 text-xs font-semibold flex items-center gap-1.5 shadow-sm transition-all hover:border-amber-300">
+        <button id="openSettingsBtn" class="px-3 py-1.5 rounded-lg border border-stone-200 bg-white hover:bg-stone-50 text-stone-700 text-xs font-semibold flex items-center gap-1.5 shadow-sm transition-all hover:border-amber-300">
           <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5"></i>
-          <span id="settingsStatusText">Configuration</span>
+          <span id="settingsStatusText" class="hidden sm:inline">Configuration</span>
         </button>
       </div>
     </div>
@@ -69,14 +74,14 @@
     <!-- Hero Header -->
     <div class="text-center max-w-2xl mx-auto mb-8">
       <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-stone-100 text-stone-700 text-xs font-semibold mb-3 border border-stone-200">
-        <span class="w-1.5 h-1.5 rounded-full bg-amber-600"></span>
-        <span>Multi-Angle Feline Kinematics & Posture Audit</span>
+        <i data-lucide="cpu" class="w-3.5 h-3.5 text-amber-700"></i>
+        <span>Multimodal AI Vision &bull; Powered by Google Gemini</span>
       </div>
       <h1 class="text-3xl sm:text-5xl font-black text-stone-900 tracking-tight leading-tight">
         Grade Your Cat's <span class="font-serif italic font-normal text-amber-700 underline decoration-amber-400 decoration-2 underline-offset-4">Loaf Score</span>
       </h1>
       <p class="mt-3 text-stone-600 text-sm sm:text-base leading-relaxed">
-        Upload 1 to 3 orthographic photos (front, side, and top-down). The vision engine evaluates undercarriage paw concealment, tail aerodynamic drag, and bilateral boule symmetry.
+        Upload 1 to 3 photos (front, side, and top-down). Our AI vision model evaluates undercarriage paw concealment, aerodynamic drag coefficient, and bilateral boule symmetry in seconds.
       </p>
 
       <!-- Preset Quick Demo Bar -->
@@ -92,6 +97,11 @@
     <!-- Main Inspection Form -->
     <div id="inspectorBay" class="bakery-card p-5 sm:p-8 mb-10">
       
+      <!-- Anti-bot honeypot field (hidden from real users) -->
+      <div style="position: absolute; left: -9999px; top: -9999px;" aria-hidden="true">
+        <input type="text" name="website_url_check" id="honeypotInput" tabindex="-1" autocomplete="off">
+      </div>
+
       <!-- Cat Name Input -->
       <div class="mb-6 flex flex-col sm:flex-row gap-3 sm:items-center justify-between pb-6 border-b border-stone-100">
         <div>
@@ -508,6 +518,26 @@
 
   </main>
 
+  <!-- Site Footer with Terms & Policies -->
+  <footer class="mt-20 border-t border-stone-200 bg-white/70 py-8 text-stone-500 text-xs">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="flex items-center gap-2">
+        <span class="font-bold text-stone-800">Loafed<span class="text-amber-600">AI</span></span>
+        <span>&bull;</span>
+        <span>A free, open feline posture appreciation project by RederSoft</span>
+      </div>
+
+      <div class="flex items-center gap-4 text-xs font-semibold">
+        <button id="openPrivacyBtn" class="hover:text-stone-900 underline underline-offset-2 transition-colors">
+          Privacy Policy
+        </button>
+        <button id="openTermsBtn" class="hover:text-stone-900 underline underline-offset-2 transition-colors">
+          Terms of Service
+        </button>
+      </div>
+    </div>
+  </footer>
+
   <!-- Settings Modal -->
   <div id="settingsModal" class="hidden fixed inset-0 z-50 bg-stone-950/60 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="bakery-card max-w-md w-full p-6 sm:p-7 relative bg-white shadow-2xl">
@@ -583,6 +613,80 @@
           Enter Personal API Key
         </button>
         <button id="closeOvenAlertBtn" class="w-full py-2 text-stone-400 hover:text-stone-600 font-semibold text-xs transition-colors mt-1">
+          Dismiss
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Past Loaves / Local History Modal -->
+  <div id="historyModal" class="hidden fixed inset-0 z-50 bg-stone-950/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bakery-card max-w-lg w-full p-6 sm:p-7 relative bg-white shadow-2xl max-h-[85vh] flex flex-col">
+      <button id="closeHistoryBtn" class="absolute right-4 top-4 text-stone-400 hover:text-stone-700 p-1 rounded-lg hover:bg-stone-100 transition-colors">
+        <i data-lucide="x" class="w-4 h-4"></i>
+      </button>
+
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-10 h-10 rounded-xl bg-amber-50 border border-amber-200/60 text-amber-800 flex items-center justify-center shrink-0">
+          <i data-lucide="history" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <h3 class="text-base font-bold text-stone-900">Saved Loaf Inspections</h3>
+          <p class="text-xs text-stone-500">Stored privately in your browser &bull; Zero login required</p>
+        </div>
+      </div>
+
+      <!-- History list container -->
+      <div id="historyListContainer" class="overflow-y-auto space-y-2.5 max-h-[50vh] pr-1">
+        <!-- Rendered dynamically -->
+      </div>
+
+      <div class="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between text-xs">
+        <button id="clearAllHistoryBtn" class="text-stone-400 hover:text-rose-600 transition-colors text-[11px] font-medium">
+          Clear Local History
+        </button>
+        <button id="dismissHistoryBtn" class="px-3.5 py-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-700 font-semibold text-xs transition-colors">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Legal / Privacy & Terms Modal -->
+  <div id="legalModal" class="hidden fixed inset-0 z-50 bg-stone-950/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bakery-card max-w-xl w-full p-6 sm:p-7 relative bg-white shadow-2xl max-h-[85vh] flex flex-col">
+      <button id="closeLegalBtn" class="absolute right-4 top-4 text-stone-400 hover:text-stone-700 p-1 rounded-lg hover:bg-stone-100 transition-colors">
+        <i data-lucide="x" class="w-4 h-4"></i>
+      </button>
+
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-10 h-10 rounded-xl bg-amber-50 border border-amber-200/60 text-amber-800 flex items-center justify-center shrink-0">
+          <i data-lucide="shield-check" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <h3 class="text-base font-bold text-stone-900" id="legalModalTitle">Privacy Policy & Terms</h3>
+          <p class="text-xs text-stone-500">Transparent freeware & zero-data collection standards</p>
+        </div>
+      </div>
+
+      <!-- Modal Tabs -->
+      <div class="flex items-center gap-2 border-b border-stone-200 pb-3 mb-4">
+        <button id="tabPrivacyBtn" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all bg-amber-50 text-amber-900 border border-amber-200/80">
+          Privacy Policy
+        </button>
+        <button id="tabTermsBtn" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all text-stone-600 hover:text-stone-900 border border-transparent">
+          Terms of Service
+        </button>
+      </div>
+
+      <!-- Content Area (Scrollable) -->
+      <div id="legalModalBody" class="overflow-y-auto text-xs text-stone-600 space-y-3 pr-2 leading-relaxed max-h-[50vh]">
+        <!-- Rendered dynamically -->
+      </div>
+
+      <div class="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between text-[11px] text-stone-400">
+        <span>Zero tracking cookies &bull; Zero data retention &bull; 100% Freeware</span>
+        <button id="dismissLegalBtn" class="px-3.5 py-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-700 font-semibold text-xs transition-colors">
           Dismiss
         </button>
       </div>
