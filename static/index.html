@@ -34,18 +34,18 @@
   <script src="https://unpkg.com/lucide@latest"></script>
   <link rel="stylesheet" href="/static/style.css">
 </head>
-<body class="text-stone-800 antialiased selection:bg-amber-200 selection:text-amber-900 pb-16">
+<body class="text-stone-800 antialiased selection:bg-orange-200 selection:text-orange-900 pb-16">
 
   <!-- Navigation Bar -->
   <header class="border-b border-stone-200/80 bg-white/90 backdrop-blur-md sticky top-0 z-40">
     <div class="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/25 flex items-center justify-center text-amber-700 shadow-sm">
-          <i data-lucide="scale" class="w-5 h-5"></i>
+        <div class="w-10 h-10 rounded-xl bg-orange-50 border border-orange-200/80 flex items-center justify-center text-orange-700 shadow-sm p-1">
+          <img src="/static/logo.svg" alt="Loafed AI Cat Loaf Logo" class="w-8 h-8 object-contain">
         </div>
         <div>
           <div class="flex items-center gap-2">
-            <span class="font-extrabold text-xl tracking-tight text-stone-900">Loafed<span class="text-amber-600 font-black">AI</span></span>
+            <span class="font-extrabold text-xl tracking-tight text-stone-900">Loafed<span class="text-orange-600 font-black">AI</span></span>
             <span class="text-[10px] font-bold uppercase tracking-wider bg-stone-100 text-stone-700 px-2 py-0.5 rounded-full border border-stone-200">Gemini 3.8 Flash</span>
           </div>
           <p class="text-xs text-stone-500 hidden sm:block">Feline Posture & Silhouette Certification Bureau</p>
@@ -53,17 +53,13 @@
       </div>
 
       <div class="flex items-center gap-2">
-        <button id="openHistoryBtn" class="px-3 py-1.5 rounded-lg border border-stone-200 bg-white hover:bg-stone-50 text-stone-700 text-xs font-semibold flex items-center gap-1.5 shadow-sm transition-all hover:border-amber-300">
+        <button id="openHistoryBtn" class="px-3 py-1.5 rounded-lg border border-stone-200 bg-white hover:bg-stone-50 text-stone-700 text-xs font-semibold flex items-center gap-1.5 shadow-sm transition-all hover:border-orange-300">
           <i data-lucide="history" class="w-3.5 h-3.5 text-stone-600"></i>
           <span class="hidden sm:inline">Past Loaves</span>
           <span id="historyBadgeCount" class="px-1.5 py-0.2 rounded-full bg-stone-100 text-[10px] font-bold text-stone-600 border border-stone-200">0</span>
         </button>
         <button id="soundToggleBtn" class="p-2 rounded-lg text-stone-600 hover:text-stone-900 hover:bg-stone-100 transition-colors text-sm flex items-center gap-1.5" title="Toggle Sound">
           <i data-lucide="volume-2" class="w-4 h-4" id="soundIcon"></i>
-        </button>
-        <button id="openSettingsBtn" class="px-3 py-1.5 rounded-lg border border-stone-200 bg-white hover:bg-stone-50 text-stone-700 text-xs font-semibold flex items-center gap-1.5 shadow-sm transition-all hover:border-amber-300">
-          <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5"></i>
-          <span id="settingsStatusText" class="hidden sm:inline">Configuration</span>
         </button>
       </div>
     </div>
@@ -74,11 +70,11 @@
     <!-- Hero Header -->
     <div class="text-center max-w-2xl mx-auto mb-8">
       <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-stone-100 text-stone-700 text-xs font-semibold mb-3 border border-stone-200">
-        <i data-lucide="cpu" class="w-3.5 h-3.5 text-amber-700"></i>
+        <i data-lucide="cpu" class="w-3.5 h-3.5 text-orange-700"></i>
         <span>Multimodal AI Vision &bull; Powered by Google Gemini</span>
       </div>
       <h1 class="text-3xl sm:text-5xl font-black text-stone-900 tracking-tight leading-tight">
-        Grade Your Cat's <span class="font-serif italic font-normal text-amber-700 underline decoration-amber-400 decoration-2 underline-offset-4">Loaf Score</span>
+        Grade Your Cat's <span class="font-serif italic font-normal text-orange-700 underline decoration-orange-400 decoration-2 underline-offset-4">Loaf Score</span>
       </h1>
       <p class="mt-3 text-stone-600 text-sm sm:text-base leading-relaxed">
         Upload 1 to 3 photos (front, side, and top-down). Our AI vision model evaluates undercarriage paw concealment, aerodynamic drag coefficient, and bilateral boule symmetry in seconds.
@@ -87,8 +83,8 @@
       <!-- Preset Quick Demo Bar -->
       <div class="mt-5 flex items-center justify-center gap-2 flex-wrap">
         <span class="text-xs font-semibold text-stone-500">Benchmark Test:</span>
-        <button id="loadButtercupBtn" class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-900 text-xs font-semibold border border-amber-200/80 transition-all hover:border-amber-300 shadow-sm">
-          <i data-lucide="flask-conical" class="w-3.5 h-3.5 text-amber-700"></i>
+        <button id="loadButtercupBtn" class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-orange-50 hover:bg-orange-100 text-orange-900 text-xs font-semibold border border-orange-200/80 transition-all hover:border-orange-300 shadow-sm">
+          <i data-lucide="flask-conical" class="w-3.5 h-3.5 text-orange-700"></i>
           <span>Load Buttercup Dataset (3-Angle Baseline)</span>
         </button>
       </div>
@@ -113,7 +109,7 @@
             type="text" 
             id="catNameInput" 
             placeholder="e.g., Buttercup, Mochi, Oliver" 
-            class="w-full px-3.5 py-2 rounded-xl border border-stone-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-200 outline-none text-sm transition-all"
+            class="w-full px-3.5 py-2 rounded-xl border border-stone-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 outline-none text-sm transition-all"
           >
         </div>
       </div>
@@ -122,7 +118,7 @@
       <div class="mb-4">
         <div class="flex items-center justify-between mb-3">
           <h2 class="text-base font-bold text-stone-900 flex items-center gap-2">
-            <i data-lucide="camera" class="w-4 h-4 text-amber-700"></i>
+            <i data-lucide="camera" class="w-4 h-4 text-orange-700"></i>
             <span>Orthographic Inspection Bay</span>
           </h2>
           <span class="text-xs text-stone-600 bg-stone-100 px-2.5 py-1 rounded-md font-medium border border-stone-200">
@@ -130,7 +126,7 @@
           </span>
         </div>
         <p class="text-xs text-stone-500 mb-4">
-          Submitting all three planes provides high-fidelity tail wrap validation, dorsal boule symmetry, and a <strong class="text-amber-800">+5 Multi-Angle Inspection Bonus</strong>.
+          Submitting all three planes provides high-fidelity tail wrap validation, dorsal boule symmetry, and a <strong class="text-orange-800">+5 Multi-Angle Inspection Bonus</strong>.
         </p>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -141,12 +137,12 @@
             
             <!-- Empty state -->
             <div class="slot-empty flex flex-col items-center">
-              <div class="w-12 h-12 rounded-full bg-amber-50 text-amber-700 border border-amber-200/60 flex items-center justify-center mb-2.5 shadow-sm">
+              <div class="w-12 h-12 rounded-full bg-orange-50 text-orange-700 border border-orange-200/60 flex items-center justify-center mb-2.5 shadow-sm">
                 <i data-lucide="eye" class="w-5 h-5"></i>
               </div>
               <span class="font-bold text-stone-800 text-sm">Front Elevation</span>
               <span class="text-[11px] text-stone-500 mt-1 max-w-[180px]">Front paw concealment, chest width, chin alignment</span>
-              <span class="mt-3 px-3 py-1 bg-white border border-stone-200 rounded-lg text-xs font-semibold text-stone-700 shadow-sm hover:border-amber-400">
+              <span class="mt-3 px-3 py-1 bg-white border border-stone-200 rounded-lg text-xs font-semibold text-stone-700 shadow-sm hover:border-orange-400">
                 Select Photo
               </span>
             </div>
@@ -171,12 +167,12 @@
             
             <!-- Empty state -->
             <div class="slot-empty flex flex-col items-center">
-              <div class="w-12 h-12 rounded-full bg-amber-50 text-amber-700 border border-amber-200/60 flex items-center justify-center mb-2.5 shadow-sm">
+              <div class="w-12 h-12 rounded-full bg-orange-50 text-orange-700 border border-orange-200/60 flex items-center justify-center mb-2.5 shadow-sm">
                 <i data-lucide="move-horizontal" class="w-5 h-5"></i>
               </div>
               <span class="font-bold text-stone-800 text-sm">Lateral Profile</span>
               <span class="text-[11px] text-stone-500 mt-1 max-w-[180px]">Tail wrap, elbow compression, flank curvature</span>
-              <span class="mt-3 px-3 py-1 bg-white border border-stone-200 rounded-lg text-xs font-semibold text-stone-700 shadow-sm hover:border-amber-400">
+              <span class="mt-3 px-3 py-1 bg-white border border-stone-200 rounded-lg text-xs font-semibold text-stone-700 shadow-sm hover:border-orange-400">
                 Select Photo
               </span>
             </div>
@@ -201,12 +197,12 @@
             
             <!-- Empty state -->
             <div class="slot-empty flex flex-col items-center">
-              <div class="w-12 h-12 rounded-full bg-amber-50 text-amber-700 border border-amber-200/60 flex items-center justify-center mb-2.5 shadow-sm">
+              <div class="w-12 h-12 rounded-full bg-orange-50 text-orange-700 border border-orange-200/60 flex items-center justify-center mb-2.5 shadow-sm">
                 <i data-lucide="compass" class="w-5 h-5"></i>
               </div>
               <span class="font-bold text-stone-800 text-sm">Dorsal Projection</span>
               <span class="text-[11px] text-stone-500 mt-1 max-w-[180px]">Boule symmetry, spinal alignment, zero splay</span>
-              <span class="mt-3 px-3 py-1 bg-white border border-stone-200 rounded-lg text-xs font-semibold text-stone-700 shadow-sm hover:border-amber-400">
+              <span class="mt-3 px-3 py-1 bg-white border border-stone-200 rounded-lg text-xs font-semibold text-stone-700 shadow-sm hover:border-orange-400">
                 Select Photo
               </span>
             </div>
@@ -258,15 +254,15 @@
 
     <!-- Inspecting Loading State -->
     <div id="loadingState" class="hidden bakery-card p-10 text-center max-w-xl mx-auto my-12">
-      <div class="w-16 h-16 mx-auto rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-700 flex items-center justify-center mb-5">
+      <div class="w-16 h-16 mx-auto rounded-2xl bg-orange-500/10 border border-orange-500/20 text-orange-700 flex items-center justify-center mb-5">
         <i data-lucide="loader-2" class="w-8 h-8 animate-spin"></i>
       </div>
       <h3 class="text-xl font-bold text-stone-900 mb-1">Performing Kinematic Inspection...</h3>
-      <p id="loadingPhrase" class="text-amber-800 font-semibold text-sm h-6">Scanning undercarriage for limb protrusions...</p>
+      <p id="loadingPhrase" class="text-orange-800 font-semibold text-sm h-6">Scanning undercarriage for limb protrusions...</p>
       
       <!-- Progress Bar -->
       <div class="w-full bg-stone-100 h-2 rounded-full overflow-hidden mt-6 max-w-sm mx-auto border border-stone-200">
-        <div id="loadingProgressBar" class="h-full bg-amber-600 w-1/3 transition-all duration-500 rounded-full"></div>
+        <div id="loadingProgressBar" class="h-full bg-orange-600 w-1/3 transition-all duration-500 rounded-full"></div>
       </div>
       <p class="text-[11px] text-stone-400 mt-3">Evaluating paw concealment, lateral drag, and dorsal curvature</p>
     </div>
@@ -284,7 +280,7 @@
             <div class="relative w-44 h-44 flex-shrink-0 flex items-center justify-center">
               <svg class="score-circle-svg w-full h-full" viewBox="0 0 200 200">
                 <circle cx="100" cy="100" r="90" class="stroke-stone-100" stroke-width="14" fill="transparent" />
-                <circle id="scoreMeterCircle" cx="100" cy="100" r="90" class="score-circle-meter stroke-amber-600" stroke-width="14" stroke-linecap="round" fill="transparent" />
+                <circle id="scoreMeterCircle" cx="100" cy="100" r="90" class="score-circle-meter stroke-orange-600" stroke-width="14" stroke-linecap="round" fill="transparent" />
               </svg>
               <div class="absolute flex flex-col items-center justify-center">
                 <span id="scoreNumber" class="text-5xl font-black tracking-tight text-stone-900">0</span>
@@ -294,9 +290,9 @@
 
             <div>
               <div class="flex items-center gap-3 mb-2 justify-center sm:justify-start flex-wrap">
-                <span id="gradeStamp" class="stamp text-amber-800 border-amber-800 text-lg">A+</span>
-                <span id="multiAngleBadge" class="text-xs font-bold bg-amber-50 text-amber-900 px-2.5 py-1 rounded-md border border-amber-200/80 flex items-center gap-1.5">
-                  <i data-lucide="shield-check" class="w-3.5 h-3.5 text-amber-700"></i>
+                <span id="gradeStamp" class="stamp text-orange-800 border-orange-800 text-lg">A+</span>
+                <span id="multiAngleBadge" class="text-xs font-bold bg-orange-50 text-orange-900 px-2.5 py-1 rounded-md border border-orange-200/80 flex items-center gap-1.5">
+                  <i data-lucide="shield-check" class="w-3.5 h-3.5 text-orange-700"></i>
                   <span>+5 Multi-Angle Bonus</span>
                 </span>
                 <span id="oarBadge" class="hidden text-xs font-bold bg-red-50 text-red-800 px-2.5 py-1 rounded-md border border-red-200 flex items-center gap-1.5">
@@ -308,7 +304,7 @@
               <h2 id="resultCatName" class="text-2xl sm:text-3xl font-black text-stone-900 tracking-tight">
                 Buttercup
               </h2>
-              <div class="text-amber-800 font-bold text-lg mt-0.5" id="resultHonoraryRank">
+              <div class="text-orange-800 font-bold text-lg mt-0.5" id="resultHonoraryRank">
                 Grandmaster Artisan Loaf
               </div>
               <div class="inline-flex items-center gap-1.5 text-stone-600 text-sm mt-1 bg-stone-100 px-3 py-1 rounded-lg">
@@ -320,11 +316,11 @@
 
           <!-- Quick Action Buttons -->
           <div class="flex flex-col sm:flex-row lg:flex-col gap-2.5 w-full lg:w-auto">
-            <button id="downloadCertificateBtn" class="px-5 py-2.5 bg-amber-700 hover:bg-amber-800 text-white rounded-xl font-bold text-xs shadow-sm transition-all flex items-center justify-center gap-2">
+            <button id="downloadCertificateBtn" class="px-5 py-2.5 bg-orange-700 hover:bg-orange-800 text-white rounded-xl font-bold text-xs shadow-sm transition-all flex items-center justify-center gap-2">
               <i data-lucide="download" class="w-3.5 h-3.5"></i>
               <span>Export Certificate (PNG)</span>
             </button>
-            <button id="copySummaryBtn" class="px-5 py-2.5 bg-white hover:bg-stone-50 border border-stone-200 text-stone-700 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-2 hover:border-amber-300">
+            <button id="copySummaryBtn" class="px-5 py-2.5 bg-white hover:bg-stone-50 border border-stone-200 text-stone-700 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-2 hover:border-orange-300">
               <i data-lucide="copy" class="w-3.5 h-3.5" id="copyIcon"></i>
               <span id="copyBtnText">Copy Technical Summary</span>
             </button>
@@ -337,13 +333,13 @@
         </div>
 
         <!-- Auditor's Summary Box -->
-        <div class="mt-8 p-4 sm:p-5 rounded-xl bg-amber-50/70 border border-amber-200/70 relative">
+        <div class="mt-8 p-4 sm:p-5 rounded-xl bg-orange-50/70 border border-orange-200/70 relative">
           <div class="flex items-start gap-3">
-            <div class="p-2 rounded-lg bg-amber-100 text-amber-800 shrink-0">
+            <div class="p-2 rounded-lg bg-orange-100 text-orange-800 shrink-0">
               <i data-lucide="clipboard-check" class="w-4 h-4"></i>
             </div>
             <div>
-              <h4 class="text-xs font-bold uppercase tracking-wider text-amber-900 mb-1">Chief Auditor's Findings</h4>
+              <h4 class="text-xs font-bold uppercase tracking-wider text-orange-900 mb-1">Chief Auditor's Findings</h4>
               <p id="resultSummaryCritique" class="text-stone-800 text-sm leading-relaxed font-serif italic">
                 "A masterclass in feline bakery arts. Buttercup demonstrates peerless geometry with zero paw visibility across all three inspected planes..."
               </p>
@@ -360,12 +356,12 @@
         <div class="bakery-card p-5 sm:p-6">
           <div class="flex items-center justify-between mb-3">
             <div class="flex items-center gap-2.5">
-              <div class="w-9 h-9 rounded-xl bg-amber-50 border border-amber-200/60 text-amber-700 flex items-center justify-center">
+              <div class="w-9 h-9 rounded-xl bg-orange-50 border border-orange-200/60 text-orange-700 flex items-center justify-center">
                 <i data-lucide="shield" class="w-4 h-4"></i>
               </div>
               <div>
                 <h3 class="font-bold text-stone-900 text-sm">Paw Tuck & Undercarriage</h3>
-                <span id="pawStatusTag" class="text-[11px] font-semibold text-amber-800">100% Peet Concealment</span>
+                <span id="pawStatusTag" class="text-[11px] font-semibold text-orange-800">100% Peet Concealment</span>
               </div>
             </div>
             <div class="text-right">
@@ -375,7 +371,7 @@
           </div>
           <!-- Progress bar -->
           <div class="w-full bg-stone-100 h-2 rounded-full overflow-hidden mb-3">
-            <div id="pawBar" class="h-full bg-amber-600 rounded-full" style="width: 100%;"></div>
+            <div id="pawBar" class="h-full bg-orange-600 rounded-full" style="width: 100%;"></div>
           </div>
           <p id="pawCritique" class="text-xs text-stone-600 mb-3 leading-relaxed">
             Front and rear peet are completely tucked beneath the chest.
@@ -389,12 +385,12 @@
         <div class="bakery-card p-5 sm:p-6">
           <div class="flex items-center justify-between mb-3">
             <div class="flex items-center gap-2.5">
-              <div class="w-9 h-9 rounded-xl bg-amber-50 border border-amber-200/60 text-amber-700 flex items-center justify-center">
+              <div class="w-9 h-9 rounded-xl bg-orange-50 border border-orange-200/60 text-orange-700 flex items-center justify-center">
                 <i data-lucide="wind" class="w-4 h-4"></i>
               </div>
               <div>
                 <h3 class="font-bold text-stone-900 text-sm">Tail Aerodynamics & Drag</h3>
-                <span id="tailStatusTag" class="text-[11px] font-semibold text-amber-800">Zero Drag Flank Wrap</span>
+                <span id="tailStatusTag" class="text-[11px] font-semibold text-orange-800">Zero Drag Flank Wrap</span>
               </div>
             </div>
             <div class="text-right">
@@ -403,11 +399,11 @@
             </div>
           </div>
           <div class="w-full bg-stone-100 h-2 rounded-full overflow-hidden mb-3">
-            <div id="tailBar" class="h-full bg-amber-600 rounded-full" style="width: 96%;"></div>
+            <div id="tailBar" class="h-full bg-orange-600 rounded-full" style="width: 96%;"></div>
           </div>
           <div class="flex items-center gap-2 mb-2">
             <span class="text-[10px] font-bold uppercase tracking-wider bg-stone-100 text-stone-600 px-2 py-0.5 rounded">
-              Drag Coefficient: <span id="dragCoeffNum" class="text-amber-800 font-extrabold">0.03</span>
+              Drag Coefficient: <span id="dragCoeffNum" class="text-orange-800 font-extrabold">0.03</span>
             </span>
           </div>
           <p id="tailCritique" class="text-xs text-stone-600 mb-3 leading-relaxed">
@@ -422,12 +418,12 @@
         <div class="bakery-card p-5 sm:p-6">
           <div class="flex items-center justify-between mb-3">
             <div class="flex items-center gap-2.5">
-              <div class="w-9 h-9 rounded-xl bg-amber-50 border border-amber-200/60 text-amber-700 flex items-center justify-center">
+              <div class="w-9 h-9 rounded-xl bg-orange-50 border border-orange-200/60 text-orange-700 flex items-center justify-center">
                 <i data-lucide="maximize-2" class="w-4 h-4"></i>
               </div>
               <div>
                 <h3 class="font-bold text-stone-900 text-sm">Flank Compression & Form</h3>
-                <span id="elbowStatusTag" class="text-[11px] font-semibold text-amber-800">Artisanal Dough Fold</span>
+                <span id="elbowStatusTag" class="text-[11px] font-semibold text-orange-800">Artisanal Dough Fold</span>
               </div>
             </div>
             <div class="text-right">
@@ -436,7 +432,7 @@
             </div>
           </div>
           <div class="w-full bg-stone-100 h-2 rounded-full overflow-hidden mb-3">
-            <div id="elbowBar" class="h-full bg-amber-600 rounded-full" style="width: 96%;"></div>
+            <div id="elbowBar" class="h-full bg-orange-600 rounded-full" style="width: 96%;"></div>
           </div>
           <p id="elbowCritique" class="text-xs text-stone-600 mb-3 leading-relaxed">
             Elbows pulled inwards against ribcage with zero lateral flare.
@@ -450,12 +446,12 @@
         <div class="bakery-card p-5 sm:p-6">
           <div class="flex items-center justify-between mb-3">
             <div class="flex items-center gap-2.5">
-              <div class="w-9 h-9 rounded-xl bg-amber-50 border border-amber-200/60 text-amber-700 flex items-center justify-center">
+              <div class="w-9 h-9 rounded-xl bg-orange-50 border border-orange-200/60 text-orange-700 flex items-center justify-center">
                 <i data-lucide="sparkles" class="w-4 h-4"></i>
               </div>
               <div>
                 <h3 class="font-bold text-stone-900 text-sm">Dorsal Symmetry & Crust</h3>
-                <span id="crustStatusTag" class="text-[11px] font-semibold text-amber-800">Dorsal Boule Symmetry</span>
+                <span id="crustStatusTag" class="text-[11px] font-semibold text-orange-800">Dorsal Boule Symmetry</span>
               </div>
             </div>
             <div class="text-right">
@@ -464,7 +460,7 @@
             </div>
           </div>
           <div class="w-full bg-stone-100 h-2 rounded-full overflow-hidden mb-3">
-            <div id="crustBar" class="h-full bg-amber-600 rounded-full" style="width: 100%;"></div>
+            <div id="crustBar" class="h-full bg-orange-600 rounded-full" style="width: 100%;"></div>
           </div>
           <p id="crustCritique" class="text-xs text-stone-600 mb-3 leading-relaxed">
             Overhead inspection reveals a textbook oval boule with uniform dorsal coat distribution.
@@ -522,7 +518,7 @@
   <footer class="mt-20 border-t border-stone-200 bg-white/70 py-8 text-stone-500 text-xs">
     <div class="max-w-5xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
       <div class="flex items-center gap-2">
-        <span class="font-bold text-stone-800">Loafed<span class="text-amber-600">AI</span></span>
+        <span class="font-bold text-stone-800">Loafed<span class="text-orange-600">AI</span></span>
         <span>&bull;</span>
         <span>A free, open feline posture appreciation project by RederSoft</span>
       </div>
@@ -538,81 +534,21 @@
     </div>
   </footer>
 
-  <!-- Settings Modal -->
-  <div id="settingsModal" class="hidden fixed inset-0 z-50 bg-stone-950/60 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bakery-card max-w-md w-full p-6 sm:p-7 relative bg-white shadow-2xl">
-      <button id="closeSettingsBtn" class="absolute right-4 top-4 text-stone-400 hover:text-stone-700 p-1">
-        <i data-lucide="x" class="w-4 h-4"></i>
-      </button>
-
-      <div class="flex items-center gap-3 mb-4">
-        <div class="w-10 h-10 rounded-xl bg-amber-50 border border-amber-200/60 text-amber-700 flex items-center justify-center">
-          <i data-lucide="sliders" class="w-5 h-5"></i>
-        </div>
-        <div>
-          <h3 class="text-base font-bold text-stone-900">Engine Configuration</h3>
-          <p class="text-xs text-stone-500">Gemini Vision AI integration settings</p>
-        </div>
-      </div>
-
-      <div id="serverKeyStatus" class="mb-4 p-3 rounded-xl bg-stone-50 border border-stone-200 text-xs flex items-center justify-between">
-        <span>Server Configuration:</span>
-        <span id="serverKeyBadge" class="font-bold text-stone-600">Verifying...</span>
-      </div>
-
-      <div class="space-y-4">
-        <div>
-          <label class="block text-xs font-bold text-stone-800 mb-1">Google Gemini API Key</label>
-          <input 
-            type="password" 
-            id="apiKeyInput" 
-            placeholder="AIzaSy..." 
-            class="w-full px-3 py-2 rounded-xl border border-stone-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-200 outline-none text-xs font-mono transition-all"
-          >
-          <p class="text-[11px] text-stone-500 mt-1.5 leading-relaxed">
-            Keys are retained locally in client storage. Free keys available at 
-            <a href="https://aistudio.google.com/" target="_blank" rel="noopener" class="text-amber-800 font-bold underline hover:text-amber-900">aistudio.google.com</a>.
-          </p>
-        </div>
-
-        <div>
-          <label class="block text-xs font-bold text-stone-800 mb-1">Active Model</label>
-          <select id="modelSelect" class="w-full px-3 py-2 rounded-xl border border-stone-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-200 outline-none text-xs font-medium bg-white">
-            <option value="gemini-3.8-flash" selected>gemini-3.8-flash (Recommended • Multimodal Vision)</option>
-            <option value="gemini-3.5-flash-lite">gemini-3.5-flash-lite (High Speed)</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="mt-6 pt-4 border-t border-stone-100 flex items-center justify-between gap-3">
-        <button id="clearKeyBtn" class="px-3 py-2 text-xs font-semibold text-stone-500 hover:text-red-600">
-          Reset Key
-        </button>
-        <button id="saveSettingsBtn" class="px-5 py-2 rounded-xl bg-amber-700 hover:bg-amber-800 text-white font-bold text-xs shadow-sm transition-all">
-          Save Settings
-        </button>
-      </div>
-    </div>
-  </div>
-
   <!-- Capacity Notice Modal -->
   <div id="ovenAlertModal" class="hidden fixed inset-0 z-50 bg-stone-950/60 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="bakery-card max-w-md w-full p-6 sm:p-7 relative bg-white shadow-2xl text-center">
-      <div class="w-14 h-14 mx-auto rounded-2xl bg-amber-50 border border-amber-200/60 text-amber-800 flex items-center justify-center mb-3">
+      <div class="w-14 h-14 mx-auto rounded-2xl bg-orange-50 border border-orange-200/60 text-orange-800 flex items-center justify-center mb-3">
         <i data-lucide="clock" class="w-7 h-7"></i>
       </div>
       <h3 class="text-lg font-bold text-stone-900 mb-1" id="ovenAlertTitle">Evaluation Capacity Reached</h3>
       <p class="text-xs text-stone-600 leading-relaxed mb-6" id="ovenAlertBody">
-        The public evaluation limit has been reached for today. Please wait for the quota reset, or provide your free API key in Settings.
+        The public evaluation limit has been reached for today. Please wait for the daily quota reset or try again later.
       </p>
       <div class="flex flex-col gap-2">
         <button id="ovenAlertPresetBtn" class="w-full py-2.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 font-bold text-xs border border-stone-200 transition-colors">
           View Buttercup Baseline Dataset
         </button>
-        <button id="ovenAlertSettingsBtn" class="w-full py-2.5 rounded-xl bg-amber-700 hover:bg-amber-800 text-white font-bold text-xs transition-colors shadow-sm">
-          Enter Personal API Key
-        </button>
-        <button id="closeOvenAlertBtn" class="w-full py-2 text-stone-400 hover:text-stone-600 font-semibold text-xs transition-colors mt-1">
+        <button id="closeOvenAlertBtn" class="w-full py-2.5 rounded-xl bg-orange-700 hover:bg-orange-800 text-white font-bold text-xs transition-colors shadow-sm">
           Dismiss
         </button>
       </div>
@@ -627,7 +563,7 @@
       </button>
 
       <div class="flex items-center gap-3 mb-4">
-        <div class="w-10 h-10 rounded-xl bg-amber-50 border border-amber-200/60 text-amber-800 flex items-center justify-center shrink-0">
+        <div class="w-10 h-10 rounded-xl bg-orange-50 border border-orange-200/60 text-orange-800 flex items-center justify-center shrink-0">
           <i data-lucide="history" class="w-5 h-5"></i>
         </div>
         <div>
@@ -660,7 +596,7 @@
       </button>
 
       <div class="flex items-center gap-3 mb-4">
-        <div class="w-10 h-10 rounded-xl bg-amber-50 border border-amber-200/60 text-amber-800 flex items-center justify-center shrink-0">
+        <div class="w-10 h-10 rounded-xl bg-orange-50 border border-orange-200/60 text-orange-800 flex items-center justify-center shrink-0">
           <i data-lucide="shield-check" class="w-5 h-5"></i>
         </div>
         <div>
@@ -671,7 +607,7 @@
 
       <!-- Modal Tabs -->
       <div class="flex items-center gap-2 border-b border-stone-200 pb-3 mb-4">
-        <button id="tabPrivacyBtn" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all bg-amber-50 text-amber-900 border border-amber-200/80">
+        <button id="tabPrivacyBtn" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all bg-orange-50 text-orange-900 border border-orange-200/80">
           Privacy Policy
         </button>
         <button id="tabTermsBtn" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all text-stone-600 hover:text-stone-900 border border-transparent">

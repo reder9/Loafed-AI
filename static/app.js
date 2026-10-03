@@ -40,16 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const downloadCertificateBtn = document.getElementById('downloadCertificateBtn');
   const certificateCanvas = document.getElementById('certificateCanvas');
 
-  // Settings Elements
-  const openSettingsBtn = document.getElementById('openSettingsBtn');
-  const closeSettingsBtn = document.getElementById('closeSettingsBtn');
-  const settingsModal = document.getElementById('settingsModal');
-  const apiKeyInput = document.getElementById('apiKeyInput');
-  const modelSelect = document.getElementById('modelSelect');
-  const saveSettingsBtn = document.getElementById('saveSettingsBtn');
-  const clearKeyBtn = document.getElementById('clearKeyBtn');
-  const serverKeyBadge = document.getElementById('serverKeyBadge');
-  const settingsStatusText = document.getElementById('settingsStatusText');
+  // Header Elements
   const soundToggleBtn = document.getElementById('soundToggleBtn');
   const soundIcon = document.getElementById('soundIcon');
   const toastContainer = document.getElementById('toastContainer');
@@ -168,32 +159,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const res = await fetch('/api/status');
       const data = await res.json();
       state.serverHasKey = data.has_server_api_key;
-      updateSettingsUI();
     } catch (e) {
       console.warn('Could not query /api/status', e);
     }
-  }
-
-  function updateSettingsUI() {
-    if (state.serverHasKey) {
-      serverKeyBadge.textContent = 'Active (.env / Server)';
-      serverKeyBadge.className = 'font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200';
-      settingsStatusText.textContent = 'Server Configured';
-    } else if (state.apiKey) {
-      serverKeyBadge.textContent = 'Client Key Set';
-      serverKeyBadge.className = 'font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200';
-      settingsStatusText.textContent = 'Client Configured';
-    } else {
-      serverKeyBadge.textContent = 'Public / Demo Mode';
-      serverKeyBadge.className = 'font-bold text-stone-600 bg-stone-100 px-2 py-0.5 rounded border border-stone-200';
-      settingsStatusText.textContent = 'Configuration';
-    }
-
-    if (state.apiKey) {
-      apiKeyInput.value = state.apiKey;
-    }
-    modelSelect.value = state.model;
-    updateSoundIcon();
   }
 
   function updateSoundIcon() {
@@ -940,49 +908,7 @@ Certified by Loafed Inspection Engine`;
     triggerDownload();
   }
 
-  // Settings Modal Controls
-  openSettingsBtn.addEventListener('click', () => {
-    playTone('click');
-    settingsModal.classList.remove('hidden');
-    refreshIcons();
-  });
 
-  closeSettingsBtn.addEventListener('click', () => {
-    playTone('click');
-    settingsModal.classList.add('hidden');
-  });
-
-  saveSettingsBtn.addEventListener('click', () => {
-    playTone('click');
-    const key = apiKeyInput.value.trim();
-    const model = modelSelect.value;
-
-    state.apiKey = key;
-    state.model = model;
-    localStorage.setItem('loafed_gemini_key', key);
-    localStorage.setItem('loafed_model', model);
-
-    updateSettingsUI();
-    settingsModal.classList.add('hidden');
-    showToast({
-      type: 'success',
-      title: 'Configuration Saved',
-      message: key ? 'Personal API key configured for evaluations.' : 'Inspection model preferences updated.'
-    });
-  });
-
-  clearKeyBtn.addEventListener('click', () => {
-    playTone('click');
-    apiKeyInput.value = '';
-    state.apiKey = '';
-    localStorage.removeItem('loafed_gemini_key');
-    updateSettingsUI();
-    showToast({
-      type: 'info',
-      title: 'Key Removed',
-      message: 'Personal key cleared. System reverted to server/public evaluation mode.'
-    });
-  });
 
   // Sound Toggle
   soundToggleBtn.addEventListener('click', () => {
@@ -997,7 +923,6 @@ Certified by Loafed Inspection Engine`;
   const ovenAlertBody = document.getElementById('ovenAlertBody');
   const closeOvenAlertBtn = document.getElementById('closeOvenAlertBtn');
   const ovenAlertPresetBtn = document.getElementById('ovenAlertPresetBtn');
-  const ovenAlertSettingsBtn = document.getElementById('ovenAlertSettingsBtn');
 
   function showOvenAlert(msg) {
     if (ovenAlertBody) ovenAlertBody.textContent = msg;
@@ -1017,14 +942,6 @@ Certified by Loafed Inspection Engine`;
       playTone('click');
       ovenAlertModal.classList.add('hidden');
       loadButtercupBtn.click();
-    });
-  }
-
-  if (ovenAlertSettingsBtn) {
-    ovenAlertSettingsBtn.addEventListener('click', () => {
-      playTone('click');
-      ovenAlertModal.classList.add('hidden');
-      openSettingsBtn.click();
     });
   }
 
