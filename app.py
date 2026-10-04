@@ -5,7 +5,7 @@ from typing import Optional, List, Dict, Any
 from pathlib import Path
 
 from fastapi import FastAPI, UploadFile, File, Form, Header, HTTPException, Request
-from fastapi.responses import JSONResponse, FileResponse
+from fastapi.responses import JSONResponse, FileResponse, PlainTextResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
@@ -351,6 +351,25 @@ async def get_status():
         "default_model": os.getenv("DEFAULT_MODEL", "gemini-3.8-flash")
     }
 
+@app.get("/robots.txt", response_class=PlainTextResponse)
+async def get_robots():
+    """Serves robots.txt crawler directives."""
+    return "User-agent: *\nAllow: /\nDisallow: /api/\n\nSitemap: https://loafed.redersoft.com/sitemap.xml\n"
+
+@app.get("/sitemap.xml", response_class=Response)
+async def get_sitemap():
+    """Serves sitemap.xml for search engines."""
+    content = """<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://loafed.redersoft.com/</loc>
+    <lastmod>2026-10-04</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>"""
+    return Response(content=content, media_type="application/xml")
+
 @app.get("/api/samples")
 async def get_samples():
     """Returns available sample presets."""
@@ -634,6 +653,28 @@ app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 @app.get("/")
 async def serve_index():
     return FileResponse(str(STATIC_DIR / "index.html"))
+
+@app.get("/robots.txt", response_class=PlainTextResponse)
+async def serve_robots():
+    robots_file = STATIC_DIR / "robots.txt"
+    if robots_file.exists():
+        return FileResponse(str(robots_file), media_type="text/plain")
+    return PlainTextResponse("User-agent: *\nAllow: /\nDisallow: /api/\nSitemap: https://loafed.redersoft.com/sitemap.xml\n")
+
+@app.get("/sitemap.xml")
+async def serve_sitemap():
+    sitemap_file = STATIC_DIR / "sitemap.xml"
+    if sitemap_file.exists():
+        return FileResponse(str(sitemap_file), media_type="application/xml")
+    raise HTTPException(status_code=404, detail="Sitemap not found")
+
+@app.get("/manifest.webmanifest")
+@app.get("/manifest.json")
+async def serve_manifest():
+    manifest_file = STATIC_DIR / "manifest.webmanifest"
+    if manifest_file.exists():
+        return FileResponse(str(manifest_file), media_type="application/manifest+json")
+    raise HTTPException(status_code=404, detail="Manifest not found")
 
 # AWS Lambda Handler (via Mangum)
 try:

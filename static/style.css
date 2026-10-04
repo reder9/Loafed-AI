@@ -1,4 +1,9 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,600&display=swap');
+/* Mobile Tap and Safe Area Optimizations */
+html {
+  -webkit-text-size-adjust: 100%;
+  touch-action: manipulation;
+  scroll-behavior: smooth;
+}
 
 :root {
   --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
@@ -36,6 +41,8 @@ body {
   background-position: 0 0, 0 0, 12px 12px;
   background-repeat: no-repeat, repeat, repeat;
   min-height: 100vh;
+  overflow-x: hidden;
+  padding-bottom: max(4rem, env(safe-area-inset-bottom, 2rem));
 }
 
 .font-serif {
@@ -185,4 +192,20 @@ body {
 .toast-card.hide {
   transform: translateY(8px) scale(0.95);
   opacity: 0;
+}
+
+/* Accessibility: Keyboard Navigation Focus Rings */
+:focus-visible {
+  outline: 2px solid #ea580c !important;
+  outline-offset: 2px !important;
+}
+
+/* Accessibility: Respect Reduced Motion Preferences */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

@@ -1,0 +1,22 @@
+[
+  {
+    "source": "/api/<*>",
+    "target": "https://icz2vnxl323hercs3quu7uctpu0celxt.lambda-url.us-east-1.on.aws/api/<*>",
+    "status": "200"
+  },
+  {
+    "source": "/health",
+    "target": "https://icz2vnxl323hercs3quu7uctpu0celxt.lambda-url.us-east-1.on.aws/health",
+    "status": "200"
+  },
+  {
+    "source": "/static/<*>",
+    "target": "/<*>",
+    "status": "200"
+  },
+  {
+    "source": "</^[^.]+$|\\.(?!(css|gif|ico|jpg|js|png|txt|svg|woff|woff2|ttf|map|json|xml|webp|webmanifest)$)([^.]+$)/>",
+    "target": "/index.html",
+    "status": "200"
+  }
+]

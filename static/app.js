@@ -289,7 +289,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <span class="text-[10px] font-bold flex items-center gap-1 drop-shadow-xs truncate max-w-[80%]">
               <i data-lucide="${labelInfo.icon}" class="w-3 h-3 shrink-0"></i> ${labelInfo.title}
             </span>
-            <button type="button" class="remove-photo-btn bg-stone-900/80 hover:bg-rose-600 text-white rounded-md p-1 transition-colors shrink-0" data-id="${photo.id}" title="Remove photo">
+            <button type="button" class="remove-photo-btn bg-stone-900/80 hover:bg-rose-600 text-white rounded-md p-1 transition-colors shrink-0" data-id="${photo.id}" title="Remove photo" aria-label="Remove photo ${idx + 1}">
               <i data-lucide="x" class="w-3.5 h-3.5"></i>
             </button>
           </div>
@@ -1247,7 +1247,7 @@ Certified by Loafed Inspection Engine`;
     ];
 
     criteria.forEach((c, idx) => {
-      const y = 368 + idx * 49;
+      const y = 362 + idx * 47;
       ctx.fillStyle = '#292524';
       ctx.font = 'bold 15px -apple-system, BlinkMacSystemFont, sans-serif';
       ctx.fillText(c.name, 480, y);
@@ -1260,34 +1260,33 @@ Certified by Loafed Inspection Engine`;
 
       ctx.fillStyle = '#78716c';
       ctx.font = '13px -apple-system, BlinkMacSystemFont, sans-serif';
-      ctx.fillText((c.status || '').replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, ''), 480, y + 18);
+      ctx.fillText((c.status || '').replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, ''), 480, y + 17);
     });
 
-    // Auditor Findings Callout Card (Multi-line word wrap, zero overflow)
+    // Auditor Findings Callout Card (Spacious card with adaptive multi-line word wrap, zero overflow)
     ctx.fillStyle = '#fffaf5';
     ctx.strokeStyle = '#fed7aa';
     ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.roundRect(475, 575, 620, 115, 10);
+    ctx.roundRect(468, 540, 634, 155, 10);
     ctx.fill();
     ctx.stroke();
 
     // Warm left accent bar
     ctx.fillStyle = '#ea580c';
     ctx.beginPath();
-    ctx.roundRect(475, 575, 4, 115, [10, 0, 0, 10]);
+    ctx.roundRect(468, 540, 4, 155, [10, 0, 0, 10]);
     ctx.fill();
 
     // Callout Label
     ctx.fillStyle = '#c2410c';
     ctx.font = 'bold 11px -apple-system, BlinkMacSystemFont, sans-serif';
-    ctx.fillText('CHIEF AUDITOR FINDINGS & PURR-FECTION SUMMARY', 495, 598);
+    ctx.fillText('CHIEF AUDITOR FINDINGS & PURR-FECTION SUMMARY', 488, 561);
 
-    // Multi-line Word-Wrapped Critique
+    // Multi-line Adaptive Word-Wrapped Critique (dynamically chooses font tier to render full text)
     ctx.fillStyle = '#292524';
-    ctx.font = 'italic 13.5px Georgia, serif';
     const cleanCritique = (result.summary_critique || '').replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, '').trim();
-    drawWrappedText(ctx, `"${cleanCritique}"`, 495, 622, 580, 21, 3);
+    drawFittedCritique(ctx, `"${cleanCritique}"`, 488, 582, 600, 104);
 
     // Footer
     ctx.fillStyle = '#a8a29e';
@@ -1296,34 +1295,57 @@ Certified by Loafed Inspection Engine`;
     const dateStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
     ctx.fillText(`Evaluation Date: ${dateStr}  |  Certified by Loafed Machine Vision Engine`, w / 2, 745);
 
-    function drawWrappedText(context, text, startX, startY, maxWidth, lineHeight, maxLines = 3) {
-      const words = text.split(' ');
-      let currentLine = '';
-      let currentY = startY;
-      let linesDrawn = 0;
+    function drawFittedCritique(context, text, startX, startY, maxWidth, maxHeight) {
+      const fontTiers = [
+        { size: 13, lineHeight: 19 },
+        { size: 12, lineHeight: 17.5 },
+        { size: 11, lineHeight: 16 }
+      ];
 
-      for (let n = 0; n < words.length; n++) {
-        const testLine = currentLine + (currentLine ? ' ' : '') + words[n];
-        const metrics = context.measureText(testLine);
-        if (metrics.width > maxWidth && currentLine !== '') {
-          linesDrawn++;
-          if (linesDrawn === maxLines) {
-            let lineWithEllipsis = currentLine;
-            while (lineWithEllipsis.length > 0 && context.measureText(lineWithEllipsis + '...').width > maxWidth) {
-              lineWithEllipsis = lineWithEllipsis.slice(0, -1);
-            }
-            context.fillText(lineWithEllipsis + '...', startX, currentY);
-            return;
+      const words = text.split(/\s+/).filter(Boolean);
+      let selectedTier = fontTiers[0];
+      let selectedLines = [];
+
+      for (const tier of fontTiers) {
+        context.font = `italic ${tier.size}px Georgia, serif`;
+        const lines = [];
+        let currentLine = '';
+
+        for (let i = 0; i < words.length; i++) {
+          const testLine = currentLine ? `${currentLine} ${words[i]}` : words[i];
+          if (context.measureText(testLine).width > maxWidth && currentLine) {
+            lines.push(currentLine);
+            currentLine = words[i];
+          } else {
+            currentLine = testLine;
           }
-          context.fillText(currentLine, startX, currentY);
-          currentLine = words[n];
-          currentY += lineHeight;
-        } else {
-          currentLine = testLine;
+        }
+        if (currentLine) lines.push(currentLine);
+
+        selectedTier = tier;
+        selectedLines = lines;
+
+        // If all lines comfortably fit within maxHeight, select this tier
+        if (lines.length * tier.lineHeight <= maxHeight) {
+          break;
         }
       }
-      if (currentLine && linesDrawn < maxLines) {
-        context.fillText(currentLine, startX, currentY);
+
+      // Render lines using the chosen tier
+      context.font = `italic ${selectedTier.size}px Georgia, serif`;
+      const maxAllowedLines = Math.floor(maxHeight / selectedTier.lineHeight);
+      let currentY = startY;
+
+      for (let idx = 0; idx < Math.min(selectedLines.length, maxAllowedLines); idx++) {
+        let lineText = selectedLines[idx];
+        if (idx === maxAllowedLines - 1 && selectedLines.length > maxAllowedLines) {
+          while (lineText.length > 0 && context.measureText(lineText + '...').width > maxWidth) {
+            lineText = lineText.slice(0, -1);
+          }
+          lineText += '...';
+        }
+        context.fillText(lineText, startX, currentY);
+        currentY += selectedTier.lineHeight;
       }
     }
 
@@ -1520,10 +1542,10 @@ Certified by Loafed Inspection Engine`;
             </div>
           </div>
           <div class="flex items-center gap-1.5 shrink-0">
-            <button class="view-history-entry-btn px-2.5 py-1.5 rounded-lg bg-white hover:bg-orange-100 text-orange-950 text-xs font-bold border border-orange-200 transition-colors shadow-2xs" data-id="${item.id}">
+            <button class="view-history-entry-btn px-2.5 py-1.5 rounded-lg bg-white hover:bg-orange-100 text-orange-950 text-xs font-bold border border-orange-200 transition-colors shadow-2xs" data-id="${item.id}" aria-label="View inspection for ${item.cat_name}">
               View
             </button>
-            <button class="delete-history-entry-btn p-1.5 text-stone-400 hover:text-rose-600 transition-colors" data-id="${item.id}" title="Delete">
+            <button class="delete-history-entry-btn p-1.5 text-stone-400 hover:text-rose-600 transition-colors" data-id="${item.id}" title="Delete" aria-label="Delete saved inspection for ${item.cat_name}">
               <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
             </button>
           </div>

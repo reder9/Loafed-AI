@@ -1,0 +1,6 @@
+# robots.txt for loafed.redersoft.com
+User-agent: *
+Allow: /
+Disallow: /api/
+
+Sitemap: https://loafed.redersoft.com/sitemap.xml
