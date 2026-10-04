@@ -864,9 +864,10 @@ async def health_check():
 @app.get("/api/status")
 async def get_status():
     """Returns server and API key status."""
-    env_key = os.getenv("GEMINI_API_KEY", "").strip()
+    keys = get_server_api_keys()
     return {
-        "has_server_api_key": bool(env_key),
+        "has_server_api_key": len(keys) > 0,
+        "key_pool_size": len(keys),
         "genai_sdk_available": GENAI_AVAILABLE,
         "default_model": os.getenv("DEFAULT_MODEL", "gemini-3.8-flash")
     }
@@ -924,12 +925,77 @@ async def get_samples():
         }
     }
 
+# Multi-Key Pool & Health Tracking
+key_exhaustion_tracker: Dict[str, float] = {}
+
+def get_server_api_keys() -> List[str]:
+    """Retrieves all configured Gemini API keys from environment variables.
+    Checks GEMINI_API_KEYS (comma-separated or JSON array) and GEMINI_API_KEY.
+    Returns a deduplicated list of non-empty keys.
+    """
+    keys: List[str] = []
+
+    # 1. Check GEMINI_API_KEYS (supports comma-separated list or JSON array)
+    env_multi = os.getenv("GEMINI_API_KEYS", "").strip()
+    if env_multi:
+        if env_multi.startswith("[") and env_multi.endswith("]"):
+            try:
+                parsed = json.loads(env_multi)
+                if isinstance(parsed, list):
+                    for k in parsed:
+                        k_str = str(k).strip()
+                        if k_str and k_str not in keys:
+                            keys.append(k_str)
+            except Exception:
+                pass
+        if not keys:
+            for k in env_multi.split(","):
+                k_clean = k.strip()
+                if k_clean and k_clean not in keys:
+                    keys.append(k_clean)
+
+    # 2. Check GEMINI_API_KEY (supports single key or comma-separated list)
+    env_single = os.getenv("GEMINI_API_KEY", "").strip()
+    if env_single:
+        for k in env_single.split(","):
+            k_clean = k.strip()
+            if k_clean and k_clean not in keys:
+                keys.append(k_clean)
+
+    return keys
+
+def get_ordered_api_keys(custom_key: Optional[str] = None) -> List[str]:
+    """Returns an ordered list of keys to attempt.
+    If custom_key is passed, it takes top precedence.
+    Healthy keys (not currently in 429 cooldown) are prioritized first.
+    """
+    if custom_key:
+        return [custom_key]
+
+    server_keys = get_server_api_keys()
+    if not server_keys:
+        return []
+
+    now = time.time()
+    healthy: List[str] = []
+    cooldown: List[str] = []
+
+    for k in server_keys:
+        kid = k[-8:] if len(k) >= 8 else k
+        cooldown_until = key_exhaustion_tracker.get(kid, 0)
+        if now < cooldown_until:
+            cooldown.append(k)
+        else:
+            healthy.append(k)
+
+    return healthy + cooldown
+
 def get_gemini_client(client_key: Optional[str] = None):
     """Instantiate Gemini client using client provided key or environment variable."""
-    api_key = client_key or os.getenv("GEMINI_API_KEY", "").strip()
-    if not api_key:
+    ordered = get_ordered_api_keys(client_key)
+    if not ordered:
         return None
-    return genai.Client(api_key=api_key)
+    return genai.Client(api_key=ordered[0])
 
 SYSTEM_PROMPT = """You are the Senior Inspector and Chief Technical Director of the Official Cat Loaf Certification Bureau (inspired by loafed.app, Michelin-starred bakery standards, and feline aerodynamic engineering).
 Your mission is to evaluate uploaded cat photos as a STRICT, DISCERNING, HIGHLY CRITICAL, YET HILARIOUSLY WITTY JUDGE.
@@ -1045,7 +1111,9 @@ async def grade_loaf(
         logger.warning("Automated bot submission dropped via honeypot.")
         raise HTTPException(status_code=400, detail="Automated submission blocked.")
 
-    effective_api_key = api_key or x_gemini_api_key or os.getenv("GEMINI_API_KEY", "").strip()
+    # Resolve available keys to try from request header, form field, or server key pool
+    client_supplied_key = api_key or x_gemini_api_key
+    keys_to_try = get_ordered_api_keys(custom_key=client_supplied_key)
     
     cat_name = sanitize_cat_name(cat_name)
 
@@ -1093,7 +1161,7 @@ async def grade_loaf(
         raise HTTPException(status_code=400, detail="Please upload between 1 and 5 cat photos.")
 
     # If no API key is provided, check if this matches our sample preset or provide demo analysis
-    if not effective_api_key:
+    if not keys_to_try:
         logger.info("No Gemini API key supplied. Checking for demo fallback.")
         # If user tested Buttercup sample, return cached analysis with their cat name if provided
         result = dict(PRESET_BUTTERCUP)
@@ -1116,7 +1184,7 @@ async def grade_loaf(
             "message": "Graded using Demo Calibration Mode. Sample loaf benchmarks are pre-inspected to demonstrate our aerodynamic loaf scoring engine."
         })
 
-    is_server_key = not bool(api_key or x_gemini_api_key)
+    is_server_key = not bool(client_supplied_key)
     client_ip = get_client_ip(request)
 
     # Enforce free-tier anti-spam and daily limits
@@ -1132,8 +1200,6 @@ async def grade_loaf(
         )
 
     try:
-        client = genai.Client(api_key=effective_api_key)
-        
         contents_parts = []
         if cat_name and cat_name.strip() and cat_name.strip().lower() not in ['anonymous subject', 'anonymous baker', 'none']:
             contents_parts.append(f"Subject Cat Name: {cat_name.strip()}")
@@ -1153,7 +1219,7 @@ async def grade_loaf(
         )
 
         target_model = model or "gemini-3.8-flash"
-        logger.info(f"Sending request to Gemini model {target_model} with {len(submitted_images)} images from IP {client_ip}...")
+        logger.info(f"Preparing Gemini evaluation for model {target_model} with {len(submitted_images)} images from IP {client_ip} across {len(keys_to_try)} candidate key(s)...")
 
         safety_settings = [
             types.SafetySetting(
@@ -1174,35 +1240,72 @@ async def grade_loaf(
             ),
         ]
 
-        # Robust execution with automatic fallback if primary model experiences 503 high demand
         response = None
+        last_api_error = None
         models_to_try = [target_model]
         if target_model != "gemini-3.5-flash-lite":
             models_to_try.append("gemini-3.5-flash-lite")
 
-        for attempt, model_candidate in enumerate(models_to_try):
-            try:
-                response = client.models.generate_content(
-                    model=model_candidate,
-                    contents=contents_parts,
-                    config=types.GenerateContentConfig(
-                        response_mime_type="application/json",
-                        response_schema=LoafAnalysisResult,
-                        system_instruction=SYSTEM_PROMPT,
-                        safety_settings=safety_settings,
-                        temperature=0.3
+        # Multi-Key Failover Loop: iterate through available keys in pool
+        for key_idx, active_key in enumerate(keys_to_try):
+            key_id = active_key[-8:] if len(active_key) >= 8 else "key"
+            client = genai.Client(api_key=active_key)
+            success_for_key = False
+
+            for attempt, model_candidate in enumerate(models_to_try):
+                try:
+                    logger.info(f"Attempting Gemini generation using key ...{key_id} (key {key_idx + 1}/{len(keys_to_try)}) on model {model_candidate}...")
+                    response = client.models.generate_content(
+                        model=model_candidate,
+                        contents=contents_parts,
+                        config=types.GenerateContentConfig(
+                            response_mime_type="application/json",
+                            response_schema=LoafAnalysisResult,
+                            system_instruction=SYSTEM_PROMPT,
+                            safety_settings=safety_settings,
+                            temperature=0.3
+                        )
                     )
-                )
+                    success_for_key = True
+                    # Clear cooldown entry on success
+                    key_exhaustion_tracker.pop(key_id, None)
+                    break
+                except Exception as attempt_err:
+                    err_text = str(attempt_err)
+                    last_api_error = attempt_err
+
+                    # 1. 503 UNAVAILABLE on Google side -> retry secondary model on same key
+                    if ("503" in err_text or "UNAVAILABLE" in err_text) and attempt < len(models_to_try) - 1:
+                        logger.warning(f"Model {model_candidate} is 503 UNAVAILABLE on key ...{key_id}. Retrying model {models_to_try[attempt+1]}...")
+                        time.sleep(1.0)
+                        continue
+
+                    # 2. 429 Quota Exceeded -> put key on 15-minute cooldown and break to fail over to next key
+                    if "RESOURCE_EXHAUSTED" in err_text or "429" in err_text or "quota" in err_text.lower():
+                        key_exhaustion_tracker[key_id] = time.time() + 900
+                        logger.warning(f"Key ...{key_id} exhausted quota (429). Triggering key pool failover...")
+                        break
+
+                    # 3. 403 / Invalid key -> break to fail over to next key
+                    if "API_KEY_INVALID" in err_text or "403" in err_text or "unregistered" in err_text:
+                        logger.warning(f"Key ...{key_id} rejected (403/invalid).")
+                        break
+
+                    # 4. Content policy or 400 Bad Request
+                    if "SAFETY" in err_text or "harm" in err_text.lower() or "blocked" in err_text.lower() or "400" in err_text:
+                        raise attempt_err
+
+            if success_for_key:
+                logger.info(f"Loaf evaluation succeeded with key ...{key_id}.")
                 break
-            except Exception as attempt_err:
-                err_text = str(attempt_err)
-                if ("503" in err_text or "UNAVAILABLE" in err_text) and attempt < len(models_to_try) - 1:
-                    logger.warning(f"Model {model_candidate} is 503 UNAVAILABLE. Retrying with {models_to_try[attempt+1]}...")
-                    time.sleep(1.0)
-                    continue
-                raise attempt_err
+            elif key_idx < len(keys_to_try) - 1:
+                next_kid = keys_to_try[key_idx + 1][-8:] if len(keys_to_try[key_idx + 1]) >= 8 else "next_key"
+                logger.info(f"Failing over from key ...{key_id} to next key ...{next_kid} in pool...")
+                continue
 
         if not response or not response.text:
+            if last_api_error:
+                raise last_api_error
             raise HTTPException(
                 status_code=400,
                 detail="The uploaded photo could not be evaluated due to content safety guidelines. Please ensure your photos are family-friendly cat pictures."
