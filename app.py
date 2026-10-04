@@ -179,7 +179,7 @@ PRESET_BUTTERCUP = {
     "face_loaf": False,
     "multi_angle_bonus": 5,
     "badges": [
-        "Certified 360° Artisan Loaf",
+        "Certified 360-Degree Artisan Loaf",
         "Zero Paw Visibility",
         "Golden Brioche Classification",
         "Sub-0.05 Drag Coefficient",
@@ -277,7 +277,7 @@ EVALUATION CRITERIA (25 Points Each):
 MULTI-ANGLE BONUS:
 - If 3 views (front, side, top) are provided, give +3 to +5 multi-angle bonus points!
 - If 2 views are provided, give +2 bonus points.
-- If only 1 view is provided, give +0 bonus points and note what other views would be needed for full 360° verification.
+- If only 1 view is provided, give +0 bonus points and note what other views would be needed for full 360-degree verification.
 - Overall score = sum of the 4 subscores (capped at 100). Ensure overall_score accurately reflects the sum + bonus.
 
 TONE:
