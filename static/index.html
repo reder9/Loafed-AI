@@ -905,14 +905,29 @@
         </div>
       </div>
 
-      <!-- Baker Display Name Input -->
-      <div class="mb-4">
-        <label for="submitDisplayNameInput" class="block text-xs font-bold text-stone-700 mb-1">
-          Public Baker Display Name
-        </label>
-        <input type="text" id="submitDisplayNameInput" maxlength="30" placeholder="e.g. Baker Sarah or The Cat Whisperer" class="w-full px-3.5 py-2.5 rounded-xl border border-orange-200 text-xs sm:text-sm text-stone-800 bg-orange-50/30 focus:bg-white focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all">
-        <p class="text-[10px] text-stone-500 mt-1">This name will be displayed next to your cat on the public leaderboard.</p>
+      <!-- Required Names Section -->
+      <div class="space-y-3 mb-4">
+        <!-- Cat Name Input (Required) -->
+        <div>
+          <label for="submitCatNameInput" class="block text-xs font-bold text-stone-700 mb-1">
+            Cat's Name <span class="text-orange-600">*</span>
+          </label>
+          <input type="text" id="submitCatNameInput" required maxlength="40" placeholder="e.g. Buttercup, Professor Whiskers, Milo" class="w-full px-3.5 py-2.5 rounded-xl border border-orange-200 text-xs sm:text-sm text-stone-800 bg-orange-50/30 focus:bg-white focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all">
+          <p class="text-[10px] text-stone-500 mt-1">Every loaf on the public leaderboard requires an official cat name.</p>
+        </div>
+
+        <!-- Baker Display Name Input (Required) -->
+        <div>
+          <label for="submitDisplayNameInput" class="block text-xs font-bold text-stone-700 mb-1">
+            Public Baker Display Name <span class="text-orange-600">*</span>
+          </label>
+          <input type="text" id="submitDisplayNameInput" required maxlength="30" placeholder="e.g. Baker Sarah or The Cat Whisperer" class="w-full px-3.5 py-2.5 rounded-xl border border-orange-200 text-xs sm:text-sm text-stone-800 bg-orange-50/30 focus:bg-white focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all">
+          <p class="text-[10px] text-stone-500 mt-1">Your baker title displayed alongside your cat on the leaderboard.</p>
+        </div>
       </div>
+
+      <!-- Submission Validation Notice -->
+      <div id="submitModalNotice" class="hidden mb-3 p-3 rounded-xl text-xs font-medium border leading-relaxed auth-notice-error"></div>
 
       <!-- Opt-In Consent Checkbox -->
       <label class="flex items-start gap-2.5 mb-5 cursor-pointer text-xs text-stone-600 bg-stone-50 p-3 rounded-xl border border-stone-200">

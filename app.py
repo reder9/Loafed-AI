@@ -1,4 +1,5 @@
 import os
+import re
 import io
 import json
 import logging
@@ -117,8 +118,210 @@ MAX_CAT_NAME_LENGTH = 40
 Image.MAX_IMAGE_PIXELS = 100_000_000     # decompression-bomb guard (Pillow errors above 2x this)
 
 
+# Comprehensive Profanity and Offensive Language Filter Patterns
+LEET_MAP = str.maketrans({
+    '@': 'a', '4': 'a',
+    '3': 'e',
+    '1': 'i', '!': 'i', '|': 'i',
+    '0': 'o',
+    '5': 's', '$': 's',
+    '7': 't', '+': 't',
+    '8': 'b',
+    '9': 'g',
+})
+
+PROFANITY_WORD_PATTERNS = [
+    # Fuck and variants (including f*ck, f@ck, fuk, fck)
+    r'\bf+[u*@a0_]+c*k+(?:er|ing|ed|s|head)?\b',
+    r'\bf+u+k+s?\b',
+    r'\bf+c+k+s?\b',
+    r'\bf+\*+k+s?\b',
+    r'\bm+o+t+h+e+r+f+[u*@a0_]+c*k+(?:er)?\b',
+    # Shit and variants (including sh*t, s**t)
+    r'\bs+[h*]*[i*1!]+t+(?:ty|ted|ting|s|head)?\b',
+    r'\bb+u+l+l+s+h+[i*1!]+t+\b',
+    # Bitch and variants (including b*tch, b!tch)
+    r'\bb+[i*1!]+t+c+h+(?:es|ing)?\b',
+    r'\bb+\*+t+c+h+\b',
+    # Ass / Asshole
+    r'\ba+s+s+h+o+l+e+s?\b',
+    r'\ba+r+s+e+h+o+l+e+s?\b',
+    r'\bd+u+m+b+a+s+s+e?s?\b',
+    r'\bj+a+c+k+a+s+s+e?s?\b',
+    # Bastard
+    r'\bb+a+s+t+a+r+d+s?\b',
+    # Cunt, Twat, Wanker
+    r'\bc+[u*@a0_]+n+t+s?\b',
+    r'\bt+w+a+t+s?\b',
+    r'\bw+a+n+k+e+r+s?\b',
+    # Dick, Cock, Penis, Pussy, Vagina
+    r'\bd+[i*1!]+c+k+(?:head|s)?\b',
+    r'\bc+[o*0]+c+k+(?:sucker|s)?\b',
+    r'\bp+[u*@a0_]+s+s+y+(?:es)?\b',
+    r'\bv+a+g+[i*1!]+n+a+s?\b',
+    r'\bp+e+n+[i*1!]+s+e?s?\b',
+    r'\bc+l+[i*1!]+t+s?\b',
+    r'\bd+[i*1!]+l+d+o+s?\b',
+    # Whore, Slut
+    r'\bw+h+[o*0]+r+e+s?\b',
+    r'\bs+l+[u*@a0_]+t+s?\b',
+    # Hate speech / Slurs
+    r'\bf+a+g+(?:g+o+t+)?s?\b',
+    r'\bd+y+k+e+s?\b',
+    r'\bt+r+a+n+n+y+\b',
+    r'\bk+[i*1!]+k+e+s?\b',
+    r'\bc+h+[i*1!]+n+k+s?\b',
+    r'\bg+[o*0]{2}k+s?\b',
+    r'\bs+p+[i*1!]+c+s?\b',
+    r'\bw+e+t+b+a+c+k+s?\b',
+    r'\br+e+t+a+r+d+(?:ed)?\b',
+    r'\bn+a+z+[i*1!]+s?\b',
+    r'\bh+[i*1!]+t+l+e+r\b',
+    r'\bk+k+k+\b',
+    # Explicit sexual
+    r'\bp+[o*0]+r+n+(?:o|ography)?s?\b',
+    r'\bh+e+n+t+a+[i*1!]+\b',
+    r'\bb+l+[o*0]+w+j+[o*0]+b+s?\b',
+    r'\bh+a+n+d+j+[o*0]+b+s?\b',
+    r'\bc+[u*@a0_]+m+(?:shot)?s?\b',
+    r'\bj+[i*1!]+z+z+\b',
+    # Violence / harassment
+    r'\bk+[i*1!]+l+l+\s*y+[o*0]+u+r+s+e+l+f+\b',
+    r'\bk+y+s+\b',
+    r'\bp+e+d+[o*0]+(?:phile)?s?\b',
+    r'\br+a+p+e+s?\b',
+    r'\br+a+p+[i*1!]+s+t+s?\b',
+]
+
+SEVERE_SUBSTRINGS = [
+    r'n+[i*1!|]+g+g+[ae*]+r?',
+    r'n+[i*1!|]+g+g+a',
+    r'f+a+g+g+[o*0]+t',
+    r'k+[i*1!]+k+e',
+    r'c+h+[i*1!]+n+k',
+    r'w+e+t+b+a+c+k',
+    r's+w+a+s+t+[i*1!]+k+a',
+    r'h+e+[i*1!]+l+h+[i*1!]+t+l+e+r',
+]
+
+COMPILED_WORD_PATTERNS = [re.compile(p, re.IGNORECASE) for p in PROFANITY_WORD_PATTERNS]
+COMPILED_SEVERE_PATTERNS = [re.compile(p, re.IGNORECASE) for p in SEVERE_SUBSTRINGS]
+
+
+def is_profane(text: str) -> bool:
+    """Checks if text contains offensive words, slurs, or harassment phrases."""
+    if not text:
+        return False
+
+    # 1. Direct word check
+    for cp in COMPILED_WORD_PATTERNS:
+        if cp.search(text):
+            return True
+
+    # 2. Severe substring check
+    for sp in COMPILED_SEVERE_PATTERNS:
+        if sp.search(text):
+            return True
+
+    # 3. Leet-normalized check
+    normalized = text.lower().translate(LEET_MAP)
+    for cp in COMPILED_WORD_PATTERNS:
+        if cp.search(normalized):
+            return True
+    for sp in COMPILED_SEVERE_PATTERNS:
+        if sp.search(normalized):
+            return True
+
+    # 4. Separator-stripped check (for "f.u.c.k", "s-h-i-t", etc.)
+    stripped = re.sub(r'[^a-z0-9]', '', normalized)
+    for sp in COMPILED_SEVERE_PATTERNS:
+        if sp.search(stripped):
+            return True
+
+    if len(stripped) < len(normalized):
+        collapsed_test = re.sub(r'(.)\1+', r'\1', stripped)
+        for cp in COMPILED_WORD_PATTERNS:
+            pattern_raw = cp.pattern.replace(r'\b', '')
+            clean_pat = re.sub(r'\++', '', pattern_raw)
+            if re.search(clean_pat, collapsed_test, re.IGNORECASE):
+                return True
+
+    return False
+
+
+ALLOWED_NAME_REGEX = re.compile(r"^[a-zA-Z0-9\u00C0-\u017F\s\-'.&]+$")
+PLACEHOLDER_NAMES = {
+    "anonymous loaf", "anonymous", "unknown", "untitled",
+    "n/a", "na", "none", "null", "undefined", "placeholder"
+}
+
+def validate_and_sanitize_name(name: Optional[str], field_label: str = "Name", min_len: int = 2, max_len: int = 30) -> str:
+    """Strictly validates, sanitizes, and filters user-supplied public names for the leaderboard."""
+    if not name or not str(name).strip():
+        raise HTTPException(
+            status_code=400,
+            detail=f"{field_label} is required to submit a loaf to the leaderboard."
+        )
+
+    raw = str(name).strip()
+
+    # Reject HTML tags, script brackets, or injection characters outright
+    if re.search(r'[<>{}\[\];\\/`~=+^%$*"]', raw):
+        raise HTTPException(
+            status_code=400,
+            detail=f"{field_label} contains invalid characters. Please use letters, numbers, spaces, and basic punctuation (- ' . &)."
+        )
+
+    # Clean non-printable characters
+    cleaned = "".join(ch for ch in raw if ch.isprintable())
+    # Normalize internal whitespace
+    cleaned = re.sub(r'\s+', ' ', cleaned).strip()
+
+    if len(cleaned) < min_len:
+        raise HTTPException(
+            status_code=400,
+            detail=f"{field_label} must be at least {min_len} characters long."
+        )
+
+    if len(cleaned) > max_len:
+        raise HTTPException(
+            status_code=400,
+            detail=f"{field_label} cannot exceed {max_len} characters."
+        )
+
+    # Must match allowed characters whitelist (no emojis, no symbols)
+    if not ALLOWED_NAME_REGEX.match(cleaned):
+        raise HTTPException(
+            status_code=400,
+            detail=f"{field_label} contains unsupported characters. Please use standard letters, numbers, spaces, and basic punctuation (- ' . &)."
+        )
+
+    # Must contain at least one letter or number
+    if not re.search(r'[a-zA-Z0-9\u00C0-\u017F]', cleaned):
+        raise HTTPException(
+            status_code=400,
+            detail=f"{field_label} must contain at least one letter or number."
+        )
+
+    # Reject generic placeholders
+    if cleaned.lower() in PLACEHOLDER_NAMES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Please provide an actual name for your {field_label.lower()} instead of a generic placeholder."
+        )
+
+    # Check profanity / inappropriate terms
+    if is_profane(cleaned):
+        raise HTTPException(
+            status_code=400,
+            detail=f"{field_label} contains inappropriate or offensive language. Please choose a family-friendly bakery name."
+        )
+
+    return cleaned
+
+
 def sanitize_cat_name(name: Optional[str]) -> Optional[str]:
-    """Trims, strips control characters and caps the length of a user supplied cat name."""
+    """Lightweight sanitization for initial grading requests (allows None)."""
     if not name:
         return None
     cleaned = "".join(ch for ch in name if ch.isprintable()).strip()[:MAX_CAT_NAME_LENGTH]
@@ -993,12 +1196,17 @@ async def email_signup(req: EmailSignUpRequest):
     """Direct Cognito user registration with email verification code dispatch."""
     email = req.email.strip().lower()
     password = req.password
-    display_name = (req.display_name or "").strip() or email.split("@")[0]
 
     if not email or not password:
         raise HTTPException(status_code=400, detail="Email and password are required.")
     if len(password) < 8:
         raise HTTPException(status_code=400, detail="Password must be at least 8 characters long.")
+
+    if req.display_name and req.display_name.strip():
+        display_name = validate_and_sanitize_name(req.display_name, field_label="Display Name", min_len=2, max_len=30)
+    else:
+        fallback = re.sub(r'[^a-zA-Z0-9]', '', email.split("@")[0])[:20]
+        display_name = fallback if len(fallback) >= 2 else "Baker"
 
     session = get_boto3_session()
     client = session.client("cognito-idp", region_name=AWS_REGION)
@@ -1180,6 +1388,7 @@ async def email_confirm_forgot_password(req: ConfirmForgotPasswordRequest):
 async def submit_to_leaderboard(
     authorization: Optional[str] = Header(None),
     grade_token: str = Form(...),
+    cat_name: Optional[str] = Form(None),
     display_name: Optional[str] = Form(None),
     photo: UploadFile = File(...)
 ):
@@ -1191,6 +1400,25 @@ async def submit_to_leaderboard(
 
     # Validate HMAC score token
     score_data = verify_grade_token(grade_token)
+
+    # Validate and sanitize required Cat's Name and Baker Display Name
+    raw_cat_name = (cat_name or "").strip() or score_data.get("cat_name")
+    validated_cat_name = validate_and_sanitize_name(
+        raw_cat_name,
+        field_label="Cat's Name",
+        min_len=2,
+        max_len=40
+    )
+
+    raw_display_name = (display_name or "").strip() or user_claims.get("name") or (
+        user_claims.get("email", "").split("@")[0] if user_claims.get("email") else None
+    )
+    validated_display_name = validate_and_sanitize_name(
+        raw_display_name,
+        field_label="Baker Display Name",
+        min_len=2,
+        max_len=30
+    )
 
     # Validate uploaded photo
     content, mime = await read_and_validate_image(photo)
@@ -1223,11 +1451,6 @@ async def submit_to_leaderboard(
     month_str = now.strftime("%Y-%m")
     week_str = now.strftime("%Y-W%W")
 
-    cat_name = sanitize_cat_name(score_data.get("cat_name")) or "Anonymous Loaf"
-    sanitized_display = sanitize_cat_name(display_name) or user_claims.get("name") or (
-        user_claims.get("email", "").split("@")[0] if user_claims.get("email") else "Baker"
-    )
-
     score = int(score_data.get("overall_score", 0))
     sk = f"SCORE#{score:03d}#{entry_id}"
 
@@ -1241,8 +1464,8 @@ async def submit_to_leaderboard(
         "entry_id": entry_id,
         "user_id": user_id,
         "user_email": user_claims.get("email", ""),
-        "display_name": sanitized_display,
-        "cat_name": cat_name,
+        "display_name": validated_display_name,
+        "cat_name": validated_cat_name,
         "overall_score": score,
         "grade_letter": score_data.get("grade_letter", ""),
         "loaf_rank": score_data.get("loaf_rank", ""),
@@ -1274,8 +1497,9 @@ async def submit_to_leaderboard(
         "entry_id": entry_id,
         "score": score,
         "thumbnail_url": thumbnail_url,
-        "cat_name": cat_name,
-        "message": f"Successfully added {cat_name} to the Loafed Leaderboard!"
+        "cat_name": validated_cat_name,
+        "display_name": validated_display_name,
+        "message": f"Successfully added {validated_cat_name} to the Loafed Leaderboard!"
     }
 
 

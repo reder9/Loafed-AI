@@ -93,7 +93,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const submitModalScoreBadge = document.getElementById('submitModalScoreBadge');
   const submitModalRank = document.getElementById('submitModalRank');
   const submitModalBread = document.getElementById('submitModalBread');
+  const submitCatNameInput = document.getElementById('submitCatNameInput');
   const submitDisplayNameInput = document.getElementById('submitDisplayNameInput');
+  const submitModalNotice = document.getElementById('submitModalNotice');
   const submitConsentCheckbox = document.getElementById('submitConsentCheckbox');
 
   const authModal = document.getElementById('authModal');
@@ -2284,15 +2286,95 @@ Certified by Loafed Inspection Engine`;
   }
 
   // Submit Modal Logic
+  const CLIENT_PROFANITY_REGEX = /\b(?:fuck|fck|shit|bitch|asshole|bastard|dick|pussy|cunt|cock|nigger|nigga|faggot|retard|whore|slut|twat|wanker|prick|penis|vagina|tit|tits|boob|boobs|nazi|hitler)\b/i;
+  const ALLOWED_NAME_REGEX = /^[a-zA-Z0-9\u00C0-\u017F\s\-'.&]+$/;
+  const PLACEHOLDER_NAMES = new Set([
+    'anonymous loaf', 'anonymous', 'unknown', 'untitled',
+    'n/a', 'na', 'none', 'null', 'undefined', 'placeholder'
+  ]);
+
+  function showSubmitNotice(msg) {
+    if (!submitModalNotice) return;
+    submitModalNotice.textContent = msg;
+    submitModalNotice.classList.remove('hidden');
+  }
+
+  function hideSubmitNotice() {
+    if (!submitModalNotice) return;
+    submitModalNotice.textContent = '';
+    submitModalNotice.classList.add('hidden');
+  }
+
+  function validateLeaderboardField(val, fieldLabel, minLen, maxLen) {
+    const trimmed = (val || '').trim();
+    if (!trimmed) {
+      return `${fieldLabel} is required.`;
+    }
+    if (trimmed.length < minLen) {
+      return `${fieldLabel} must be at least ${minLen} characters long.`;
+    }
+    if (trimmed.length > maxLen) {
+      return `${fieldLabel} cannot exceed ${maxLen} characters.`;
+    }
+    if (!ALLOWED_NAME_REGEX.test(trimmed)) {
+      return `${fieldLabel} contains unsupported characters. Please use letters, numbers, spaces, and basic punctuation (- ' . &).`;
+    }
+    if (!/[a-zA-Z0-9\u00C0-\u017F]/.test(trimmed)) {
+      return `${fieldLabel} must contain at least one letter or number.`;
+    }
+    if (PLACEHOLDER_NAMES.has(trimmed.toLowerCase())) {
+      return `Please provide an actual name for your ${fieldLabel.toLowerCase()} instead of a generic placeholder.`;
+    }
+    if (CLIENT_PROFANITY_REGEX.test(trimmed)) {
+      return `${fieldLabel} contains inappropriate or offensive language. Please choose a family-friendly bakery name.`;
+    }
+    return null;
+  }
+
+  function getSubmitFormValidation() {
+    const catName = submitCatNameInput ? submitCatNameInput.value.trim() : '';
+    const displayName = submitDisplayNameInput ? submitDisplayNameInput.value.trim() : '';
+    const consent = submitConsentCheckbox ? submitConsentCheckbox.checked : false;
+
+    const catErr = validateLeaderboardField(catName, "Cat's Name", 2, 40);
+    if (catErr) return { valid: false, error: catErr, catName, displayName };
+
+    const displayErr = validateLeaderboardField(displayName, "Public Baker Display Name", 2, 30);
+    if (displayErr) return { valid: false, error: displayErr, catName, displayName };
+
+    if (!consent) {
+      return { valid: false, error: 'Please check the consent box to confirm publishing.', catName, displayName };
+    }
+
+    return { valid: true, error: null, catName, displayName };
+  }
+
+  function updateSubmitButtonState() {
+    const catName = submitCatNameInput ? submitCatNameInput.value.trim() : '';
+    if (submitModalCatName) {
+      submitModalCatName.textContent = catName || 'Cat Name';
+    }
+
+    const { valid } = getSubmitFormValidation();
+    if (confirmSubmitLeaderboardBtn) {
+      confirmSubmitLeaderboardBtn.disabled = !valid;
+    }
+  }
+
   function openSubmitModal() {
     if (!state.currentResult || !submitModal) return;
-    if (submitModalCatName) submitModalCatName.textContent = state.currentResult.cat_name || 'Anonymous Loaf';
+    const initialCatName = (state.currentResult.cat_name && state.currentResult.cat_name !== 'Anonymous Loaf') 
+      ? state.currentResult.cat_name 
+      : '';
+    if (submitCatNameInput) submitCatNameInput.value = initialCatName;
+    if (submitModalCatName) submitModalCatName.textContent = initialCatName || 'Cat Name';
     if (submitModalScoreBadge) submitModalScoreBadge.textContent = `${state.currentResult.overall_score} ${state.currentResult.grade_letter}`;
     if (submitModalRank) submitModalRank.textContent = state.currentResult.loaf_rank || 'Artisan Loaf';
     if (submitModalBread) submitModalBread.textContent = state.currentResult.bread_classification || 'Brioche';
-    if (submitDisplayNameInput) submitDisplayNameInput.value = state.user ? state.user.name : '';
+    if (submitDisplayNameInput) submitDisplayNameInput.value = state.user ? (state.user.name || '') : '';
     if (submitConsentCheckbox) submitConsentCheckbox.checked = false;
-    if (confirmSubmitLeaderboardBtn) confirmSubmitLeaderboardBtn.disabled = true;
+    hideSubmitNotice();
+    updateSubmitButtonState();
 
     if (submitModalThumbnail) {
       if (state.photos.length > 0 && state.photos[0].previewUrl) {
@@ -2308,11 +2390,27 @@ Certified by Loafed Inspection Engine`;
 
   function closeSubmitModal() {
     if (submitModal) submitModal.classList.add('hidden');
+    hideSubmitNotice();
   }
 
-  if (submitConsentCheckbox && confirmSubmitLeaderboardBtn) {
+  if (submitCatNameInput) {
+    submitCatNameInput.addEventListener('input', () => {
+      hideSubmitNotice();
+      updateSubmitButtonState();
+    });
+  }
+
+  if (submitDisplayNameInput) {
+    submitDisplayNameInput.addEventListener('input', () => {
+      hideSubmitNotice();
+      updateSubmitButtonState();
+    });
+  }
+
+  if (submitConsentCheckbox) {
     submitConsentCheckbox.addEventListener('change', () => {
-      confirmSubmitLeaderboardBtn.disabled = !submitConsentCheckbox.checked;
+      hideSubmitNotice();
+      updateSubmitButtonState();
     });
   }
 
@@ -2322,8 +2420,10 @@ Certified by Loafed Inspection Engine`;
         openAuthModal();
         return;
       }
-      if (!submitConsentCheckbox || !submitConsentCheckbox.checked) {
-        showToast({ type: 'warning', title: 'Consent Required', message: 'Please check the consent box to publish to the leaderboard.' });
+
+      const validation = getSubmitFormValidation();
+      if (!validation.valid) {
+        showSubmitNotice(validation.error);
         return;
       }
 
@@ -2347,7 +2447,7 @@ Certified by Loafed Inspection Engine`;
         let gradeToken = state.gradeToken;
         if (!gradeToken) {
           const formData = new FormData();
-          formData.append('cat_name', state.currentResult.cat_name || 'Cat');
+          formData.append('cat_name', validation.catName);
           formData.append('images', photoFile);
           const gRes = await fetch('/api/grade', { method: 'POST', body: formData });
           if (gRes.ok) {
@@ -2361,7 +2461,8 @@ Certified by Loafed Inspection Engine`;
 
         const submitForm = new FormData();
         submitForm.append('grade_token', gradeToken);
-        submitForm.append('display_name', (submitDisplayNameInput ? submitDisplayNameInput.value.trim() : '') || state.user.name);
+        submitForm.append('cat_name', validation.catName);
+        submitForm.append('display_name', validation.displayName);
         submitForm.append('photo', photoFile);
 
         const subRes = await fetch('/api/leaderboard/submit', {
@@ -2374,7 +2475,9 @@ Certified by Loafed Inspection Engine`;
 
         const subData = await subRes.json();
         if (!subRes.ok) {
-          throw new Error(subData.detail || 'Leaderboard submission failed.');
+          const errMsg = subData.detail || 'Leaderboard submission failed.';
+          showSubmitNotice(errMsg);
+          throw new Error(errMsg);
         }
 
         closeSubmitModal();
@@ -2393,6 +2496,7 @@ Certified by Loafed Inspection Engine`;
       } finally {
         confirmSubmitLeaderboardBtn.disabled = false;
         confirmSubmitLeaderboardBtn.innerHTML = '<i data-lucide="check" class="w-4 h-4"></i><span>Confirm & Publish</span>';
+        updateSubmitButtonState();
         refreshIcons();
       }
     });
