@@ -14,7 +14,15 @@ document.addEventListener('DOMContentLoaded', () => {
     model: localStorage.getItem('loafed_model') || 'gemini-3.8-flash',
     serverHasKey: false,
     currentResult: null,
-    samplePresets: {}
+    gradeToken: null,
+    submittedPhotoBlob: null,
+    samplePresets: {},
+    // User & Authentication State
+    user: null,
+    idToken: localStorage.getItem('loafed_id_token') || null,
+    accessToken: localStorage.getItem('loafed_access_token') || null,
+    authConfig: null,
+    leaderboardPeriod: 'all'
   };
 
   // Helper to re-render Lucide icons
@@ -49,8 +57,100 @@ document.addEventListener('DOMContentLoaded', () => {
   const addMorePhotosBtn = document.getElementById('addMorePhotosBtn');
   const telemetryStatusText = document.getElementById('telemetryStatusText');
 
-  // Header Elements
+  // Header & Auth Elements
   const toastContainer = document.getElementById('toastContainer');
+  const openLeaderboardBtn = document.getElementById('openLeaderboardBtn');
+  const headerSignInBtn = document.getElementById('headerSignInBtn');
+  const headerUserMenu = document.getElementById('headerUserMenu');
+  const headerUserMenuBtn = document.getElementById('headerUserMenuBtn');
+  const headerUserAvatar = document.getElementById('headerUserAvatar');
+  const headerUserName = document.getElementById('headerUserName');
+  const headerUserDropdown = document.getElementById('headerUserDropdown');
+  const dropdownUserEmail = document.getElementById('dropdownUserEmail');
+  const dropdownUserName = document.getElementById('dropdownUserName');
+  const menuMyLoavesBtn = document.getElementById('menuMyLoavesBtn');
+  const menuSignOutBtn = document.getElementById('menuSignOutBtn');
+  const menuDeleteAccountBtn = document.getElementById('menuDeleteAccountBtn');
+
+  const submitLeaderboardBtn = document.getElementById('submitLeaderboardBtn');
+
+  // Modals
+  const leaderboardModal = document.getElementById('leaderboardModal');
+  const closeLeaderboardBtn = document.getElementById('closeLeaderboardBtn');
+  const dismissLeaderboardBtn = document.getElementById('dismissLeaderboardBtn');
+  const leaderboardList = document.getElementById('leaderboardList');
+  const tabPeriodAll = document.getElementById('tabPeriodAll');
+  const tabPeriodMonth = document.getElementById('tabPeriodMonth');
+  const tabPeriodWeek = document.getElementById('tabPeriodWeek');
+  const tabPeriodMine = document.getElementById('tabPeriodMine');
+
+  const submitModal = document.getElementById('submitModal');
+  const closeSubmitModalBtn = document.getElementById('closeSubmitModalBtn');
+  const cancelSubmitModalBtn = document.getElementById('cancelSubmitModalBtn');
+  const confirmSubmitLeaderboardBtn = document.getElementById('confirmSubmitLeaderboardBtn');
+  const submitModalThumbnail = document.getElementById('submitModalThumbnail');
+  const submitModalCatName = document.getElementById('submitModalCatName');
+  const submitModalScoreBadge = document.getElementById('submitModalScoreBadge');
+  const submitModalRank = document.getElementById('submitModalRank');
+  const submitModalBread = document.getElementById('submitModalBread');
+  const submitDisplayNameInput = document.getElementById('submitDisplayNameInput');
+  const submitConsentCheckbox = document.getElementById('submitConsentCheckbox');
+
+  const authModal = document.getElementById('authModal');
+  const closeAuthModalBtn = document.getElementById('closeAuthModalBtn');
+  const authMainView = document.getElementById('authMainView');
+  const authModalTitle = document.getElementById('authModalTitle');
+  const authModalSubtitle = document.getElementById('authModalSubtitle');
+  const signInGoogleBtn = document.getElementById('signInGoogleBtn');
+  const authTabSignIn = document.getElementById('authTabSignIn');
+  const authTabSignUp = document.getElementById('authTabSignUp');
+  const authNotice = document.getElementById('authNotice');
+  const authEmailForm = document.getElementById('authEmailForm');
+  const authNameField = document.getElementById('authNameField');
+  const authNameInput = document.getElementById('authNameInput');
+  const authEmailInput = document.getElementById('authEmailInput');
+  const authPasswordInput = document.getElementById('authPasswordInput');
+  const authForgotPassLink = document.getElementById('authForgotPassLink');
+  const authSubmitBtn = document.getElementById('authSubmitBtn');
+  const authSubmitBtnText = document.getElementById('authSubmitBtnText');
+
+  const authVerifyView = document.getElementById('authVerifyView');
+  const authVerifyEmailDisplay = document.getElementById('authVerifyEmailDisplay');
+  const authVerifyNotice = document.getElementById('authVerifyNotice');
+  const authVerifyForm = document.getElementById('authVerifyForm');
+  const authVerifyCodeInput = document.getElementById('authVerifyCodeInput');
+  const authVerifySubmitBtn = document.getElementById('authVerifySubmitBtn');
+  const authVerifySubmitBtnText = document.getElementById('authVerifySubmitBtnText');
+  const authResendCodeBtn = document.getElementById('authResendCodeBtn');
+  const authBackToSignInBtn = document.getElementById('authBackToSignInBtn');
+
+  const authForgotView = document.getElementById('authForgotView');
+  const authForgotEmailInput = document.getElementById('authForgotEmailInput');
+  const authForgotNotice = document.getElementById('authForgotNotice');
+  const authForgotForm = document.getElementById('authForgotForm');
+  const authForgotStep2 = document.getElementById('authForgotStep2');
+  const authForgotCodeInput = document.getElementById('authForgotCodeInput');
+  const authForgotNewPassInput = document.getElementById('authForgotNewPassInput');
+  const authForgotSubmitBtn = document.getElementById('authForgotSubmitBtn');
+  const authForgotSubmitBtnText = document.getElementById('authForgotSubmitBtnText');
+  const authForgotCancelBtn = document.getElementById('authForgotCancelBtn');
+
+  const authOpenTermsBtn = document.getElementById('authOpenTermsBtn');
+  const authOpenPrivacyBtn = document.getElementById('authOpenPrivacyBtn');
+
+  const deleteAccountModal = document.getElementById('deleteAccountModal');
+  const cancelDeleteAccountBtn = document.getElementById('cancelDeleteAccountBtn');
+  const confirmDeleteAccountBtn = document.getElementById('confirmDeleteAccountBtn');
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
 
   // Modern Toast Notification System (Zero emojis, clean Lucide iconography)
   function showToast({ title = '', message = '', type = 'info', duration = 4500 } = {}) {
@@ -763,11 +863,22 @@ document.addEventListener('DOMContentLoaded', () => {
     refreshIcons();
   }
 
+  // Scroll so the given section's top sits just below the sticky header (works on desktop and mobile)
+  function scrollToSection(el) {
+    if (!el) return;
+    requestAnimationFrame(() => {
+      const header = document.querySelector('header');
+      const headerH = header ? header.getBoundingClientRect().height : 0;
+      const top = el.getBoundingClientRect().top + window.scrollY - headerH - 16;
+      window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+    });
+  }
+
   function startLoadingAnimation() {
     loadingState.classList.remove('hidden');
     inspectorBay.classList.add('hidden');
     resultsSection.classList.add('hidden');
-    window.scrollTo({ top: 120, behavior: 'smooth' });
+    scrollToSection(loadingState);
 
     let index = 0;
     loadingPhrase.textContent = bakeryAuditSteps[0].title;
@@ -848,6 +959,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
       stopLoadingAnimation();
       state.currentResult = data.result;
+      state.gradeToken = data.grade_token || null;
+      if (state.photos.length > 0 && state.photos[0].file) {
+        state.submittedPhotoBlob = state.photos[0].file;
+      }
       renderResults(data.result, data.demo_mode);
       saveLoafToHistory(data.result);
       if (data.demo_mode && data.message) {
@@ -883,7 +998,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function renderResults(result, isDemoMode) {
     resultsSection.classList.remove('hidden');
     inspectorBay.classList.add('hidden');
-    window.scrollTo({ top: 180, behavior: 'smooth' });
+    scrollToSection(resultsSection);
 
     // Header info
     document.getElementById('resultCatName').textContent = result.cat_name || 'The Mysterious Loaf';
@@ -1071,8 +1186,11 @@ document.addEventListener('DOMContentLoaded', () => {
     resultsSection.classList.add('hidden');
     inspectorBay.classList.remove('hidden');
     clearAllPhotos();
+    state.currentResult = null;
+    state.gradeToken = null;
+    state.submittedPhotoBlob = null;
     if (catNameInput) catNameInput.value = '';
-    window.scrollTo({ top: 120, behavior: 'smooth' });
+    scrollToSection(inspectorBay);
     showToast({
       type: 'info',
       title: 'Inspector Ready',
@@ -1629,24 +1747,24 @@ Certified by Loafed Inspection Engine`;
 
   const privacyPolicyContent = `
     <div>
-      <h4 class="font-bold text-stone-900 text-xs mb-1">1. Zero Personal Data Collection</h4>
-      <p class="text-stone-600 leading-relaxed">Loafed AI is freeware created strictly for feline appreciation and recreational entertainment by <a href="https://redersoft.com" target="_blank" rel="noopener noreferrer" class="text-orange-700 underline font-semibold">RederSoft</a>. We do not require account registration, and we do not collect your name, email address, phone number, location, or payment information.</p>
+      <h4 class="font-bold text-stone-900 text-xs mb-1">1. Voluntary Leaderboard & Authentication</h4>
+      <p class="text-stone-600 leading-relaxed">Loafed AI is freeware created strictly for feline appreciation and recreational entertainment by <a href="https://redersoft.com" target="_blank" rel="noopener noreferrer" class="text-orange-700 underline font-semibold">RederSoft</a>. You may inspect your cat loaves completely anonymously without creating an account. If you voluntarily choose to publish your cat's loaf to the public Leaderboard, authentication is handled securely via AWS Cognito (supporting Google Sign-In or email). We store solely your public baker display name, email (for account ownership), certified loaf score, and the submitted cat photo.</p>
     </div>
     <div>
-      <h4 class="font-bold text-stone-900 text-xs mb-1">2. In-Memory Image Evaluation (No Persistent Storage)</h4>
-      <p class="text-stone-600 leading-relaxed">Uploaded cat photographs are transferred over encrypted HTTPS and streamed in-memory to Google Gemini Vision API solely to generate your real-time posture report. Photos are never saved to persistent server disks, never archived into public storage buckets, and never shared, sold, or used for model training by <a href="https://redersoft.com" target="_blank" rel="noopener noreferrer" class="text-orange-700 underline font-semibold">RederSoft</a>.</p>
+      <h4 class="font-bold text-stone-900 text-xs mb-1">2. Complete User Control & Immediate Deletion</h4>
+      <p class="text-stone-600 leading-relaxed">You maintain 100% ownership of your submissions. You can delete any individual loaf submission at any time, or permanently delete your entire account and all associated media from our cloud storage with a single click in your Account settings.</p>
     </div>
     <div>
-      <h4 class="font-bold text-stone-900 text-xs mb-1">3. Local Device Storage Only</h4>
-      <p class="text-stone-600 leading-relaxed">Any client preferences (such as audio mute state, past score history, or an optional client-provided API key) remain stored exclusively in your browser local storage (localStorage) on your own device. They are never sent to our servers.</p>
+      <h4 class="font-bold text-stone-900 text-xs mb-1">3. In-Memory Evaluation for Non-Leaderboard Loaves</h4>
+      <p class="text-stone-600 leading-relaxed">Unless you explicitly opt in and click "Submit to Leaderboard", uploaded cat photographs are streamed in-memory to Google Gemini Vision API solely to generate your real-time posture audit. Unsubmitted photos are never retained on server disks or shared.</p>
     </div>
     <div>
       <h4 class="font-bold text-stone-900 text-xs mb-1">4. No Tracking, Profiling, or Advertising</h4>
       <p class="text-stone-600 leading-relaxed">We do not employ third-party advertising trackers, cross-site profiling pixels, or marketing analytics. Your browsing activity on this service remains private.</p>
     </div>
     <div>
-      <h4 class="font-bold text-stone-900 text-xs mb-1">5. Third-Party AI Services</h4>
-      <p class="text-stone-600 leading-relaxed">Visual inspection is processed via Google Gemini API in accordance with Google API terms and standard privacy guidelines.</p>
+      <h4 class="font-bold text-stone-900 text-xs mb-1">5. Third-Party AI & Cloud Services</h4>
+      <p class="text-stone-600 leading-relaxed">Visual inspection is processed via Google Gemini API in accordance with Google API terms. Authentication and leaderboard storage are hosted on AWS infrastructure (Cognito, DynamoDB, and S3).</p>
     </div>
   `;
 
@@ -1702,8 +1820,964 @@ Certified by Loafed Inspection Engine`;
   if (closeLegalBtn) closeLegalBtn.addEventListener('click', closeLegalModal);
   if (dismissLegalBtn) dismissLegalBtn.addEventListener('click', closeLegalModal);
 
+  // Authentication & PKCE Logic
+  function generateRandomString(length = 64) {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
+    const array = new Uint8Array(length);
+    window.crypto.getRandomValues(array);
+    return Array.from(array, byte => chars[byte % chars.length]).join('');
+  }
+
+  async function sha256Base64Url(str) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(str);
+    const hash = await window.crypto.subtle.digest('SHA-256', data);
+    const base64 = btoa(String.fromCharCode(...new Uint8Array(hash)));
+    return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  }
+
+  function parseJwtPayload(token) {
+    try {
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(
+        atob(base64)
+          .split('')
+          .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+          .join('')
+      );
+      return JSON.parse(jsonPayload);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function parseUserFromToken() {
+    if (!state.idToken) {
+      state.user = null;
+      return;
+    }
+    const payload = parseJwtPayload(state.idToken);
+    if (!payload) {
+      state.user = null;
+      return;
+    }
+    if (payload.exp && Date.now() >= payload.exp * 1000) {
+      signOut();
+      return;
+    }
+    const email = payload.email || '';
+    const name = payload.name || payload['cognito:username'] || (email ? email.split('@')[0] : 'Baker');
+    const avatarLetter = (name || 'B').charAt(0).toUpperCase();
+
+    state.user = {
+      id: payload.sub,
+      email: email,
+      name: name,
+      avatar: avatarLetter
+    };
+  }
+
+  function updateAuthUI() {
+    if (state.user) {
+      if (headerSignInBtn) headerSignInBtn.classList.add('hidden');
+      if (headerUserMenu) headerUserMenu.classList.remove('hidden');
+      if (headerUserName) headerUserName.textContent = state.user.name;
+      if (headerUserAvatar) headerUserAvatar.textContent = state.user.avatar;
+      if (dropdownUserName) dropdownUserName.textContent = state.user.name;
+      if (dropdownUserEmail) dropdownUserEmail.textContent = state.user.email || 'Authenticated User';
+    } else {
+      if (headerSignInBtn) headerSignInBtn.classList.remove('hidden');
+      if (headerUserMenu) headerUserMenu.classList.add('hidden');
+      if (headerUserDropdown) headerUserDropdown.classList.add('hidden');
+    }
+    refreshIcons();
+  }
+
+  async function fetchAuthConfig() {
+    try {
+      const res = await fetch('/api/auth/config');
+      if (res.ok) {
+        state.authConfig = await res.json();
+      }
+    } catch (e) {
+      console.warn('Could not fetch auth configuration', e);
+    }
+  }
+
+  async function startCognitoAuth(idp = null) {
+    if (!state.authConfig) {
+      await fetchAuthConfig();
+    }
+    const config = state.authConfig;
+    if (!config || !config.domain || !config.client_id) {
+      showToast({ type: 'error', title: 'Auth Error', message: 'Cognito authentication configuration unavailable.' });
+      return;
+    }
+
+    const verifier = generateRandomString(64);
+    const challenge = await sha256Base64Url(verifier);
+    sessionStorage.setItem('pkce_code_verifier', verifier);
+
+    const redirectUri = window.location.origin + window.location.pathname;
+    sessionStorage.setItem('pkce_redirect_uri', redirectUri);
+
+    const params = new URLSearchParams({
+      response_type: 'code',
+      client_id: config.client_id,
+      redirect_uri: redirectUri,
+      scope: 'openid email profile aws.cognito.signin.user.admin',
+      code_challenge: challenge,
+      code_challenge_method: 'S256'
+    });
+
+    if (idp === 'Google') {
+      params.set('identity_provider', 'Google');
+    }
+
+    const authUrl = `https://${config.domain}/oauth2/authorize?${params.toString()}`;
+    window.location.href = authUrl;
+  }
+
+  async function handleAuthRedirectCallback() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+    if (!code) return;
+
+    const verifier = sessionStorage.getItem('pkce_code_verifier');
+    const redirectUri = sessionStorage.getItem('pkce_redirect_uri') || (window.location.origin + window.location.pathname);
+
+    window.history.replaceState({}, document.title, window.location.pathname);
+    sessionStorage.removeItem('pkce_code_verifier');
+    sessionStorage.removeItem('pkce_redirect_uri');
+
+    if (!verifier) {
+      console.warn('No PKCE verifier found in session.');
+      return;
+    }
+
+    showToast({ type: 'info', title: 'Signing In', message: 'Authenticating with Google / Cognito...' });
+
+    try {
+      const res = await fetch('/api/auth/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code: code,
+          redirect_uri: redirectUri,
+          code_verifier: verifier
+        })
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || 'Token exchange failed');
+      }
+
+      const tokens = await res.json();
+      if (tokens.id_token) {
+        localStorage.setItem('loafed_id_token', tokens.id_token);
+        state.idToken = tokens.id_token;
+      }
+      if (tokens.access_token) {
+        localStorage.setItem('loafed_access_token', tokens.access_token);
+        state.accessToken = tokens.access_token;
+      }
+
+      parseUserFromToken();
+      updateAuthUI();
+      showToast({
+        type: 'success',
+        title: 'Welcome Baker!',
+        message: `Signed in as ${state.user ? state.user.name : 'Baker'}.`
+      });
+    } catch (err) {
+      console.error('Authentication error:', err);
+      showToast({ type: 'error', title: 'Authentication Failed', message: err.message || 'Could not complete sign in.' });
+    }
+  }
+
+  function signOut() {
+    localStorage.removeItem('loafed_id_token');
+    localStorage.removeItem('loafed_access_token');
+    state.idToken = null;
+    state.accessToken = null;
+    state.user = null;
+    updateAuthUI();
+    if (headerUserDropdown) headerUserDropdown.classList.add('hidden');
+    showToast({ type: 'info', title: 'Signed Out', message: 'You have been signed out.' });
+  }
+
+  let authMode = 'signin';
+  let pendingAuthEmail = '';
+  let pendingAuthPassword = '';
+
+  function showAuthNotice(element, message, type = 'error') {
+    if (!element) return;
+    element.className = `mb-3 p-3 rounded-xl text-xs font-medium border leading-relaxed ${
+      type === 'error' ? 'auth-notice-error' : 'auth-notice-success'
+    }`;
+    element.textContent = message;
+    element.classList.remove('hidden');
+  }
+
+  function hideAuthNotice(element) {
+    if (element) {
+      element.classList.add('hidden');
+      element.textContent = '';
+    }
+  }
+
+  function switchAuthView(viewName) {
+    if (authMainView) authMainView.classList.toggle('hidden', viewName !== 'main');
+    if (authVerifyView) authVerifyView.classList.toggle('hidden', viewName !== 'verify');
+    if (authForgotView) authForgotView.classList.toggle('hidden', viewName !== 'forgot');
+    hideAuthNotice(authNotice);
+    hideAuthNotice(authVerifyNotice);
+    hideAuthNotice(authForgotNotice);
+    refreshIcons();
+  }
+
+  function setAuthMode(mode) {
+    authMode = mode;
+    hideAuthNotice(authNotice);
+    if (mode === 'signin') {
+      if (authTabSignIn) authTabSignIn.className = 'auth-tab-btn active';
+      if (authTabSignUp) authTabSignUp.className = 'auth-tab-btn';
+      if (authNameField) authNameField.classList.add('hidden');
+      if (authModalTitle) authModalTitle.textContent = 'Sign In to Loafed AI';
+      if (authModalSubtitle) authModalSubtitle.textContent = 'Publish certified cat loaves to the leaderboard and manage your bakery submissions.';
+      if (authSubmitBtnText) authSubmitBtnText.textContent = 'Sign In to Loafed AI';
+      if (authForgotPassLink) authForgotPassLink.classList.remove('hidden');
+    } else {
+      if (authTabSignUp) authTabSignUp.className = 'auth-tab-btn active';
+      if (authTabSignIn) authTabSignIn.className = 'auth-tab-btn';
+      if (authNameField) authNameField.classList.remove('hidden');
+      if (authModalTitle) authModalTitle.textContent = 'Create Baker Account';
+      if (authModalSubtitle) authModalSubtitle.textContent = 'Join the cat loaf bakery club and register your loaves on the public leaderboard.';
+      if (authSubmitBtnText) authSubmitBtnText.textContent = 'Create Free Account';
+      if (authForgotPassLink) authForgotPassLink.classList.add('hidden');
+    }
+    refreshIcons();
+  }
+
+  function openAuthModal(defaultMode = 'signin') {
+    if (!authModal) return;
+    setAuthMode(defaultMode);
+    switchAuthView('main');
+    if (authEmailInput) authEmailInput.value = '';
+    if (authPasswordInput) authPasswordInput.value = '';
+    if (authNameInput) authNameInput.value = '';
+    authModal.classList.remove('hidden');
+    refreshIcons();
+    setTimeout(() => {
+      if (authEmailInput) authEmailInput.focus();
+    }, 60);
+  }
+
+  function closeAuthModal() {
+    if (authModal) authModal.classList.add('hidden');
+    hideAuthNotice(authNotice);
+    hideAuthNotice(authVerifyNotice);
+    hideAuthNotice(authForgotNotice);
+  }
+
+  function applyAuthTokens(tokens) {
+    if (tokens.id_token) {
+      localStorage.setItem('loafed_id_token', tokens.id_token);
+      state.idToken = tokens.id_token;
+    }
+    if (tokens.access_token) {
+      localStorage.setItem('loafed_access_token', tokens.access_token);
+      state.accessToken = tokens.access_token;
+    }
+    parseUserFromToken();
+    updateAuthUI();
+    closeAuthModal();
+    showToast({
+      type: 'success',
+      title: 'Welcome Baker!',
+      message: `Signed in as ${state.user ? state.user.name : 'Baker'}.`
+    });
+  }
+
+  // Leaderboard Modal Logic
+  function setLeaderboardPeriodTab(period) {
+    state.leaderboardPeriod = period;
+    const tabs = [
+      { id: tabPeriodAll, key: 'all' },
+      { id: tabPeriodMonth, key: 'month' },
+      { id: tabPeriodWeek, key: 'week' },
+      { id: tabPeriodMine, key: 'mine' }
+    ];
+
+    tabs.forEach(t => {
+      if (!t.id) return;
+      if (t.key === period) {
+        t.id.className = 'flex-1 py-1.5 px-3 rounded-lg transition-all bg-white text-orange-950 shadow-2xs border border-orange-200/60 font-bold';
+      } else {
+        t.id.className = 'flex-1 py-1.5 px-3 rounded-lg transition-all text-stone-600 hover:text-stone-900 border border-transparent font-bold';
+      }
+    });
+  }
+
+  function renderLeaderboardList(entries, isMine = false) {
+    if (!leaderboardList) return;
+    if (!entries || entries.length === 0) {
+      leaderboardList.innerHTML = `
+        <div class="py-12 text-center text-stone-500">
+          <div class="w-12 h-12 rounded-xl bg-orange-100/70 border border-orange-200 text-orange-600 flex items-center justify-center mx-auto mb-2">
+            <i data-lucide="inbox" class="w-6 h-6"></i>
+          </div>
+          <p class="text-xs font-bold text-stone-700">No submissions recorded yet</p>
+          <p class="text-[11px] text-stone-500 mt-0.5">${isMine ? 'You have not submitted any loaves to the leaderboard yet.' : 'Be the first baker to audit and submit a cat loaf for this period!'}</p>
+        </div>
+      `;
+      refreshIcons();
+      return;
+    }
+
+    leaderboardList.innerHTML = entries.map((entry, idx) => {
+      const rank = entry.rank || (idx + 1);
+      let rankBadge = '';
+      if (rank === 1) {
+        rankBadge = '<span class="w-7 h-7 rounded-xl bg-gradient-to-br from-amber-300 to-yellow-500 text-amber-950 flex items-center justify-center text-xs font-black shadow-xs border border-amber-400">1</span>';
+      } else if (rank === 2) {
+        rankBadge = '<span class="w-7 h-7 rounded-xl bg-gradient-to-br from-stone-200 to-stone-400 text-stone-800 flex items-center justify-center text-xs font-black shadow-xs border border-stone-300">2</span>';
+      } else if (rank === 3) {
+        rankBadge = '<span class="w-7 h-7 rounded-xl bg-gradient-to-br from-amber-600 to-orange-700 text-amber-50 flex items-center justify-center text-xs font-black shadow-xs border border-amber-700">3</span>';
+      } else {
+        rankBadge = `<span class="w-7 h-7 rounded-xl bg-orange-50 text-stone-700 flex items-center justify-center text-xs font-bold border border-orange-200">${rank}</span>`;
+      }
+
+      const thumb = entry.thumbnail_url || '/static/logo.png';
+      const catName = escapeHtml(entry.cat_name || 'Anonymous Loaf');
+      const bakerName = escapeHtml(entry.display_name || 'Baker');
+      const score = entry.overall_score || 0;
+      const gradeLetter = entry.grade_letter || '';
+      const loafRank = escapeHtml(entry.loaf_rank || 'Artisan Loaf');
+
+      let deleteBtn = '';
+      if (isMine) {
+        deleteBtn = `
+          <button class="delete-loaf-btn p-1.5 rounded-lg text-stone-400 hover:text-red-600 hover:bg-red-50 transition-colors ml-2" data-id="${entry.entry_id}" aria-label="Delete ${catName} submission">
+            <i data-lucide="trash-2" class="w-4 h-4"></i>
+          </button>
+        `;
+      }
+
+      return `
+        <div class="p-3 rounded-2xl bg-white border border-orange-200/90 hover:border-amber-400 shadow-2xs hover:shadow-xs transition-all flex items-center gap-3">
+          <div class="shrink-0 flex items-center justify-center">
+            ${rankBadge}
+          </div>
+          <img src="${thumb}" alt="${catName}" class="w-12 h-12 rounded-xl object-cover border border-orange-200/80 bg-orange-50 shrink-0">
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between gap-1">
+              <h4 class="font-extrabold text-xs sm:text-sm text-stone-900 truncate">${catName}</h4>
+              <span class="stamp text-[11px] font-black text-orange-700 bg-white border-orange-700 shrink-0">${score} ${gradeLetter}</span>
+            </div>
+            <div class="flex items-center gap-1.5 text-[11px] text-stone-500 mt-0.5 truncate">
+              <span class="text-orange-950 font-bold truncate">${loafRank}</span>
+              <span>&bull;</span>
+              <span class="truncate">by ${bakerName}</span>
+            </div>
+          </div>
+          ${deleteBtn}
+        </div>
+      `;
+    }).join('');
+
+    refreshIcons();
+
+    if (isMine) {
+      leaderboardList.querySelectorAll('.delete-loaf-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          const id = e.currentTarget.getAttribute('data-id');
+          if (!id) return;
+          if (!confirm('Are you sure you want to remove this loaf from the leaderboard?')) return;
+          try {
+            const res = await fetch(`/api/leaderboard/entry/${id}`, {
+              method: 'DELETE',
+              headers: { 'Authorization': `Bearer ${state.idToken}` }
+            });
+            if (res.ok) {
+              showToast({ type: 'info', title: 'Loaf Removed', message: 'Leaderboard submission deleted.' });
+              loadLeaderboardEntries('mine');
+            } else {
+              showToast({ type: 'error', title: 'Delete Error', message: 'Failed to delete submission.' });
+            }
+          } catch (err) {
+            showToast({ type: 'error', title: 'Delete Error', message: err.message });
+          }
+        });
+      });
+    }
+  }
+
+  async function loadLeaderboardEntries(period = 'all') {
+    setLeaderboardPeriodTab(period);
+    if (!leaderboardList) return;
+    leaderboardList.innerHTML = `
+      <div class="py-12 text-center text-stone-400">
+        <i data-lucide="loader-2" class="w-6 h-6 animate-spin mx-auto text-orange-600 mb-2"></i>
+        <p class="text-xs">Loading loaf rankings...</p>
+      </div>
+    `;
+    refreshIcons();
+
+    if (period === 'mine') {
+      if (!state.user || !state.idToken) {
+        leaderboardList.innerHTML = `
+          <div class="py-12 text-center text-stone-500">
+            <div class="w-12 h-12 rounded-xl bg-orange-100/70 border border-orange-200 text-orange-600 flex items-center justify-center mx-auto mb-2">
+              <i data-lucide="lock" class="w-6 h-6"></i>
+            </div>
+            <p class="text-xs font-bold text-stone-800">Sign in to view your submitted loaves</p>
+            <button id="leaderboardSignInPromptBtn" class="mt-3 px-4 py-2 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-bold text-xs shadow-xs transition-all">
+              Sign In
+            </button>
+          </div>
+        `;
+        refreshIcons();
+        const pBtn = document.getElementById('leaderboardSignInPromptBtn');
+        if (pBtn) pBtn.addEventListener('click', () => {
+          leaderboardModal.classList.add('hidden');
+          openAuthModal();
+        });
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/leaderboard/my-entries', {
+          headers: { 'Authorization': `Bearer ${state.idToken}` }
+        });
+        if (!res.ok) throw new Error('Could not load entries');
+        const data = await res.json();
+        renderLeaderboardList(data.entries || [], true);
+      } catch (err) {
+        leaderboardList.innerHTML = `<p class="py-8 text-center text-xs text-red-500">${err.message}</p>`;
+      }
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/leaderboard?period=${period}`);
+      if (!res.ok) throw new Error('Failed to retrieve rankings');
+      const data = await res.json();
+      renderLeaderboardList(data.entries || [], false);
+    } catch (err) {
+      leaderboardList.innerHTML = `<p class="py-8 text-center text-xs text-red-500">${err.message}</p>`;
+    }
+  }
+
+  function openLeaderboardModal(period = 'all') {
+    if (period && period !== 'all') {
+      window.location.href = `/leaderboard?period=${period}`;
+    } else {
+      window.location.href = '/leaderboard';
+    }
+  }
+
+  function closeLeaderboardModal() {
+    if (leaderboardModal) leaderboardModal.classList.add('hidden');
+  }
+
+  // Submit Modal Logic
+  function openSubmitModal() {
+    if (!state.currentResult || !submitModal) return;
+    if (submitModalCatName) submitModalCatName.textContent = state.currentResult.cat_name || 'Anonymous Loaf';
+    if (submitModalScoreBadge) submitModalScoreBadge.textContent = `${state.currentResult.overall_score} ${state.currentResult.grade_letter}`;
+    if (submitModalRank) submitModalRank.textContent = state.currentResult.loaf_rank || 'Artisan Loaf';
+    if (submitModalBread) submitModalBread.textContent = state.currentResult.bread_classification || 'Brioche';
+    if (submitDisplayNameInput) submitDisplayNameInput.value = state.user ? state.user.name : '';
+    if (submitConsentCheckbox) submitConsentCheckbox.checked = false;
+    if (confirmSubmitLeaderboardBtn) confirmSubmitLeaderboardBtn.disabled = true;
+
+    if (submitModalThumbnail) {
+      if (state.photos.length > 0 && state.photos[0].previewUrl) {
+        submitModalThumbnail.src = state.photos[0].previewUrl;
+      } else {
+        submitModalThumbnail.src = '/static/logo.png';
+      }
+    }
+
+    submitModal.classList.remove('hidden');
+    refreshIcons();
+  }
+
+  function closeSubmitModal() {
+    if (submitModal) submitModal.classList.add('hidden');
+  }
+
+  if (submitConsentCheckbox && confirmSubmitLeaderboardBtn) {
+    submitConsentCheckbox.addEventListener('change', () => {
+      confirmSubmitLeaderboardBtn.disabled = !submitConsentCheckbox.checked;
+    });
+  }
+
+  if (confirmSubmitLeaderboardBtn) {
+    confirmSubmitLeaderboardBtn.addEventListener('click', async () => {
+      if (!state.user || !state.idToken) {
+        openAuthModal();
+        return;
+      }
+      if (!submitConsentCheckbox || !submitConsentCheckbox.checked) {
+        showToast({ type: 'warning', title: 'Consent Required', message: 'Please check the consent box to publish to the leaderboard.' });
+        return;
+      }
+
+      confirmSubmitLeaderboardBtn.disabled = true;
+      confirmSubmitLeaderboardBtn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i><span>Publishing...</span>';
+      refreshIcons();
+
+      try {
+        let photoFile = state.submittedPhotoBlob;
+        if (!photoFile && state.photos.length > 0 && state.photos[0].file) {
+          photoFile = state.photos[0].file;
+        }
+
+        if (!photoFile) {
+          const sampleImgSrc = submitModalThumbnail.src || '/static/samples/buttercup_front.jpg';
+          const imgResp = await fetch(sampleImgSrc);
+          const blob = await imgResp.blob();
+          photoFile = new File([blob], 'loaf.jpg', { type: blob.type || 'image/jpeg' });
+        }
+
+        let gradeToken = state.gradeToken;
+        if (!gradeToken) {
+          const formData = new FormData();
+          formData.append('cat_name', state.currentResult.cat_name || 'Cat');
+          formData.append('images', photoFile);
+          const gRes = await fetch('/api/grade', { method: 'POST', body: formData });
+          if (gRes.ok) {
+            const gData = await gRes.json();
+            gradeToken = gData.grade_token;
+            state.gradeToken = gradeToken;
+          } else {
+            throw new Error('Could not verify grade signature token.');
+          }
+        }
+
+        const submitForm = new FormData();
+        submitForm.append('grade_token', gradeToken);
+        submitForm.append('display_name', (submitDisplayNameInput ? submitDisplayNameInput.value.trim() : '') || state.user.name);
+        submitForm.append('photo', photoFile);
+
+        const subRes = await fetch('/api/leaderboard/submit', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${state.idToken}`
+          },
+          body: submitForm
+        });
+
+        const subData = await subRes.json();
+        if (!subRes.ok) {
+          throw new Error(subData.detail || 'Leaderboard submission failed.');
+        }
+
+        closeSubmitModal();
+        showToast({
+          type: 'success',
+          title: 'Published to Leaderboard!',
+          message: subData.message || 'Your cat loaf is now live on the Leaderboard!'
+        });
+
+        setTimeout(() => {
+          window.location.href = '/leaderboard';
+        }, 1000);
+      } catch (err) {
+        console.error('Submission error:', err);
+        showToast({ type: 'error', title: 'Submission Failed', message: err.message || 'Failed to submit loaf.' });
+      } finally {
+        confirmSubmitLeaderboardBtn.disabled = false;
+        confirmSubmitLeaderboardBtn.innerHTML = '<i data-lucide="check" class="w-4 h-4"></i><span>Confirm & Publish</span>';
+        refreshIcons();
+      }
+    });
+  }
+
+  // Event Listeners for Leaderboard & Auth
+  if (openLeaderboardBtn) openLeaderboardBtn.addEventListener('click', () => openLeaderboardModal('all'));
+  if (closeLeaderboardBtn) closeLeaderboardBtn.addEventListener('click', closeLeaderboardModal);
+  if (dismissLeaderboardBtn) dismissLeaderboardBtn.addEventListener('click', closeLeaderboardModal);
+
+  if (tabPeriodAll) tabPeriodAll.addEventListener('click', () => loadLeaderboardEntries('all'));
+  if (tabPeriodMonth) tabPeriodMonth.addEventListener('click', () => loadLeaderboardEntries('month'));
+  if (tabPeriodWeek) tabPeriodWeek.addEventListener('click', () => loadLeaderboardEntries('week'));
+  if (tabPeriodMine) tabPeriodMine.addEventListener('click', () => loadLeaderboardEntries('mine'));
+
+  if (headerSignInBtn) headerSignInBtn.addEventListener('click', () => openAuthModal('signin'));
+  if (closeAuthModalBtn) closeAuthModalBtn.addEventListener('click', closeAuthModal);
+
+  // 1-Click Google Sign-In (Direct to Google, skips Cognito Hosted UI)
+  if (signInGoogleBtn) {
+    signInGoogleBtn.addEventListener('click', () => {
+      closeAuthModal();
+      startCognitoAuth('Google');
+    });
+  }
+
+  // Auth Tabs (Sign In vs Create Account)
+  if (authTabSignIn) {
+    authTabSignIn.addEventListener('click', () => setAuthMode('signin'));
+  }
+  if (authTabSignUp) {
+    authTabSignUp.addEventListener('click', () => setAuthMode('signup'));
+  }
+
+  // Email Sign In / Sign Up Form
+  if (authEmailForm) {
+    authEmailForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      hideAuthNotice(authNotice);
+
+      const email = authEmailInput ? authEmailInput.value.trim().toLowerCase() : '';
+      const password = authPasswordInput ? authPasswordInput.value : '';
+      const name = authNameInput ? authNameInput.value.trim() : '';
+
+      if (!email || !password) {
+        showAuthNotice(authNotice, 'Please enter both email and password.');
+        return;
+      }
+
+      const submitBtn = authSubmitBtn;
+      const origText = authSubmitBtnText ? authSubmitBtnText.textContent : 'Submit';
+      if (submitBtn) submitBtn.disabled = true;
+      if (authSubmitBtnText) authSubmitBtnText.textContent = 'Please wait...';
+
+      try {
+        if (authMode === 'signin') {
+          const res = await fetch('/api/auth/email/signin', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+          });
+          const data = await res.json();
+          if (!res.ok) {
+            if (res.status === 403 || (data.detail && data.detail.includes('USER_NOT_CONFIRMED'))) {
+              pendingAuthEmail = email;
+              pendingAuthPassword = password;
+              if (authVerifyEmailDisplay) authVerifyEmailDisplay.textContent = email;
+              switchAuthView('verify');
+              showAuthNotice(authVerifyNotice, 'Your email has not been verified yet. Please enter the 6-digit code sent to your inbox.', 'error');
+              return;
+            }
+            throw new Error(data.detail || 'Sign in failed. Please check your email and password.');
+          }
+          applyAuthTokens(data);
+        } else {
+          // Sign Up
+          if (password.length < 8) {
+            throw new Error('Password must be at least 8 characters long.');
+          }
+          const res = await fetch('/api/auth/email/signup', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password, display_name: name })
+          });
+          const data = await res.json();
+          if (!res.ok) {
+            throw new Error(data.detail || 'Registration failed. Please try again.');
+          }
+          pendingAuthEmail = email;
+          pendingAuthPassword = password;
+          if (authVerifyEmailDisplay) authVerifyEmailDisplay.textContent = email;
+          switchAuthView('verify');
+          showAuthNotice(authVerifyNotice, 'Account created! Enter the 6-digit verification code sent to your email.', 'success');
+        }
+      } catch (err) {
+        showAuthNotice(authNotice, err.message || 'An error occurred.');
+      } finally {
+        if (submitBtn) submitBtn.disabled = false;
+        if (authSubmitBtnText) authSubmitBtnText.textContent = origText;
+        refreshIcons();
+      }
+    });
+  }
+
+  // Verification Code (OTP) Form
+  if (authVerifyForm) {
+    authVerifyForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      hideAuthNotice(authVerifyNotice);
+      const code = authVerifyCodeInput ? authVerifyCodeInput.value.trim() : '';
+      if (!code) {
+        showAuthNotice(authVerifyNotice, 'Please enter your 6-digit verification code.');
+        return;
+      }
+
+      const submitBtn = authVerifySubmitBtn;
+      const origText = authVerifySubmitBtnText ? authVerifySubmitBtnText.textContent : 'Verify';
+      if (submitBtn) submitBtn.disabled = true;
+      if (authVerifySubmitBtnText) authVerifySubmitBtnText.textContent = 'Verifying...';
+
+      try {
+        const res = await fetch('/api/auth/email/confirm', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: pendingAuthEmail,
+            code: code,
+            password: pendingAuthPassword || undefined
+          })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.detail || 'Verification code failed. Please check your code.');
+        }
+
+        if (data.id_token) {
+          applyAuthTokens(data);
+        } else {
+          switchAuthView('main');
+          setAuthMode('signin');
+          if (authEmailInput) authEmailInput.value = pendingAuthEmail;
+          showAuthNotice(authNotice, 'Email confirmed! You can now sign in with your password.', 'success');
+        }
+      } catch (err) {
+        showAuthNotice(authVerifyNotice, err.message || 'Verification failed.');
+      } finally {
+        if (submitBtn) submitBtn.disabled = false;
+        if (authVerifySubmitBtnText) authVerifySubmitBtnText.textContent = origText;
+        refreshIcons();
+      }
+    });
+  }
+
+  // Resend Verification Code
+  if (authResendCodeBtn) {
+    authResendCodeBtn.addEventListener('click', async () => {
+      if (!pendingAuthEmail) return;
+      try {
+        const res = await fetch('/api/auth/email/resend-code', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: pendingAuthEmail })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Could not resend code.');
+        showAuthNotice(authVerifyNotice, 'A fresh 6-digit verification code has been emailed to you.', 'success');
+      } catch (err) {
+        showAuthNotice(authVerifyNotice, err.message || 'Could not resend code.', 'error');
+      }
+    });
+  }
+
+  if (authBackToSignInBtn) {
+    authBackToSignInBtn.addEventListener('click', () => {
+      switchAuthView('main');
+      setAuthMode('signin');
+    });
+  }
+
+  // Forgot Password Flow
+  if (authForgotPassLink) {
+    authForgotPassLink.addEventListener('click', () => {
+      switchAuthView('forgot');
+      if (authForgotStep2) authForgotStep2.classList.add('hidden');
+      if (authForgotSubmitBtnText) authForgotSubmitBtnText.textContent = 'Send Reset Code';
+      if (authForgotEmailInput && authEmailInput) {
+        authForgotEmailInput.value = authEmailInput.value.trim();
+      }
+    });
+  }
+
+  if (authForgotForm) {
+    authForgotForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      hideAuthNotice(authForgotNotice);
+      const email = authForgotEmailInput ? authForgotEmailInput.value.trim().toLowerCase() : '';
+      if (!email) {
+        showAuthNotice(authForgotNotice, 'Please enter your email address.');
+        return;
+      }
+
+      const isStep2 = authForgotStep2 && !authForgotStep2.classList.contains('hidden');
+      const submitBtn = authForgotSubmitBtn;
+      const origText = authForgotSubmitBtnText ? authForgotSubmitBtnText.textContent : 'Submit';
+      if (submitBtn) submitBtn.disabled = true;
+      if (authForgotSubmitBtnText) authForgotSubmitBtnText.textContent = 'Processing...';
+
+      try {
+        if (!isStep2) {
+          const res = await fetch('/api/auth/email/forgot-password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email })
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.detail || 'Could not send reset code.');
+          if (authForgotStep2) authForgotStep2.classList.remove('hidden');
+          if (authForgotSubmitBtnText) authForgotSubmitBtnText.textContent = 'Update Password & Sign In';
+          showAuthNotice(authForgotNotice, 'Reset code sent! Check your email inbox.', 'success');
+        } else {
+          const code = authForgotCodeInput ? authForgotCodeInput.value.trim() : '';
+          const newPassword = authForgotNewPassInput ? authForgotNewPassInput.value : '';
+          if (!code || !newPassword) {
+            throw new Error('Please enter the reset code and a new password.');
+          }
+          if (newPassword.length < 8) {
+            throw new Error('New password must be at least 8 characters long.');
+          }
+          const res = await fetch('/api/auth/email/confirm-forgot-password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, code, new_password: newPassword })
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.detail || 'Password reset failed.');
+
+          if (data.id_token) {
+            applyAuthTokens(data);
+          } else {
+            switchAuthView('main');
+            setAuthMode('signin');
+            if (authEmailInput) authEmailInput.value = email;
+            showAuthNotice(authNotice, 'Password reset successfully! Please sign in with your new password.', 'success');
+          }
+        }
+      } catch (err) {
+        showAuthNotice(authForgotNotice, err.message || 'Password reset failed.');
+      } finally {
+        if (submitBtn) submitBtn.disabled = false;
+        if (authForgotSubmitBtnText && !isStep2 && authForgotStep2 && !authForgotStep2.classList.contains('hidden')) {
+          authForgotSubmitBtnText.textContent = 'Update Password & Sign In';
+        } else if (authForgotSubmitBtnText) {
+          authForgotSubmitBtnText.textContent = origText;
+        }
+        refreshIcons();
+      }
+    });
+  }
+
+  if (authForgotCancelBtn) {
+    authForgotCancelBtn.addEventListener('click', () => {
+      switchAuthView('main');
+      setAuthMode('signin');
+    });
+  }
+
+  if (authOpenTermsBtn) {
+    authOpenTermsBtn.addEventListener('click', () => {
+      closeAuthModal();
+      openLegalModal('terms');
+    });
+  }
+  if (authOpenPrivacyBtn) {
+    authOpenPrivacyBtn.addEventListener('click', () => {
+      closeAuthModal();
+      openLegalModal('privacy');
+    });
+  }
+
+  if (submitLeaderboardBtn) {
+    submitLeaderboardBtn.addEventListener('click', () => {
+      if (!state.currentResult) {
+        showToast({ type: 'warning', title: 'No Loaf Graded', message: 'Please grade a cat loaf before submitting to the leaderboard.' });
+        return;
+      }
+      if (!state.user) {
+        openAuthModal();
+        return;
+      }
+      openSubmitModal();
+    });
+  }
+  if (closeSubmitModalBtn) closeSubmitModalBtn.addEventListener('click', closeSubmitModal);
+  if (cancelSubmitModalBtn) cancelSubmitModalBtn.addEventListener('click', closeSubmitModal);
+
+  if (headerUserMenuBtn) {
+    headerUserMenuBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (!headerUserDropdown) return;
+      const isHidden = headerUserDropdown.classList.contains('hidden');
+      if (isHidden) {
+        headerUserDropdown.classList.remove('hidden');
+        headerUserMenuBtn.setAttribute('aria-expanded', 'true');
+      } else {
+        headerUserDropdown.classList.add('hidden');
+        headerUserMenuBtn.setAttribute('aria-expanded', 'false');
+      }
+      refreshIcons();
+    });
+  }
+
+  document.addEventListener('click', (e) => {
+    if (headerUserDropdown && !headerUserDropdown.contains(e.target) && e.target !== headerUserMenuBtn) {
+      headerUserDropdown.classList.add('hidden');
+      if (headerUserMenuBtn) headerUserMenuBtn.setAttribute('aria-expanded', 'false');
+    }
+  });
+
+  if (menuMyLoavesBtn) {
+    menuMyLoavesBtn.addEventListener('click', () => {
+      if (headerUserDropdown) headerUserDropdown.classList.add('hidden');
+      openLeaderboardModal('mine');
+    });
+  }
+  if (menuSignOutBtn) {
+    menuSignOutBtn.addEventListener('click', signOut);
+  }
+
+  if (menuDeleteAccountBtn) {
+    menuDeleteAccountBtn.addEventListener('click', () => {
+      if (headerUserDropdown) headerUserDropdown.classList.add('hidden');
+      if (deleteAccountModal) deleteAccountModal.classList.remove('hidden');
+      refreshIcons();
+    });
+  }
+  if (cancelDeleteAccountBtn) {
+    cancelDeleteAccountBtn.addEventListener('click', () => {
+      if (deleteAccountModal) deleteAccountModal.classList.add('hidden');
+    });
+  }
+  if (confirmDeleteAccountBtn) {
+    confirmDeleteAccountBtn.addEventListener('click', async () => {
+      if (!state.idToken) return;
+      confirmDeleteAccountBtn.disabled = true;
+      confirmDeleteAccountBtn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i><span>Deleting...</span>';
+      refreshIcons();
+
+      try {
+        const res = await fetch('/api/user/account', {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${state.idToken}` }
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.detail || 'Account deletion failed.');
+        }
+        if (deleteAccountModal) deleteAccountModal.classList.add('hidden');
+        signOut();
+        showToast({
+          type: 'info',
+          title: 'Account Deleted',
+          message: 'Your account and all associated submissions have been permanently deleted.'
+        });
+      } catch (err) {
+        showToast({ type: 'error', title: 'Deletion Error', message: err.message });
+      } finally {
+        confirmDeleteAccountBtn.disabled = false;
+        confirmDeleteAccountBtn.innerHTML = '<i data-lucide="trash-2" class="w-3.5 h-3.5"></i><span>Permanently Delete</span>';
+        refreshIcons();
+      }
+    });
+  }
+
   // Initial Boot
   checkServerStatus();
+  fetchAuthConfig();
+  parseUserFromToken();
+  updateAuthUI();
+  handleAuthRedirectCallback();
+  // Check for legal modal query param
+  const urlLegal = new URLSearchParams(window.location.search).get('legal');
+  if (urlLegal === 'privacy' || urlLegal === 'terms') {
+    openLegalModal(urlLegal);
+  }
+
   updateHistoryBadge();
   refreshIcons();
 });

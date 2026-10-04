@@ -1,8 +1,23 @@
 import os
+import io
 import json
 import logging
+import hmac
+import hashlib
+import base64
+import uuid
+import subprocess
+import urllib.request
+import urllib.parse
 from typing import Optional, List, Dict, Any
 from pathlib import Path
+
+from PIL import Image, UnidentifiedImageError
+import boto3
+from boto3.dynamodb.conditions import Key
+from botocore.exceptions import ClientError
+import jwt
+from jwt.algorithms import RSAAlgorithm
 
 from fastapi import FastAPI, UploadFile, File, Form, Header, HTTPException, Request
 from fastapi.responses import JSONResponse, FileResponse, PlainTextResponse, Response
@@ -91,6 +106,206 @@ def check_free_tier_limits(client_ip: str, is_server_key: bool):
     daily_counter["count"] += 1
     ip_history[client_ip].append(now)
     return True, ""
+
+
+# Upload validation limits
+MAX_IMAGES = 5
+MAX_IMAGE_BYTES = 8 * 1024 * 1024        # 8 MB per image
+MAX_IMAGE_DIMENSION = 12000              # px per side
+ALLOWED_IMAGE_FORMATS = {"JPEG": "image/jpeg", "PNG": "image/png", "WEBP": "image/webp"}
+MAX_CAT_NAME_LENGTH = 40
+Image.MAX_IMAGE_PIXELS = 100_000_000     # decompression-bomb guard (Pillow errors above 2x this)
+
+
+def sanitize_cat_name(name: Optional[str]) -> Optional[str]:
+    """Trims, strips control characters and caps the length of a user supplied cat name."""
+    if not name:
+        return None
+    cleaned = "".join(ch for ch in name if ch.isprintable()).strip()[:MAX_CAT_NAME_LENGTH]
+    return cleaned or None
+
+
+async def read_and_validate_image(upload: UploadFile):
+    """Reads an upload with a hard size cap and verifies it is genuinely a JPEG/PNG/WebP.
+
+    Returns (bytes, detected_mime) or (b"", "") for an empty file. Never trusts the
+    client supplied filename or Content-Type.
+    """
+    content = await upload.read(MAX_IMAGE_BYTES + 1)
+    if len(content) > MAX_IMAGE_BYTES:
+        raise HTTPException(status_code=413, detail=f"Each photo must be {MAX_IMAGE_BYTES // (1024 * 1024)} MB or smaller.")
+    if not content:
+        return b"", ""
+    try:
+        with Image.open(io.BytesIO(content)) as probe:
+            fmt = probe.format
+            width, height = probe.size
+            probe.verify()
+    except (UnidentifiedImageError, Image.DecompressionBombError, OSError, SyntaxError, ValueError):
+        raise HTTPException(status_code=400, detail="One of the uploaded files is not a valid JPEG, PNG or WebP image.")
+    if fmt not in ALLOWED_IMAGE_FORMATS:
+        raise HTTPException(status_code=400, detail="Only JPEG, PNG and WebP photos are supported.")
+    if width > MAX_IMAGE_DIMENSION or height > MAX_IMAGE_DIMENSION:
+        raise HTTPException(status_code=400, detail=f"Photos may be at most {MAX_IMAGE_DIMENSION} pixels per side.")
+    return content, ALLOWED_IMAGE_FORMATS[fmt]
+
+
+# AWS & Auth Configuration
+COGNITO_USER_POOL_ID = os.getenv("COGNITO_USER_POOL_ID", "us-east-1_IiodbLOpW")
+COGNITO_CLIENT_ID = os.getenv("COGNITO_CLIENT_ID", "76eqq0ir3782t01unag505400b")
+COGNITO_DOMAIN = os.getenv("COGNITO_DOMAIN", "loafed-auth.auth.us-east-1.amazoncognito.com")
+AWS_REGION = os.getenv("AWS_REGION", "us-east-1")
+DYNAMODB_TABLE_NAME = os.getenv("DYNAMODB_TABLE", "Loafed-Leaderboard")
+S3_BUCKET_NAME = os.getenv("S3_THUMBNAILS_BUCKET", "loafed-thumbnails-686255947626")
+SIGNATURE_SECRET = os.getenv("SIGNATURE_SECRET", "c0afed7a89b4e5f61234567890abcdefc0afed7a89b4e5f61234567890abcdef")
+
+
+def get_boto3_session():
+    """Returns a working boto3 Session, prioritizing Lambda IAM execution role,
+    standard environment variables, or local profile fallback."""
+    if os.getenv("AWS_LAMBDA_FUNCTION_NAME"):
+        return boto3.Session(region_name=AWS_REGION)
+
+    # For local development or non-Lambda environments, try exported profile credentials
+    profile = os.getenv("AWS_PROFILE", "antigravity")
+    try:
+        proc = subprocess.run(
+            ["aws", "configure", "export-credentials", "--profile", profile],
+            capture_output=True,
+            text=True,
+            timeout=5
+        )
+        if proc.returncode == 0 and proc.stdout:
+            creds = json.loads(proc.stdout)
+            return boto3.Session(
+                aws_access_key_id=creds.get("AccessKeyId"),
+                aws_secret_access_key=creds.get("SecretAccessKey"),
+                aws_session_token=creds.get("SessionToken"),
+                region_name=AWS_REGION
+            )
+    except Exception as err:
+        logger.debug(f"Local aws export-credentials note: {err}")
+
+    return boto3.Session(region_name=AWS_REGION)
+
+
+COGNITO_JWKS_CACHE: Dict[str, Any] = {"keys": None, "fetched_at": 0.0}
+
+
+def get_cognito_jwks() -> dict:
+    now = time.time()
+    if COGNITO_JWKS_CACHE["keys"] and (now - COGNITO_JWKS_CACHE["fetched_at"] < 3600):
+        return COGNITO_JWKS_CACHE["keys"]
+
+    url = f"https://cognito-idp.{AWS_REGION}.amazonaws.com/{COGNITO_USER_POOL_ID}/.well-known/jwks.json"
+    req = urllib.request.Request(url, headers={"User-Agent": "Loafed-Backend/1.0"})
+    try:
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+            COGNITO_JWKS_CACHE["keys"] = data
+            COGNITO_JWKS_CACHE["fetched_at"] = now
+            return data
+    except Exception as e:
+        logger.error(f"Failed to fetch Cognito JWKS: {e}")
+        if COGNITO_JWKS_CACHE["keys"]:
+            return COGNITO_JWKS_CACHE["keys"]
+        raise HTTPException(status_code=500, detail="Authentication provider key retrieval failed.")
+
+
+def verify_cognito_token(auth_header: Optional[str]) -> dict:
+    if not auth_header or not auth_header.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Authentication required. Please sign in.")
+    token = auth_header.split(" ", 1)[1].strip()
+    try:
+        header = jwt.get_unverified_header(token)
+        kid = header.get("kid")
+        if not kid:
+            raise HTTPException(status_code=401, detail="Invalid token header.")
+
+        jwks = get_cognito_jwks()
+        key_data = next((k for k in jwks.get("keys", []) if k.get("kid") == kid), None)
+        if not key_data:
+            COGNITO_JWKS_CACHE["fetched_at"] = 0.0
+            jwks = get_cognito_jwks()
+            key_data = next((k for k in jwks.get("keys", []) if k.get("kid") == kid), None)
+            if not key_data:
+                raise HTTPException(status_code=401, detail="Invalid token key signature.")
+
+        public_key = RSAAlgorithm.from_jwk(key_data)
+        claims = jwt.decode(
+            token,
+            public_key,
+            algorithms=["RS256"],
+            options={"verify_aud": False}
+        )
+
+        expected_issuer = f"https://cognito-idp.{AWS_REGION}.amazonaws.com/{COGNITO_USER_POOL_ID}"
+        if claims.get("iss") != expected_issuer:
+            raise HTTPException(status_code=401, detail="Invalid token issuer.")
+
+        user_id = claims.get("sub")
+        if not user_id:
+            raise HTTPException(status_code=401, detail="Missing user identifier in token claims.")
+
+        return claims
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.warning(f"Cognito token validation failed: {e}")
+        raise HTTPException(status_code=401, detail="Session expired or invalid authentication token.")
+
+
+def generate_grade_token(result_data: dict) -> str:
+    payload = {
+        "cat_name": result_data.get("cat_name", "Anonymous Loaf"),
+        "overall_score": int(result_data.get("overall_score", 0)),
+        "grade_letter": str(result_data.get("grade_letter", "")),
+        "loaf_rank": str(result_data.get("loaf_rank", "")),
+        "bread_classification": str(result_data.get("bread_classification", "")),
+        "ts": int(time.time()),
+        "salt": uuid.uuid4().hex[:12]
+    }
+    encoded = base64.urlsafe_b64encode(json.dumps(payload, sort_keys=True).encode()).decode()
+    signature = hmac.new(SIGNATURE_SECRET.encode(), encoded.encode(), hashlib.sha256).hexdigest()
+    return f"{encoded}.{signature}"
+
+
+def verify_grade_token(grade_token: str) -> dict:
+    if not grade_token or "." not in grade_token:
+        raise HTTPException(status_code=400, detail="Invalid grade evaluation token.")
+    parts = grade_token.rsplit(".", 1)
+    if len(parts) != 2:
+        raise HTTPException(status_code=400, detail="Malformed grade token structure.")
+    encoded, signature = parts
+    expected_sig = hmac.new(SIGNATURE_SECRET.encode(), encoded.encode(), hashlib.sha256).hexdigest()
+    if not hmac.compare_digest(signature, expected_sig):
+        raise HTTPException(status_code=400, detail="Tampered or invalid evaluation token.")
+    try:
+        data = json.loads(base64.urlsafe_b64decode(encoded.encode()).decode())
+        if time.time() - data.get("ts", 0) > 86400:
+            raise HTTPException(status_code=400, detail="Grade token has expired. Please run a new loaf inspection.")
+        return data
+    except Exception as e:
+        if isinstance(e, HTTPException):
+            raise
+        raise HTTPException(status_code=400, detail="Failed to parse grade token payload.")
+
+
+def create_leaderboard_thumbnail(image_bytes: bytes) -> bytes:
+    with Image.open(io.BytesIO(image_bytes)) as img:
+        if img.mode in ("RGBA", "LA", "P"):
+            rgb_img = Image.new("RGB", img.size, (255, 255, 255))
+            if img.mode == "P":
+                img = img.convert("RGBA")
+            rgb_img.paste(img, mask=img.split()[-1] if "A" in img.mode else None)
+            img = rgb_img
+        elif img.mode != "RGB":
+            img = img.convert("RGB")
+
+        img.thumbnail((600, 600), Image.Resampling.LANCZOS)
+        out = io.BytesIO()
+        img.save(out, format="WEBP", quality=82, method=6)
+        return out.getvalue()
 
 
 # Pydantic Schemas for AI Structured Output
@@ -502,33 +717,29 @@ async def grade_loaf(
 
     effective_api_key = api_key or x_gemini_api_key or os.getenv("GEMINI_API_KEY", "").strip()
     
-    # Collect all uploaded files (1 to 5 images)
+    cat_name = sanitize_cat_name(cat_name)
+
+    # Collect all uploaded files (1 to 5 images), each validated server-side
     submitted_images = [] # list of (label, bytes, mime_type)
-    
+
+    async def add_upload(upload, label):
+        if len(submitted_images) >= MAX_IMAGES or not (upload and upload.filename):
+            return
+        content, mime = await read_and_validate_image(upload)
+        if content:
+            submitted_images.append((label, content, mime))
+
     if images:
-        for idx, img in enumerate(images):
-            if img and img.filename and len(submitted_images) < 5:
-                content = await img.read()
-                if len(content) > 0:
-                    label = f"Inspection Photo {len(submitted_images) + 1}"
-                    submitted_images.append((label, content, img.content_type or "image/jpeg"))
+        for img in images:
+            await add_upload(img, f"Inspection Photo {len(submitted_images) + 1}")
 
     # Also check individual named slots if images list was empty or has room (e.g. presets)
-    if len(submitted_images) < 5:
-        if front and front.filename and not any(l == "Front View" for l, _, _ in submitted_images):
-            content = await front.read()
-            if len(content) > 0 and len(submitted_images) < 5:
-                submitted_images.append(("Front View", content, front.content_type or "image/jpeg"))
-                
-        if side and side.filename and not any(l == "Side View" for l, _, _ in submitted_images):
-            content = await side.read()
-            if len(content) > 0 and len(submitted_images) < 5:
-                submitted_images.append(("Side View", content, side.content_type or "image/jpeg"))
-                
-        if top and top.filename and not any(l == "Top (Bird's Eye) View" for l, _, _ in submitted_images):
-            content = await top.read()
-            if len(content) > 0 and len(submitted_images) < 5:
-                submitted_images.append(("Top (Bird's Eye) View", content, top.content_type or "image/jpeg"))
+    if front and not any(l == "Front View" for l, _, _ in submitted_images):
+        await add_upload(front, "Front View")
+    if side and not any(l == "Side View" for l, _, _ in submitted_images):
+        await add_upload(side, "Side View")
+    if top and not any(l == "Top (Bird's Eye) View" for l, _, _ in submitted_images):
+        await add_upload(top, "Top (Bird's Eye) View")
 
     if not submitted_images:
         raise HTTPException(status_code=400, detail="Please upload between 1 and 5 cat photos.")
@@ -540,8 +751,10 @@ async def grade_loaf(
         result = dict(PRESET_BUTTERCUP)
         if cat_name:
             result["cat_name"] = cat_name
+        grade_token = generate_grade_token(result)
         return JSONResponse(content={
             "result": result,
+            "grade_token": grade_token,
             "demo_mode": True,
             "message": "Graded using Demo Mode (Sample Preset). To grade your own cat photos in real-time with Gemini 3.8 Flash, enter your Gemini API key in the top right settings!"
         })
@@ -613,8 +826,10 @@ async def grade_loaf(
                 raise attempt_err
 
         analysis_data = json.loads(response.text)
+        grade_token = generate_grade_token(analysis_data)
         return JSONResponse(content={
             "result": analysis_data,
+            "grade_token": grade_token,
             "demo_mode": False
         })
 
@@ -647,12 +862,627 @@ async def grade_loaf(
                 detail="An unexpected error occurred during the visual inspection. Please try again."
             )
 
+
+# Leaderboard & Authentication Endpoints
+
+class TokenExchangeRequest(BaseModel):
+    code: str
+    redirect_uri: str
+    code_verifier: Optional[str] = None
+
+
+@app.get("/api/auth/config")
+async def get_auth_config():
+    """Returns public Cognito authentication parameters for the client."""
+    return {
+        "user_pool_id": COGNITO_USER_POOL_ID,
+        "client_id": COGNITO_CLIENT_ID,
+        "domain": COGNITO_DOMAIN,
+        "region": AWS_REGION
+    }
+
+
+@app.post("/api/auth/token")
+async def exchange_auth_code(req: TokenExchangeRequest):
+    """Securely proxies authorization code exchange with Cognito Hosted UI."""
+    token_url = f"https://{COGNITO_DOMAIN}/oauth2/token"
+    payload = {
+        "grant_type": "authorization_code",
+        "client_id": COGNITO_CLIENT_ID,
+        "redirect_uri": req.redirect_uri,
+        "code": req.code
+    }
+    if req.code_verifier:
+        payload["code_verifier"] = req.code_verifier
+
+    encoded_data = urllib.parse.urlencode(payload).encode("utf-8")
+    http_req = urllib.request.Request(
+        token_url,
+        data=encoded_data,
+        headers={
+            "Content-Type": "application/x-www-form-urlencoded",
+            "User-Agent": "Loafed-Backend/1.0"
+        }
+    )
+    try:
+        with urllib.request.urlopen(http_req, timeout=10) as resp:
+            return json.loads(resp.read().decode("utf-8"))
+    except urllib.error.HTTPError as e:
+        err_body = e.read().decode("utf-8", errors="ignore")
+        logger.warning(f"Cognito token exchange failed: {err_body}")
+        raise HTTPException(status_code=e.code, detail="Authorization code exchange failed.")
+    except Exception as e:
+        logger.error(f"Token exchange error: {e}")
+        raise HTTPException(status_code=500, detail="Token exchange connection error.")
+
+
+# Direct Email / Password Authentication Endpoints (RederSoft Auth Pattern)
+
+class EmailSignInRequest(BaseModel):
+    email: str
+    password: str
+
+
+class EmailSignUpRequest(BaseModel):
+    email: str
+    password: str
+    display_name: Optional[str] = None
+
+
+class EmailConfirmRequest(BaseModel):
+    email: str
+    code: str
+    password: Optional[str] = None
+
+
+class EmailResendRequest(BaseModel):
+    email: str
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: str
+
+
+class ConfirmForgotPasswordRequest(BaseModel):
+    email: str
+    code: str
+    new_password: str
+
+
+@app.post("/api/auth/email/signin")
+async def email_signin(req: EmailSignInRequest):
+    """Direct Cognito email/password authentication (RederSoft in-modal auth pattern)."""
+    email = req.email.strip().lower()
+    if not email or not req.password:
+        raise HTTPException(status_code=400, detail="Email and password are required.")
+
+    session = get_boto3_session()
+    client = session.client("cognito-idp", region_name=AWS_REGION)
+    try:
+        resp = client.initiate_auth(
+            ClientId=COGNITO_CLIENT_ID,
+            AuthFlow="USER_PASSWORD_AUTH",
+            AuthParameters={
+                "USERNAME": email,
+                "PASSWORD": req.password
+            }
+        )
+        auth_res = resp.get("AuthenticationResult", {})
+        return {
+            "id_token": auth_res.get("IdToken"),
+            "access_token": auth_res.get("AccessToken"),
+            "refresh_token": auth_res.get("RefreshToken"),
+            "expires_in": auth_res.get("ExpiresIn"),
+            "token_type": auth_res.get("TokenType", "Bearer")
+        }
+    except ClientError as e:
+        err_code = e.response.get("Error", {}).get("Code", "")
+        err_msg = e.response.get("Error", {}).get("Message", str(e))
+        if err_code == "UserNotConfirmedException":
+            raise HTTPException(status_code=403, detail="USER_NOT_CONFIRMED: Please verify your email with the 6-digit code.")
+        elif err_code in ("NotAuthorizedException", "UserNotFoundException"):
+            raise HTTPException(status_code=401, detail="Incorrect email address or password.")
+        elif err_code == "PasswordResetRequiredException":
+            raise HTTPException(status_code=400, detail="Password reset required. Please use Forgot Password.")
+        else:
+            raise HTTPException(status_code=400, detail=err_msg)
+
+
+@app.post("/api/auth/email/signup")
+async def email_signup(req: EmailSignUpRequest):
+    """Direct Cognito user registration with email verification code dispatch."""
+    email = req.email.strip().lower()
+    password = req.password
+    display_name = (req.display_name or "").strip() or email.split("@")[0]
+
+    if not email or not password:
+        raise HTTPException(status_code=400, detail="Email and password are required.")
+    if len(password) < 8:
+        raise HTTPException(status_code=400, detail="Password must be at least 8 characters long.")
+
+    session = get_boto3_session()
+    client = session.client("cognito-idp", region_name=AWS_REGION)
+    try:
+        user_attrs = [
+            {"Name": "email", "Value": email},
+            {"Name": "name", "Value": display_name}
+        ]
+        resp = client.sign_up(
+            ClientId=COGNITO_CLIENT_ID,
+            Username=email,
+            Password=password,
+            UserAttributes=user_attrs
+        )
+        return {
+            "user_confirmed": resp.get("UserConfirmed", False),
+            "user_sub": resp.get("UserSub"),
+            "message": "Account created! Please enter the 6-digit verification code sent to your email."
+        }
+    except ClientError as e:
+        err_code = e.response.get("Error", {}).get("Code", "")
+        err_msg = e.response.get("Error", {}).get("Message", str(e))
+        if err_code == "UsernameExistsException":
+            raise HTTPException(status_code=409, detail="An account with this email already exists. Please sign in.")
+        elif err_code == "InvalidPasswordException":
+            raise HTTPException(status_code=400, detail=f"Password does not meet requirements: {err_msg}")
+        elif err_code == "InvalidParameterException":
+            raise HTTPException(status_code=400, detail=err_msg)
+        else:
+            raise HTTPException(status_code=400, detail=err_msg)
+
+
+@app.post("/api/auth/email/confirm")
+async def email_confirm(req: EmailConfirmRequest):
+    """Verifies a newly registered user with their 6-digit confirmation code and logs them in."""
+    email = req.email.strip().lower()
+    code = req.code.strip()
+    if not email or not code:
+        raise HTTPException(status_code=400, detail="Email and confirmation code are required.")
+
+    session = get_boto3_session()
+    client = session.client("cognito-idp", region_name=AWS_REGION)
+    try:
+        client.confirm_sign_up(
+            ClientId=COGNITO_CLIENT_ID,
+            Username=email,
+            ConfirmationCode=code
+        )
+        # Auto sign-in if password was supplied
+        if req.password:
+            try:
+                auth_resp = client.initiate_auth(
+                    ClientId=COGNITO_CLIENT_ID,
+                    AuthFlow="USER_PASSWORD_AUTH",
+                    AuthParameters={
+                        "USERNAME": email,
+                        "PASSWORD": req.password
+                    }
+                )
+                auth_res = auth_resp.get("AuthenticationResult", {})
+                return {
+                    "confirmed": True,
+                    "id_token": auth_res.get("IdToken"),
+                    "access_token": auth_res.get("AccessToken"),
+                    "refresh_token": auth_res.get("RefreshToken"),
+                    "expires_in": auth_res.get("ExpiresIn"),
+                    "token_type": auth_res.get("TokenType", "Bearer")
+                }
+            except Exception as login_err:
+                logger.warning(f"Auto-login after confirmation failed: {login_err}")
+
+        return {"confirmed": True, "message": "Email confirmed successfully! You can now sign in."}
+    except ClientError as e:
+        err_code = e.response.get("Error", {}).get("Code", "")
+        err_msg = e.response.get("Error", {}).get("Message", str(e))
+        if err_code == "CodeMismatchException":
+            raise HTTPException(status_code=400, detail="Invalid verification code. Please check your email and try again.")
+        elif err_code == "ExpiredCodeException":
+            raise HTTPException(status_code=400, detail="Verification code has expired. Please request a new code.")
+        elif err_code == "NotAuthorizedException":
+            return {"confirmed": True, "message": "User is already confirmed. Please sign in."}
+        else:
+            raise HTTPException(status_code=400, detail=err_msg)
+
+
+@app.post("/api/auth/email/resend-code")
+async def email_resend_code(req: EmailResendRequest):
+    """Resends a 6-digit confirmation code to unconfirmed user."""
+    email = req.email.strip().lower()
+    if not email:
+        raise HTTPException(status_code=400, detail="Email is required.")
+    session = get_boto3_session()
+    client = session.client("cognito-idp", region_name=AWS_REGION)
+    try:
+        client.resend_confirmation_code(
+            ClientId=COGNITO_CLIENT_ID,
+            Username=email
+        )
+        return {"status": "code_resent", "message": "A fresh 6-digit verification code has been emailed to you."}
+    except ClientError as e:
+        err_msg = e.response.get("Error", {}).get("Message", str(e))
+        raise HTTPException(status_code=400, detail=err_msg)
+
+
+@app.post("/api/auth/email/forgot-password")
+async def email_forgot_password(req: ForgotPasswordRequest):
+    """Initiates password reset by sending a reset code to the user's email."""
+    email = req.email.strip().lower()
+    if not email:
+        raise HTTPException(status_code=400, detail="Email is required.")
+    session = get_boto3_session()
+    client = session.client("cognito-idp", region_name=AWS_REGION)
+    try:
+        client.forgot_password(
+            ClientId=COGNITO_CLIENT_ID,
+            Username=email
+        )
+        return {"status": "reset_code_sent", "message": "Password reset code sent to your email."}
+    except ClientError as e:
+        err_code = e.response.get("Error", {}).get("Code", "")
+        if err_code == "UserNotFoundException":
+            return {"status": "reset_code_sent", "message": "If an account exists with this email, a reset code was sent."}
+        err_msg = e.response.get("Error", {}).get("Message", str(e))
+        raise HTTPException(status_code=400, detail=err_msg)
+
+
+@app.post("/api/auth/email/confirm-forgot-password")
+async def email_confirm_forgot_password(req: ConfirmForgotPasswordRequest):
+    """Confirms password reset with verification code and sets the new password."""
+    email = req.email.strip().lower()
+    code = req.code.strip()
+    new_password = req.new_password
+    if not email or not code or not new_password:
+        raise HTTPException(status_code=400, detail="Email, code, and new password are required.")
+    if len(new_password) < 8:
+        raise HTTPException(status_code=400, detail="New password must be at least 8 characters long.")
+
+    session = get_boto3_session()
+    client = session.client("cognito-idp", region_name=AWS_REGION)
+    try:
+        client.confirm_forgot_password(
+            ClientId=COGNITO_CLIENT_ID,
+            Username=email,
+            ConfirmationCode=code,
+            Password=new_password
+        )
+        try:
+            auth_resp = client.initiate_auth(
+                ClientId=COGNITO_CLIENT_ID,
+                AuthFlow="USER_PASSWORD_AUTH",
+                AuthParameters={
+                    "USERNAME": email,
+                    "PASSWORD": new_password
+                }
+            )
+            auth_res = auth_resp.get("AuthenticationResult", {})
+            return {
+                "reset": True,
+                "id_token": auth_res.get("IdToken"),
+                "access_token": auth_res.get("AccessToken"),
+                "refresh_token": auth_res.get("RefreshToken"),
+                "expires_in": auth_res.get("ExpiresIn"),
+                "token_type": auth_res.get("TokenType", "Bearer")
+            }
+        except Exception:
+            return {"reset": True, "message": "Password updated successfully! Please sign in."}
+    except ClientError as e:
+        err_code = e.response.get("Error", {}).get("Code", "")
+        err_msg = e.response.get("Error", {}).get("Message", str(e))
+        if err_code == "CodeMismatchException":
+            raise HTTPException(status_code=400, detail="Invalid verification code. Please check your email.")
+        elif err_code == "ExpiredCodeException":
+            raise HTTPException(status_code=400, detail="Verification code has expired. Please request a new code.")
+        else:
+            raise HTTPException(status_code=400, detail=err_msg)
+
+
+@app.post("/api/leaderboard/submit")
+async def submit_to_leaderboard(
+    authorization: Optional[str] = Header(None),
+    grade_token: str = Form(...),
+    display_name: Optional[str] = Form(None),
+    photo: UploadFile = File(...)
+):
+    """Submits a verified cat loaf evaluation to the public leaderboard."""
+    user_claims = verify_cognito_token(authorization)
+    user_id = user_claims.get("sub")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="User identification missing.")
+
+    # Validate HMAC score token
+    score_data = verify_grade_token(grade_token)
+
+    # Validate uploaded photo
+    content, mime = await read_and_validate_image(photo)
+    if not content:
+        raise HTTPException(status_code=400, detail="A valid photo is required for leaderboard submission.")
+
+    # Create optimized WebP thumbnail (strips EXIF, under 40 KB)
+    thumb_bytes = create_leaderboard_thumbnail(content)
+
+    entry_id = uuid.uuid4().hex[:12]
+    thumb_key = f"thumbnails/{entry_id}.webp"
+
+    session = get_boto3_session()
+    s3_client = session.client("s3")
+    try:
+        s3_client.put_object(
+            Bucket=S3_BUCKET_NAME,
+            Key=thumb_key,
+            Body=thumb_bytes,
+            ContentType="image/webp"
+        )
+    except Exception as e:
+        logger.error(f"S3 upload error: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to save cat loaf photo to cloud storage.")
+
+    thumbnail_url = f"https://{S3_BUCKET_NAME}.s3.amazonaws.com/{thumb_key}"
+
+    now = datetime.now(timezone.utc)
+    now_iso = now.isoformat()
+    month_str = now.strftime("%Y-%m")
+    week_str = now.strftime("%Y-W%W")
+
+    cat_name = sanitize_cat_name(score_data.get("cat_name")) or "Anonymous Loaf"
+    sanitized_display = sanitize_cat_name(display_name) or user_claims.get("name") or (
+        user_claims.get("email", "").split("@")[0] if user_claims.get("email") else "Baker"
+    )
+
+    score = int(score_data.get("overall_score", 0))
+    sk = f"SCORE#{score:03d}#{entry_id}"
+
+    ddb = session.resource("dynamodb")
+    table = ddb.Table(DYNAMODB_TABLE_NAME)
+
+    # Primary item in PERIOD#ALL with user_id for GSI UserIndex
+    item_all = {
+        "pk": "PERIOD#ALL",
+        "sk": sk,
+        "entry_id": entry_id,
+        "user_id": user_id,
+        "user_email": user_claims.get("email", ""),
+        "display_name": sanitized_display,
+        "cat_name": cat_name,
+        "overall_score": score,
+        "grade_letter": score_data.get("grade_letter", ""),
+        "loaf_rank": score_data.get("loaf_rank", ""),
+        "bread_classification": score_data.get("bread_classification", ""),
+        "thumbnail_url": thumbnail_url,
+        "created_at": now_iso,
+        "periods": ["ALL", month_str, week_str]
+    }
+
+    # Partition items for Month and Week (without user_id to keep GSI clean)
+    item_month = dict(item_all)
+    item_month["pk"] = f"PERIOD#{month_str}"
+    item_month.pop("user_id", None)
+
+    item_week = dict(item_all)
+    item_week["pk"] = f"PERIOD#{week_str}"
+    item_week.pop("user_id", None)
+
+    try:
+        table.put_item(Item=item_all)
+        table.put_item(Item=item_month)
+        table.put_item(Item=item_week)
+    except Exception as e:
+        logger.error(f"DynamoDB write error: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to save leaderboard record.")
+
+    return {
+        "success": True,
+        "entry_id": entry_id,
+        "score": score,
+        "thumbnail_url": thumbnail_url,
+        "cat_name": cat_name,
+        "message": f"Successfully added {cat_name} to the Loafed Leaderboard!"
+    }
+
+
+@app.get("/api/leaderboard")
+async def get_leaderboard(period: str = "all", limit: int = 50):
+    """Retrieves leaderboard rankings sorted by overall score descending."""
+    limit = min(max(1, limit), 100)
+    now = datetime.now(timezone.utc)
+
+    if period == "month":
+        pk = f"PERIOD#{now.strftime('%Y-%m')}"
+    elif period == "week":
+        pk = f"PERIOD#{now.strftime('%Y-W%W')}"
+    else:
+        pk = "PERIOD#ALL"
+
+    session = get_boto3_session()
+    ddb = session.resource("dynamodb")
+    table = ddb.Table(DYNAMODB_TABLE_NAME)
+
+    try:
+        response = table.query(
+            KeyConditionExpression=Key("pk").eq(pk),
+            ScanIndexForward=False,
+            Limit=limit
+        )
+        raw_items = response.get("Items", [])
+    except Exception as e:
+        logger.error(f"DynamoDB query error: {e}", exc_info=True)
+        raw_items = []
+
+    entries = []
+    for rank, it in enumerate(raw_items, start=1):
+        entries.append({
+            "rank": rank,
+            "entry_id": it.get("entry_id", ""),
+            "cat_name": it.get("cat_name", "Anonymous Loaf"),
+            "display_name": it.get("display_name", "Anonymous Baker"),
+            "overall_score": int(it.get("overall_score", 0)),
+            "grade_letter": it.get("grade_letter", ""),
+            "loaf_rank": it.get("loaf_rank", ""),
+            "bread_classification": it.get("bread_classification", ""),
+            "thumbnail_url": it.get("thumbnail_url", ""),
+            "created_at": it.get("created_at", "")
+        })
+
+    return {
+        "period": period,
+        "count": len(entries),
+        "entries": entries
+    }
+
+
+@app.get("/api/leaderboard/my-entries")
+async def get_my_entries(authorization: Optional[str] = Header(None)):
+    """Retrieves all leaderboard submissions created by the authenticated user."""
+    user_claims = verify_cognito_token(authorization)
+    user_id = user_claims.get("sub")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="User identification missing.")
+
+    session = get_boto3_session()
+    ddb = session.resource("dynamodb")
+    table = ddb.Table(DYNAMODB_TABLE_NAME)
+
+    try:
+        response = table.query(
+            IndexName="UserIndex",
+            KeyConditionExpression=Key("user_id").eq(user_id),
+            ScanIndexForward=False
+        )
+        items = response.get("Items", [])
+    except Exception as e:
+        logger.error(f"DynamoDB UserIndex query error: {e}", exc_info=True)
+        items = []
+
+    entries = []
+    for it in items:
+        entries.append({
+            "entry_id": it.get("entry_id", ""),
+            "cat_name": it.get("cat_name", "Anonymous Loaf"),
+            "display_name": it.get("display_name", ""),
+            "overall_score": int(it.get("overall_score", 0)),
+            "grade_letter": it.get("grade_letter", ""),
+            "loaf_rank": it.get("loaf_rank", ""),
+            "bread_classification": it.get("bread_classification", ""),
+            "thumbnail_url": it.get("thumbnail_url", ""),
+            "created_at": it.get("created_at", "")
+        })
+    return {"entries": entries, "count": len(entries)}
+
+
+@app.delete("/api/leaderboard/entry/{entry_id}")
+async def delete_leaderboard_entry(entry_id: str, authorization: Optional[str] = Header(None)):
+    """Deletes an individual loaf submission owned by the authenticated user."""
+    user_claims = verify_cognito_token(authorization)
+    user_id = user_claims.get("sub")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="User identification missing.")
+
+    session = get_boto3_session()
+    ddb = session.resource("dynamodb")
+    table = ddb.Table(DYNAMODB_TABLE_NAME)
+    s3_client = session.client("s3")
+
+    res = table.query(
+        IndexName="UserIndex",
+        KeyConditionExpression=Key("user_id").eq(user_id)
+    )
+    matching_item = next((it for it in res.get("Items", []) if it.get("entry_id") == entry_id), None)
+    if not matching_item:
+        raise HTTPException(status_code=404, detail="Entry not found or you are not authorized to delete it.")
+
+    score = int(matching_item.get("overall_score", 0))
+    sk = f"SCORE#{score:03d}#{entry_id}"
+    periods = matching_item.get("periods", ["ALL"])
+
+    for p in periods:
+        pk = "PERIOD#ALL" if p == "ALL" else f"PERIOD#{p}"
+        try:
+            table.delete_item(Key={"pk": pk, "sk": sk})
+        except Exception as e:
+            logger.warning(f"Error deleting item {pk}/{sk}: {e}")
+
+    try:
+        s3_client.delete_object(Bucket=S3_BUCKET_NAME, Key=f"thumbnails/{entry_id}.webp")
+    except Exception as e:
+        logger.warning(f"Error deleting S3 thumbnail for {entry_id}: {e}")
+
+    return {"success": True, "deleted_id": entry_id, "message": "Leaderboard entry removed."}
+
+
+@app.delete("/api/user/account")
+async def delete_user_account(authorization: Optional[str] = Header(None)):
+    """Permanently deletes the user account, all submissions, and all stored media."""
+    user_claims = verify_cognito_token(authorization)
+    user_id = user_claims.get("sub")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="User identification missing.")
+
+    session = get_boto3_session()
+    ddb = session.resource("dynamodb")
+    table = ddb.Table(DYNAMODB_TABLE_NAME)
+    s3_client = session.client("s3")
+    cognito_client = session.client("cognito-idp")
+
+    # Find and delete all user loaf records
+    try:
+        res = table.query(
+            IndexName="UserIndex",
+            KeyConditionExpression=Key("user_id").eq(user_id)
+        )
+        items = res.get("Items", [])
+    except Exception as e:
+        logger.error(f"Error querying UserIndex for account deletion: {e}", exc_info=True)
+        items = []
+
+    for it in items:
+        entry_id = it.get("entry_id")
+        score = int(it.get("overall_score", 0))
+        sk = f"SCORE#{score:03d}#{entry_id}"
+        periods = it.get("periods", ["ALL"])
+        for p in periods:
+            pk = "PERIOD#ALL" if p == "ALL" else f"PERIOD#{p}"
+            try:
+                table.delete_item(Key={"pk": pk, "sk": sk})
+            except Exception as e:
+                logger.warning(f"Error deleting item {pk}/{sk}: {e}")
+        try:
+            s3_client.delete_object(Bucket=S3_BUCKET_NAME, Key=f"thumbnails/{entry_id}.webp")
+        except Exception as e:
+            logger.warning(f"Error deleting S3 thumbnail: {e}")
+
+    # Delete Cognito user
+    username = user_claims.get("cognito:username") or user_claims.get("username") or user_id
+    try:
+        cognito_client.admin_delete_user(
+            UserPoolId=COGNITO_USER_POOL_ID,
+            Username=username
+        )
+    except Exception as e:
+        logger.error(f"Error deleting user from Cognito with username {username}: {e}")
+        try:
+            cognito_client.admin_delete_user(
+                UserPoolId=COGNITO_USER_POOL_ID,
+                Username=user_id
+            )
+        except Exception:
+            pass
+
+    return {
+        "success": True,
+        "message": "Your account and all associated submissions have been permanently removed."
+    }
+
+
 # Mount static files
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
 @app.get("/")
 async def serve_index():
     return FileResponse(str(STATIC_DIR / "index.html"))
+
+@app.get("/leaderboard")
+@app.get("/leaderboard.html")
+async def serve_leaderboard():
+    return FileResponse(str(STATIC_DIR / "leaderboard.html"))
 
 @app.get("/robots.txt", response_class=PlainTextResponse)
 async def serve_robots():
