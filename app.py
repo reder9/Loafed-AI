@@ -274,9 +274,19 @@ RIGID DEDUCTION PENALTIES (Apply these strictly):
    - 8-15: Heavily asymmetrical resting posture or chaotic dough lump.
    - Bread classification: Assign an accurate, funny artisanal bread type (e.g. 'Underproofed Sourdough', 'Over-Risen Brioche', 'Rustic Baguette', 'Golden Cinnamon Swirl', 'Dark Rye Boule').
 
-SCORE ARITHMETIC & CALCULATION:
+SCORE ARITHMETIC & MULTI-IMAGE CALIBRATION:
 - overall_score MUST be the true sum: paw_tuck.score + tail_tuck.score + elbow_compactness.score + crust_symmetry.score + multi_angle_bonus (capped at 100).
-- If only 1 image angle is submitted: multi_angle_bonus is 0. If 2 angles, +2. If all 3 angles (front, side, top), +3 to +5.
+- STRICT SINGLE-PHOTO PENALTY:
+  When only 1 photo is submitted, you ONLY have visual evidence for a single 2D perspective. You CANNOT verify if paws or claws are peeking out on the unseen side, whether the tail is trailing awkwardly behind the body, or if rear haunches are splayed.
+  Therefore, IT IS VERY HARD TO GIVE A HIGH SCORE (80+) WITH JUST ONE PICTURE!
+  Unless that single picture is an extraordinary, unobstructed angle that definitively proves 100% paw concealment, tight tail tuck, and symmetry all at once, a 1-photo loaf score MUST be heavily conservative (typically capped in the 65 to 78 range, C to C+).
+  Set multi_angle_bonus = 0.
+  Explicitly state in the critique or tips: 'Single-photo inspection limitation applied: Without side or overhead telemetry, hidden peet infractions on unobserved flanks cannot be definitively ruled out.'
+- MULTI-IMAGE BONUS (The more photos, the better the telemetry!):
+  * 1 photo: 0 bonus points. Conservative single-plane grading.
+  * 2 photos: +2 bonus points. Dual-plane telemetry.
+  * 3 photos (ideally covering front, side, and top): +3 to +4 bonus points. High confidence 360-degree verification.
+  * 4 to 5 photos: +5 bonus points (maximum multi-angle telemetry bonus unlocked).
 - Align grade_letter strictly with overall_score:
   * 95-100: A+
   * 90-94: A
@@ -317,34 +327,36 @@ async def grade_loaf(
 
     effective_api_key = api_key or x_gemini_api_key or os.getenv("GEMINI_API_KEY", "").strip()
     
-    # Collect all uploaded files and organize by angle
+    # Collect all uploaded files (1 to 5 images)
     submitted_images = [] # list of (label, bytes, mime_type)
     
-    if front and front.filename:
-        content = await front.read()
-        if len(content) > 0:
-            submitted_images.append(("Front View", content, front.content_type or "image/jpeg"))
-            
-    if side and side.filename:
-        content = await side.read()
-        if len(content) > 0:
-            submitted_images.append(("Side View", content, side.content_type or "image/jpeg"))
-            
-    if top and top.filename:
-        content = await top.read()
-        if len(content) > 0:
-            submitted_images.append(("Top (Bird's Eye) View", content, top.content_type or "image/jpeg"))
-            
     if images:
         for idx, img in enumerate(images):
-            if img.filename:
+            if img and img.filename and len(submitted_images) < 5:
                 content = await img.read()
                 if len(content) > 0:
-                    label = f"Angle {len(submitted_images) + 1}"
+                    label = f"Inspection Photo {len(submitted_images) + 1}"
                     submitted_images.append((label, content, img.content_type or "image/jpeg"))
 
+    # Also check individual named slots if images list was empty or has room (e.g. presets)
+    if len(submitted_images) < 5:
+        if front and front.filename and not any(l == "Front View" for l, _, _ in submitted_images):
+            content = await front.read()
+            if len(content) > 0 and len(submitted_images) < 5:
+                submitted_images.append(("Front View", content, front.content_type or "image/jpeg"))
+                
+        if side and side.filename and not any(l == "Side View" for l, _, _ in submitted_images):
+            content = await side.read()
+            if len(content) > 0 and len(submitted_images) < 5:
+                submitted_images.append(("Side View", content, side.content_type or "image/jpeg"))
+                
+        if top and top.filename and not any(l == "Top (Bird's Eye) View" for l, _, _ in submitted_images):
+            content = await top.read()
+            if len(content) > 0 and len(submitted_images) < 5:
+                submitted_images.append(("Top (Bird's Eye) View", content, top.content_type or "image/jpeg"))
+
     if not submitted_images:
-        raise HTTPException(status_code=400, detail="Please upload at least 1 cat photo (front, side, top, or general).")
+        raise HTTPException(status_code=400, detail="Please upload between 1 and 5 cat photos.")
 
     # If no API key is provided, check if this matches our sample preset or provide demo analysis
     if not effective_api_key:

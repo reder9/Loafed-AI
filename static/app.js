@@ -3,8 +3,9 @@
 document.addEventListener('DOMContentLoaded', () => {
   // State
   const state = {
+    photos: [], // Array of { id, file, previewUrl, name } (max 5)
     slots: {
-      front: null, // { file, previewUrl }
+      front: null,
       side: null,
       top: null
     },
@@ -32,12 +33,21 @@ document.addEventListener('DOMContentLoaded', () => {
   const loadingProgressBar = document.getElementById('loadingProgressBar');
   const inspectorBay = document.getElementById('inspectorBay');
   const resultsSection = document.getElementById('resultsSection');
-  const multiInput = document.getElementById('multiInput');
   const loadButtercupBtn = document.getElementById('loadButtercupBtn');
   const resetInspectorBtn = document.getElementById('resetInspectorBtn');
   const copySummaryBtn = document.getElementById('copySummaryBtn');
   const downloadCertificateBtn = document.getElementById('downloadCertificateBtn');
   const certificateCanvas = document.getElementById('certificateCanvas');
+
+  // Multi-Photo Upload & Staging Elements
+  const mainDropzone = document.getElementById('mainDropzone');
+  const photosInput = document.getElementById('photosInput');
+  const stagedPhotosContainer = document.getElementById('stagedPhotosContainer');
+  const stagedPhotosGrid = document.getElementById('stagedPhotosGrid');
+  const stagedCountBadge = document.getElementById('stagedCountBadge');
+  const clearAllPhotosBtn = document.getElementById('clearAllPhotosBtn');
+  const addMorePhotosBtn = document.getElementById('addMorePhotosBtn');
+  const telemetryStatusText = document.getElementById('telemetryStatusText');
 
   // Header Elements
   const toastContainer = document.getElementById('toastContainer');
@@ -127,85 +137,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
 
-  // Slot Setup & Drag-and-Drop
-  const slotIds = ['front', 'side', 'top'];
-  slotIds.forEach(slotKey => {
-    const slotEl = document.getElementById(`slot${slotKey.charAt(0).toUpperCase() + slotKey.slice(1)}`);
-    const inputEl = document.getElementById(`input${slotKey.charAt(0).toUpperCase() + slotKey.slice(1)}`);
-    const removeBtn = slotEl.querySelector('.remove-btn');
-
-    // Click slot to browse
-    slotEl.addEventListener('click', (e) => {
-      if (e.target.closest('.remove-btn')) return;
-      inputEl.click();
-    });
-
-    // File selected
-    inputEl.addEventListener('change', (e) => {
-      if (e.target.files && e.target.files[0]) {
-        setSlotFile(slotKey, e.target.files[0]);
-      }
-    });
-
-    // Remove button
-    removeBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      clearSlot(slotKey);
-    });
-
-    // Drag and Drop
-    ['dragenter', 'dragover'].forEach(evt => {
-      slotEl.addEventListener(evt, (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        slotEl.classList.add('drag-over');
-      });
-    });
-
-    ['dragleave', 'drop'].forEach(evt => {
-      slotEl.addEventListener(evt, (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        slotEl.classList.remove('drag-over');
-      });
-    });
-
-    slotEl.addEventListener('drop', (e) => {
-      const files = e.dataTransfer.files;
-      if (files && files[0]) {
-        setSlotFile(slotKey, files[0]);
-      }
-    });
-  });
-
-  // Global Clipboard Paste Support (Ctrl+V)
-  window.addEventListener('paste', (e) => {
-    if (!e.clipboardData || !e.clipboardData.items) return;
-    for (const item of e.clipboardData.items) {
-      if (item.type.startsWith('image/')) {
-        const file = item.getAsFile();
-        if (file) {
-          const emptySlot = slotIds.find(key => state.slots[key] === null) || 'front';
-          setSlotFile(emptySlot, file);
-          break;
-        }
-      }
-    }
-  });
-
-  // Multi-file input
-  multiInput.addEventListener('change', (e) => {
-    if (e.target.files && e.target.files.length > 0) {
-      const files = Array.from(e.target.files).slice(0, 3);
-      files.forEach((file, index) => {
-        const slotKey = slotIds[index];
-        if (slotKey) {
-          setSlotFile(slotKey, file);
-        }
-      });
-    }
-  });
-
+  // Image Optimization (Resize large images to maintain responsive performance)
   async function optimizeImage(file, maxDimension = 1280, quality = 0.85) {
     if (!file || !file.type.startsWith('image/')) return file;
     return new Promise((resolve) => {
@@ -247,71 +179,258 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  async function setSlotFile(slotKey, rawFile) {
-    const file = await optimizeImage(rawFile);
-    const slotEl = document.getElementById(`slot${slotKey.charAt(0).toUpperCase() + slotKey.slice(1)}`);
-    const emptyState = slotEl.querySelector('.slot-empty');
-    const previewState = slotEl.querySelector('.slot-preview');
-    const previewImg = slotEl.querySelector('.preview-img');
+  // Multi-Photo Staging Manager (1 to 5 Photos)
+  async function addFiles(files) {
+    if (!files || files.length === 0) return;
+    const imageFiles = Array.from(files).filter(f => f.type.startsWith('image/'));
+    if (imageFiles.length === 0) {
+      showToast({
+        type: 'warning',
+        title: 'Invalid Files',
+        message: 'Please select valid image files (JPG, PNG, WEBP).'
+      });
+      return;
+    }
 
-    const previewUrl = URL.createObjectURL(file);
-    state.slots[slotKey] = { file, previewUrl };
+    const currentCount = state.photos.length;
+    const available = 5 - currentCount;
+    if (available <= 0) {
+      showToast({
+        type: 'warning',
+        title: 'Photo Limit Reached',
+        message: 'You can stage a maximum of 5 inspection photos.'
+      });
+      return;
+    }
 
-    previewImg.src = previewUrl;
-    emptyState.classList.add('hidden');
-    previewState.classList.remove('hidden');
-    slotEl.classList.add('has-image');
+    let toProcess = imageFiles;
+    if (toProcess.length > available) {
+      toProcess = toProcess.slice(0, available);
+      showToast({
+        type: 'info',
+        title: 'Photo Limit Applied',
+        message: `Staged ${available} photo(s). Maximum limit is 5 photos.`
+      });
+    }
 
+    for (const rawFile of toProcess) {
+      const optimized = await optimizeImage(rawFile);
+      const previewUrl = URL.createObjectURL(optimized);
+      const id = 'photo_' + Math.random().toString(36).substring(2, 9);
+      state.photos.push({
+        id,
+        file: optimized,
+        previewUrl,
+        name: rawFile.name
+      });
+    }
+
+    syncLegacySlots();
+    renderStagedPhotos();
     updateSubmitButton();
-    refreshIcons();
   }
 
-  function clearSlot(slotKey) {
-    const slotEl = document.getElementById(`slot${slotKey.charAt(0).toUpperCase() + slotKey.slice(1)}`);
-    const inputEl = document.getElementById(`input${slotKey.charAt(0).toUpperCase() + slotKey.slice(1)}`);
-    const emptyState = slotEl.querySelector('.slot-empty');
-    const previewState = slotEl.querySelector('.slot-preview');
-    const previewImg = slotEl.querySelector('.preview-img');
+  function syncLegacySlots() {
+    state.slots.front = state.photos[0] || null;
+    state.slots.side = state.photos[1] || null;
+    state.slots.top = state.photos[2] || null;
+  }
 
-    if (state.slots[slotKey] && state.slots[slotKey].previewUrl) {
-      URL.revokeObjectURL(state.slots[slotKey].previewUrl);
+  function removePhoto(id) {
+    const idx = state.photos.findIndex(p => p.id === id);
+    if (idx !== -1) {
+      URL.revokeObjectURL(state.photos[idx].previewUrl);
+      state.photos.splice(idx, 1);
+      syncLegacySlots();
+      renderStagedPhotos();
+      updateSubmitButton();
     }
-    state.slots[slotKey] = null;
-    inputEl.value = '';
+  }
 
-    previewImg.src = '';
-    previewState.classList.add('hidden');
-    emptyState.classList.remove('hidden');
-    slotEl.classList.remove('has-image');
-
+  function clearAllPhotos() {
+    state.photos.forEach(p => URL.revokeObjectURL(p.previewUrl));
+    state.photos = [];
+    syncLegacySlots();
+    if (photosInput) photosInput.value = '';
+    renderStagedPhotos();
     updateSubmitButton();
+  }
+
+  function renderStagedPhotos() {
+    if (!stagedPhotosGrid) return;
+    stagedPhotosGrid.innerHTML = '';
+    const count = state.photos.length;
+
+    if (count === 0) {
+      if (mainDropzone) mainDropzone.classList.remove('hidden');
+      if (stagedPhotosContainer) stagedPhotosContainer.classList.add('hidden');
+      return;
+    }
+
+    if (mainDropzone) mainDropzone.classList.add('hidden');
+    if (stagedPhotosContainer) stagedPhotosContainer.classList.remove('hidden');
+
+    const suggestedLabels = [
+      { title: 'Front View', icon: 'eye' },
+      { title: 'Side View', icon: 'move-horizontal' },
+      { title: 'Overhead View', icon: 'compass' },
+      { title: 'Angle 4', icon: 'camera' },
+      { title: 'Angle 5', icon: 'camera' }
+    ];
+
+    state.photos.forEach((photo, idx) => {
+      const labelInfo = suggestedLabels[idx] || { title: `Angle ${idx + 1}`, icon: 'camera' };
+      const card = document.createElement('div');
+      card.className = 'relative group rounded-xl overflow-hidden border border-orange-200/80 bg-white shadow-2xs flex flex-col';
+      card.innerHTML = `
+        <div class="relative w-full aspect-square bg-stone-100 overflow-hidden">
+          <img src="${photo.previewUrl}" class="w-full h-full object-cover transition-transform group-hover:scale-105 duration-200" alt="${photo.name}">
+          <div class="absolute inset-0 bg-gradient-to-t from-stone-950/75 via-transparent to-transparent flex items-end justify-between p-2 text-white">
+            <span class="text-[10px] font-bold flex items-center gap-1 drop-shadow-xs truncate max-w-[80%]">
+              <i data-lucide="${labelInfo.icon}" class="w-3 h-3 shrink-0"></i> ${labelInfo.title}
+            </span>
+            <button type="button" class="remove-photo-btn bg-stone-900/80 hover:bg-rose-600 text-white rounded-md p-1 transition-colors shrink-0" data-id="${photo.id}" title="Remove photo">
+              <i data-lucide="x" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+        </div>
+      `;
+      stagedPhotosGrid.appendChild(card);
+    });
+
+    // Bind remove buttons
+    stagedPhotosGrid.querySelectorAll('.remove-photo-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const id = btn.getAttribute('data-id');
+        removePhoto(id);
+      });
+    });
+
+    if (stagedCountBadge) {
+      stagedCountBadge.textContent = `${count} / 5 Photos`;
+    }
+
+    if (addMorePhotosBtn) {
+      if (count >= 5) {
+        addMorePhotosBtn.classList.add('hidden');
+      } else {
+        addMorePhotosBtn.classList.remove('hidden');
+      }
+    }
+
+    if (telemetryStatusText) {
+      if (count === 1) {
+        telemetryStatusText.innerHTML = `
+          <i data-lucide="alert-circle" class="w-4 h-4 text-amber-600 shrink-0"></i>
+          <span class="text-amber-900"><strong>Single-Photo Mode:</strong> Strict conservative grading will apply. Add side or top angles to verify hidden peet & unlock top scores!</span>
+        `;
+      } else if (count === 2) {
+        telemetryStatusText.innerHTML = `
+          <i data-lucide="shield" class="w-4 h-4 text-amber-700 shrink-0"></i>
+          <span class="text-stone-700"><strong>Dual-Plane Telemetry:</strong> Good coverage across 2 vectors (+2 bonus points).</span>
+        `;
+      } else {
+        const bonus = count >= 4 ? 5 : 4;
+        telemetryStatusText.innerHTML = `
+          <i data-lucide="sparkles" class="w-4 h-4 text-orange-600 shrink-0"></i>
+          <span class="text-orange-950 font-bold">Full 360-Degree Telemetry Active! (+${bonus} bonus unlocked)</span>
+        `;
+      }
+    }
+
     refreshIcons();
   }
 
   function updateSubmitButton() {
-    const activeSlots = Object.values(state.slots).filter(s => s !== null);
-    const count = activeSlots.length;
-
+    const count = state.photos.length;
     if (count === 0) {
       gradeLoafBtn.disabled = true;
       gradeLoafBtn.className = 'w-full sm:w-auto px-8 py-3.5 rounded-xl font-bold text-sm text-white bg-stone-300 cursor-not-allowed shadow-sm transition-all flex items-center justify-center gap-2';
-      photoCountBadge.textContent = '0 images selected';
+      photoCountBadge.textContent = '0 photos selected';
       photoCountBadge.className = 'font-semibold text-stone-500 bg-stone-100 px-2 py-0.5 rounded border border-stone-200';
     } else {
       gradeLoafBtn.disabled = false;
-      gradeLoafBtn.className = 'w-full sm:w-auto px-8 py-3.5 rounded-xl font-bold text-sm text-white bg-amber-700 hover:bg-amber-800 shadow-sm transition-all hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-2 cursor-pointer';
+      gradeLoafBtn.className = 'w-full sm:w-auto px-8 py-3.5 rounded-xl font-bold text-sm text-white bg-orange-700 hover:bg-orange-800 shadow-sm transition-all hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-2 cursor-pointer';
       
-      if (count === 3) {
-        photoCountBadge.textContent = '3 planes loaded (+5 Multi-Angle Bonus)';
-        photoCountBadge.className = 'font-bold text-amber-900 bg-amber-100 px-2.5 py-0.5 rounded border border-amber-300';
+      if (count === 1) {
+        photoCountBadge.textContent = '1 photo staged (Single-Angle Mode)';
+        photoCountBadge.className = 'font-semibold text-amber-800 bg-amber-50 px-2.5 py-0.5 rounded border border-amber-200';
+      } else if (count === 2) {
+        photoCountBadge.textContent = '2 photos staged (+2 Bonus)';
+        photoCountBadge.className = 'font-semibold text-amber-800 bg-amber-50 px-2.5 py-0.5 rounded border border-amber-200';
       } else {
-        photoCountBadge.textContent = `${count} plane${count > 1 ? 's' : ''} loaded`;
-        photoCountBadge.className = 'font-semibold text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200';
+        const bonus = count >= 4 ? 5 : 4;
+        photoCountBadge.textContent = `${count} photos staged (+${bonus} 360-Degree Bonus)`;
+        photoCountBadge.className = 'font-bold text-orange-900 bg-orange-100 px-2.5 py-0.5 rounded border border-orange-300';
       }
     }
   }
 
-  // Load Buttercup Preset
+  // Main Dropzone & File Input Listeners
+  if (mainDropzone && photosInput) {
+    mainDropzone.addEventListener('click', () => {
+      photosInput.click();
+    });
+
+    photosInput.addEventListener('change', (e) => {
+      if (e.target.files && e.target.files.length > 0) {
+        addFiles(e.target.files);
+        e.target.value = '';
+      }
+    });
+
+    ['dragenter', 'dragover'].forEach(evt => {
+      mainDropzone.addEventListener(evt, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        mainDropzone.classList.add('drag-over');
+      });
+    });
+
+    ['dragleave', 'drop'].forEach(evt => {
+      mainDropzone.addEventListener(evt, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        mainDropzone.classList.remove('drag-over');
+      });
+    });
+
+    mainDropzone.addEventListener('drop', (e) => {
+      if (e.dataTransfer && e.dataTransfer.files) {
+        addFiles(e.dataTransfer.files);
+      }
+    });
+  }
+
+  if (addMorePhotosBtn && photosInput) {
+    addMorePhotosBtn.addEventListener('click', () => {
+      photosInput.click();
+    });
+  }
+
+  if (clearAllPhotosBtn) {
+    clearAllPhotosBtn.addEventListener('click', () => {
+      clearAllPhotos();
+    });
+  }
+
+  // Global Clipboard Paste Support (Ctrl+V)
+  window.addEventListener('paste', (e) => {
+    if (!e.clipboardData || !e.clipboardData.items) return;
+    const pastedFiles = [];
+    for (const item of e.clipboardData.items) {
+      if (item.type.startsWith('image/')) {
+        const file = item.getAsFile();
+        if (file) pastedFiles.push(file);
+      }
+    }
+    if (pastedFiles.length > 0) {
+      addFiles(pastedFiles);
+    }
+  });
+
+  // Load Buttercup Preset (Stages 3 masterclass angles)
   loadButtercupBtn.addEventListener('click', async () => {
     loadButtercupBtn.disabled = true;
     loadButtercupBtn.innerHTML = '<i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i><span>Loading Baseline Dataset...</span>';
@@ -319,27 +438,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
     try {
       catNameInput.value = 'Buttercup';
-      
-      const loadPresetImage = async (url, slotKey, filename) => {
+      clearAllPhotos();
+
+      const loadPresetImage = async (url, filename) => {
         const resp = await fetch(url);
         const blob = await resp.blob();
-        const file = new File([blob], filename, { type: 'image/jpeg' });
-        setSlotFile(slotKey, file);
+        return new File([blob], filename, { type: 'image/jpeg' });
       };
 
-      await Promise.all([
-        loadPresetImage('/static/samples/buttercup_front.jpg', 'front', 'buttercup_front.jpg'),
-        loadPresetImage('/static/samples/buttercup_side.jpg', 'side', 'buttercup_side.jpg'),
-        loadPresetImage('/static/samples/buttercup_top.jpg', 'top', 'buttercup_top.jpg'),
+      const files = await Promise.all([
+        loadPresetImage('/static/samples/buttercup_front.jpg', 'buttercup_front.jpg'),
+        loadPresetImage('/static/samples/buttercup_side.jpg', 'buttercup_side.jpg'),
+        loadPresetImage('/static/samples/buttercup_top.jpg', 'buttercup_top.jpg'),
       ]);
 
-      loadButtercupBtn.innerHTML = '<i data-lucide="check" class="w-3.5 h-3.5 text-emerald-700"></i><span>Buttercup Dataset Loaded (3 Planes)</span>';
+      await addFiles(files);
+
+      loadButtercupBtn.innerHTML = '<i data-lucide="check" class="w-3.5 h-3.5 text-emerald-700"></i><span>Buttercup Dataset Loaded (3 Angles)</span>';
       loadButtercupBtn.className = 'inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-emerald-50 text-emerald-800 text-xs font-semibold border border-emerald-300 shadow-sm';
       refreshIcons();
       showToast({
         type: 'success',
         title: 'Calibration Dataset Loaded',
-        message: 'Buttercup 3-angle dataset loaded into the inspector bay.'
+        message: 'Buttercup 3-angle dataset staged for inspection.'
       });
     } catch (e) {
       console.error('Failed to load sample photos', e);
@@ -348,9 +469,8 @@ document.addEventListener('DOMContentLoaded', () => {
         title: 'Dataset Unavailable',
         message: 'Could not load sample baseline images: ' + e.message
       });
+    } finally {
       loadButtercupBtn.disabled = false;
-      loadButtercupBtn.innerHTML = '<i data-lucide="flask-conical" class="w-3.5 h-3.5 text-amber-700"></i><span>Load Buttercup Dataset (3-Angle Baseline)</span>';
-      refreshIcons();
     }
   });
 
@@ -425,12 +545,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Submit & Grade
   gradeLoafBtn.addEventListener('click', async () => {
-    const activeSlots = Object.entries(state.slots).filter(([k, v]) => v !== null);
-    if (activeSlots.length === 0) {
+    if (state.photos.length === 0) {
       showToast({
         type: 'warning',
         title: 'Photographs Required',
-        message: 'Please provide at least one photo (front, side, or top perspective) to run the analysis.'
+        message: 'Please provide between 1 and 5 cat photos to run the evaluation.'
       });
       return;
     }
@@ -454,9 +573,13 @@ document.addEventListener('DOMContentLoaded', () => {
       formData.append('api_key', state.apiKey);
     }
 
-    if (state.slots.front) formData.append('front', state.slots.front.file);
-    if (state.slots.side) formData.append('side', state.slots.side.file);
-    if (state.slots.top) formData.append('top', state.slots.top.file);
+    // Append all staged photos (1 to 5)
+    state.photos.forEach((photo, idx) => {
+      formData.append('images', photo.file);
+      if (idx === 0) formData.append('front', photo.file);
+      else if (idx === 1) formData.append('side', photo.file);
+      else if (idx === 2) formData.append('top', photo.file);
+    });
 
     try {
       const headers = {};
@@ -613,41 +736,54 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function renderAngleReview(result) {
     const grid = document.getElementById('angleReviewGrid');
+    if (!grid) return;
     grid.innerHTML = '';
 
-    const angleLabels = [
-      { key: 'front', label: 'Front Elevation', iconName: 'eye' },
-      { key: 'side', label: 'Lateral Profile', iconName: 'move-horizontal' },
-      { key: 'top', label: 'Dorsal Projection', iconName: 'compass' }
-    ];
+    const angleNotesKeys = ['front', 'side', 'top'];
+    const defaultLabels = ['Front Elevation', 'Lateral Profile', 'Dorsal Projection', 'Perspective 4', 'Perspective 5'];
+    const icons = ['eye', 'move-horizontal', 'compass', 'camera', 'camera'];
 
-    angleLabels.forEach(angle => {
-      const slotData = state.slots[angle.key];
-      const note = result.angle_notes ? result.angle_notes[angle.key] : null;
+    state.photos.forEach((photo, idx) => {
+      const noteKey = angleNotesKeys[idx];
+      const note = result.angle_notes && noteKey ? result.angle_notes[noteKey] : null;
+      const label = defaultLabels[idx] || `Photo ${idx + 1}`;
+      const icon = icons[idx] || 'camera';
 
       const card = document.createElement('div');
       card.className = 'p-3 rounded-xl bg-stone-50 border border-stone-200 flex flex-col gap-2';
-
-      let imgHtml = '';
-      if (slotData && slotData.previewUrl) {
-        imgHtml = `<img src="${slotData.previewUrl}" class="w-full h-28 object-cover rounded-lg border border-stone-200" alt="${angle.label}">`;
-      } else {
-        imgHtml = `<div class="w-full h-28 bg-stone-200/50 rounded-lg flex items-center justify-center text-xs text-stone-400 italic">Not submitted</div>`;
-      }
-
       card.innerHTML = `
         <div class="flex items-center justify-between">
           <span class="text-xs font-bold text-stone-800 flex items-center gap-1.5">
-            <i data-lucide="${angle.iconName}" class="w-3.5 h-3.5 text-stone-600"></i> ${angle.label}
+            <i data-lucide="${icon}" class="w-3.5 h-3.5 text-stone-600"></i> ${label}
           </span>
-          ${slotData ? '<span class="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.5 rounded">Inspected</span>' : '<span class="text-[10px] bg-stone-200 text-stone-600 px-1.5 py-0.5 rounded">Omitted</span>'}
+          <span class="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.5 rounded">Inspected</span>
         </div>
-        ${imgHtml}
-        <p class="text-[11px] text-stone-600 leading-snug">${(note || (slotData ? 'Evaluated in composite score calculation.' : 'Submit this view for deeper geometric validation.')).replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, '')}</p>
+        <img src="${photo.previewUrl}" class="w-full h-28 object-cover rounded-lg border border-stone-200" alt="${label}">
+        <p class="text-[11px] text-stone-600 leading-snug">${(note || 'Evaluated in composite score telemetry.').replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, '')}</p>
       `;
-
       grid.appendChild(card);
     });
+
+    // If fewer than 3 photos, show an informative card about omitted angles
+    if (state.photos.length < 3) {
+      const missingCard = document.createElement('div');
+      missingCard.className = 'p-3 rounded-xl bg-amber-50/70 border border-amber-200/80 flex flex-col gap-2 justify-between';
+      missingCard.innerHTML = `
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold text-amber-900 flex items-center gap-1.5">
+            <i data-lucide="info" class="w-3.5 h-3.5 text-amber-700"></i> Additional Perspectives
+          </span>
+          <span class="text-[10px] bg-amber-100 text-amber-800 font-bold px-1.5 py-0.5 rounded">Omitted</span>
+        </div>
+        <div class="w-full h-28 bg-white/80 rounded-lg border border-dashed border-amber-300 flex flex-col items-center justify-center p-3 text-center">
+          <i data-lucide="camera-off" class="w-6 h-6 text-amber-400 mb-1"></i>
+          <span class="text-xs font-bold text-amber-900">Missing Telemetry</span>
+          <span class="text-[10px] text-amber-700 mt-0.5">Submit up to 5 photos for full 360-degree audit bonus</span>
+        </div>
+        <p class="text-[11px] text-amber-800 leading-snug">Hidden angles prevented 100% paw concealment validation. Score evaluated conservatively.</p>
+      `;
+      grid.appendChild(missingCard);
+    }
 
     refreshIcons();
   }
@@ -686,6 +822,8 @@ document.addEventListener('DOMContentLoaded', () => {
   resetInspectorBtn.addEventListener('click', () => {
     resultsSection.classList.add('hidden');
     inspectorBay.classList.remove('hidden');
+    clearAllPhotos();
+    if (catNameInput) catNameInput.value = '';
     window.scrollTo({ top: 120, behavior: 'smooth' });
     showToast({
       type: 'info',
