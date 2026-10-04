@@ -404,19 +404,46 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Loading Cycle Messages (Lighthearted & witty cat bakery references, zero emojis)
-  const auditPhrases = [
-    "Scanning undercarriage perimeter for illicit peet peek...",
-    "Auditing toe bean tuck integrity and concealed peet status...",
-    "Calculating aerodynamic drag of tail curl along flank...",
-    "Monitoring radar for Loaf Boat hazards (accidental oar deployment)...",
-    "Checking elbow tuck against strict chicken-wing regulations...",
-    "Measuring dough rise, boule volume, and carpet proofing contour...",
-    "Evaluating coat toastiness against artisanal bakery color charts...",
-    "Verifying whether subject has attempted legendary Face Loaf...",
-    "Consulting Chief Loaf Auditor for official honorary ranking..."
+  const bakeryAuditSteps = [
+    { title: "Loading the oven & preheating pan...", detail: "Calibrating temperature to golden brioche" },
+    { title: "Kneading dough & making biscuits...", detail: "Rhythmic front-paw biscuit agitation detected" },
+    { title: "Proofing loaf on warm sunlit carpet...", detail: "Allowing dough to rise and maximize fluffiness" },
+    { title: "Scanning undercarriage for illicit peet peek...", detail: "Auditing all 4 paws for hidden toe beans" },
+    { title: "Monitoring radar for Loaf Boat hazards...", detail: "Checking for unauthorized oar deployments" },
+    { title: "Checking elbow fold against chicken-wing rules...", detail: "Verifying flank compression against ribcage" },
+    { title: "Measuring dorsal symmetry & crust toastiness...", detail: "Scoring tiger-stripe toast pigmentation" },
+    { title: "Consulting Chief Loaf Auditor for official rank...", detail: "Preparing official certification papers" }
   ];
 
   let phraseInterval = null;
+  const loadingStepLog = document.getElementById('loadingStepLog');
+
+  function renderStepLog(activeIdx) {
+    if (!loadingStepLog) return;
+    loadingStepLog.innerHTML = '';
+    
+    // Show current step and recent completed steps
+    const startIdx = Math.max(0, activeIdx - 2);
+    for (let i = startIdx; i <= activeIdx && i < bakeryAuditSteps.length; i++) {
+      const step = bakeryAuditSteps[i];
+      const isCurrent = i === activeIdx;
+      const el = document.createElement('div');
+      el.className = isCurrent 
+        ? 'flex items-center gap-2 text-orange-950 font-semibold bg-orange-50/90 px-2.5 py-1 rounded-lg border border-orange-200/70 transition-all duration-300'
+        : 'flex items-center gap-2 text-stone-500 px-2.5 py-0.5 transition-all duration-300';
+      
+      const iconName = isCurrent ? 'loader-2' : 'check-circle-2';
+      const iconClass = isCurrent ? 'w-3.5 h-3.5 text-orange-600 animate-spin shrink-0' : 'w-3.5 h-3.5 text-emerald-600 shrink-0';
+      
+      el.innerHTML = `
+        <i data-lucide="${iconName}" class="${iconClass}"></i>
+        <span class="truncate">${step.title}</span>
+      `;
+      loadingStepLog.appendChild(el);
+    }
+    refreshIcons();
+  }
+
   function startLoadingAnimation() {
     loadingState.classList.remove('hidden');
     inspectorBay.classList.add('hidden');
@@ -424,15 +451,17 @@ document.addEventListener('DOMContentLoaded', () => {
     window.scrollTo({ top: 120, behavior: 'smooth' });
 
     let index = 0;
-    loadingPhrase.textContent = auditPhrases[0];
-    loadingProgressBar.style.width = '20%';
+    loadingPhrase.textContent = bakeryAuditSteps[0].title;
+    loadingProgressBar.style.width = '18%';
+    renderStepLog(0);
 
     phraseInterval = setInterval(() => {
-      index = (index + 1) % auditPhrases.length;
-      loadingPhrase.textContent = auditPhrases[index];
-      const pct = Math.min(25 + index * 12, 95);
+      index = (index + 1) % bakeryAuditSteps.length;
+      loadingPhrase.textContent = bakeryAuditSteps[index].title;
+      const pct = Math.min(20 + index * 11, 95);
       loadingProgressBar.style.width = `${pct}%`;
-    }, 1200);
+      renderStepLog(index);
+    }, 1000);
   }
 
   function stopLoadingAnimation() {
@@ -440,7 +469,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loadingProgressBar.style.width = '100%';
     setTimeout(() => {
       loadingState.classList.add('hidden');
-    }, 300);
+    }, 350);
   }
 
   // Submit & Grade
