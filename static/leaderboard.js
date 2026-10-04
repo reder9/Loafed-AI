@@ -1512,9 +1512,11 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!t.el) return;
       if (t.key === period) {
         t.el.className = 'tab-filter-btn active';
+        t.el.setAttribute('aria-selected', 'true');
         if (listSectionTitle) listSectionTitle.textContent = t.title;
       } else {
         t.el.className = 'tab-filter-btn';
+        t.el.setAttribute('aria-selected', 'false');
       }
     });
 
@@ -1659,7 +1661,7 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
           <div class="flex-1 min-w-0">
             <div class="flex items-center justify-between gap-2">
-              <h4 class="font-extrabold text-sm sm:text-base text-stone-900 truncate group-hover:text-orange-950 transition-colors">${catName}</h4>
+              <h3 class="font-extrabold text-sm sm:text-base text-stone-900 truncate group-hover:text-orange-950 transition-colors">${catName}</h3>
               <span class="stamp text-xs font-black text-orange-700 bg-white border-orange-700 shrink-0">${score} ${gradeLetter}</span>
             </div>
             <div class="flex items-center gap-2 text-xs text-stone-600 mt-0.5 flex-wrap">
@@ -1667,8 +1669,8 @@ document.addEventListener('DOMContentLoaded', () => {
               <span class="hidden sm:inline text-stone-300">&bull;</span>
               <span class="text-stone-500 text-[11px] truncate">${bread}</span>
             </div>
-            <div class="text-[11px] text-stone-400 mt-1 truncate">
-              Baked by <span class="font-medium text-stone-600">${bakerName}</span>
+            <div class="text-[11px] text-stone-600 font-medium mt-1 truncate">
+              Baked by <span class="font-bold text-stone-800">${bakerName}</span>
             </div>
           </div>
           ${actionBtns}
