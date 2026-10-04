@@ -1003,13 +1003,70 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Scroll so the given section's top sits just below the sticky header (works on desktop and mobile)
-  function scrollToSection(el) {
-    if (!el) return;
+  function scrollToSection(el, onComplete = null) {
+    if (!el) {
+      if (typeof onComplete === 'function') onComplete();
+      return;
+    }
     requestAnimationFrame(() => {
       const header = document.querySelector('header');
       const headerH = header ? header.getBoundingClientRect().height : 0;
-      const top = el.getBoundingClientRect().top + window.scrollY - headerH - 16;
-      window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+      const targetY = Math.max(0, el.getBoundingClientRect().top + window.scrollY - headerH - 16);
+      
+      let finished = false;
+      function finish() {
+        if (finished) return;
+        finished = true;
+        if (typeof onComplete === 'function') {
+          // Extra settling buffer: 200ms after scrolling stops to let the viewport visually rest
+          setTimeout(onComplete, 200);
+        }
+      }
+
+      // If already within 15px of target, finish immediately with settling buffer
+      if (Math.abs(window.scrollY - targetY) <= 15) {
+        finish();
+        return;
+      }
+
+      // Modern browser native scrollend event
+      const onScrollEnd = () => {
+        window.removeEventListener('scrollend', onScrollEnd);
+        finish();
+      };
+      if ('onscrollend' in window) {
+        window.addEventListener('scrollend', onScrollEnd, { once: true });
+      }
+
+      // Robust fallback watcher across all devices (including mobile & older browsers)
+      let lastPos = window.scrollY;
+      let restingCount = 0;
+      const watcher = setInterval(() => {
+        const curr = window.scrollY;
+        // Reached destination
+        if (Math.abs(curr - targetY) <= 15) {
+          clearInterval(watcher);
+          finish();
+        } else if (Math.abs(curr - lastPos) < 2) {
+          // Hasn't moved across ticks (e.g. hit bottom of document or completed scroll)
+          restingCount++;
+          if (restingCount >= 3) {
+            clearInterval(watcher);
+            finish();
+          }
+        } else {
+          restingCount = 0;
+          lastPos = curr;
+        }
+      }, 50);
+
+      // Hard timeout fallback (1400ms max smooth scroll duration)
+      setTimeout(() => {
+        clearInterval(watcher);
+        finish();
+      }, 1400);
+
+      window.scrollTo({ top: targetY, behavior: 'smooth' });
     });
   }
 
@@ -1112,7 +1169,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 200);
   }
 
-  function stopLoadingAnimation() {
+  function stopLoadingAnimation(callback = null) {
     if (progressInterval) clearInterval(progressInterval);
     progressInterval = null;
     if (photoCycleInterval) clearInterval(photoCycleInterval);
@@ -1125,6 +1182,9 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => {
       loadingState.classList.remove('hearth-oven-active');
       loadingState.classList.add('hidden');
+      if (typeof callback === 'function') {
+        callback();
+      }
     }, 380);
   }
 
@@ -1190,21 +1250,22 @@ document.addEventListener('DOMContentLoaded', () => {
         throw new Error(data.detail || 'Inspection failed');
       }
 
-      stopLoadingAnimation();
-      state.currentResult = data.result;
-      state.gradeToken = data.grade_token || null;
-      if (state.photos.length > 0 && state.photos[0].file) {
-        state.submittedPhotoBlob = state.photos[0].file;
-      }
-      renderResults(data.result, data.demo_mode);
-      saveLoafToHistory(data.result);
-      if (data.demo_mode && data.message) {
-        showToast({
-          type: 'info',
-          title: 'Demo Calibration Mode',
-          message: data.message
-        });
-      }
+      stopLoadingAnimation(() => {
+        state.currentResult = data.result;
+        state.gradeToken = data.grade_token || null;
+        if (state.photos.length > 0 && state.photos[0].file) {
+          state.submittedPhotoBlob = state.photos[0].file;
+        }
+        renderResults(data.result, data.demo_mode);
+        saveLoafToHistory(data.result);
+        if (data.demo_mode && data.message) {
+          showToast({
+            type: 'info',
+            title: 'Demo Calibration Mode',
+            message: data.message
+          });
+        }
+      });
     } catch (err) {
       stopLoadingAnimation();
       inspectorBay.classList.remove('hidden');
@@ -1233,7 +1294,28 @@ document.addEventListener('DOMContentLoaded', () => {
   function renderResults(result, isDemoMode) {
     resultsSection.classList.remove('hidden');
     inspectorBay.classList.add('hidden');
-    scrollToSection(resultsSection);
+
+    // Reset score number to 0 and reset ring gauge before scrolling so user sees the roll
+    const scoreNumEl = document.getElementById('scoreNumber');
+    if (scoreNumEl) scoreNumEl.textContent = '0';
+    const circleEl = document.getElementById('scoreMeterCircle');
+    if (circleEl) {
+      const circumference = 2 * Math.PI * 90;
+      circleEl.style.strokeDashoffset = circumference;
+    }
+
+    // Keep grade stamp hidden until score roll completes
+    const gradeStamp = document.getElementById('gradeStamp');
+    if (gradeStamp) {
+      gradeStamp.classList.remove('stamp-slam');
+      gradeStamp.style.opacity = '0';
+    }
+
+    // Hide badges until stamp impact
+    const multiAngleBadge = document.getElementById('multiAngleBadge');
+    if (multiAngleBadge) multiAngleBadge.classList.add('hidden');
+    const oarBadge = document.getElementById('oarBadge');
+    if (oarBadge) oarBadge.classList.add('hidden');
 
     // Configure Example Preset vs User Inspection UX
     if (state.isExamplePreset) {
@@ -1285,33 +1367,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (angleReviewStrip) angleReviewStrip.classList.add('hidden');
       if (badgesAndTipsGrid) badgesAndTipsGrid.classList.add('hidden');
       if (downloadCertificateBtn) downloadCertificateBtn.classList.add('hidden');
-      if (submitLeaderboardBtn) submitLeaderboardBtn.classList.add('hidden');
 
-      showToast({
-        type: 'error',
-        title: 'Non-Feline Disqualification',
-        message: result.rejection_reason || 'Non-feline subject detected. Only authentic domestic cats can be certified!'
-      });
-
-      setTimeout(() => {
-        if (disqualificationBanner) {
-          disqualificationBanner.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-      }, 100);
-    } else {
-      if (disqualificationBanner) disqualificationBanner.classList.add('hidden');
-      if (criteriaGrid) criteriaGrid.classList.remove('hidden');
-      if (angleReviewStrip) angleReviewStrip.classList.remove('hidden');
-      if (badgesAndTipsGrid) badgesAndTipsGrid.classList.remove('hidden');
-      if (downloadCertificateBtn) downloadCertificateBtn.classList.remove('hidden');
-      if (submitLeaderboardBtn && !isDemoMode) submitLeaderboardBtn.classList.remove('hidden');
-    }
-
-    // Grade Stamp & Badges
-    const gradeStamp = document.getElementById('gradeStamp');
-    if (result.is_cat === false) {
-      gradeStamp.textContent = 'DQ';
-      gradeStamp.className = 'stamp text-rose-700 border-rose-700 text-lg font-black';
       if (submitLeaderboardBtn) {
         submitLeaderboardBtn.classList.remove('hidden');
         submitLeaderboardBtn.disabled = false;
@@ -1322,10 +1378,20 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
         submitLeaderboardBtn.title = result.rejection_reason || 'Audit Disqualified: Not an authentic feline loaf';
       }
+
+      showToast({
+        type: 'error',
+        title: 'Non-Feline Disqualification',
+        message: result.rejection_reason || 'Non-feline subject detected. Only authentic domestic cats can be certified!'
+      });
     } else {
-      gradeStamp.textContent = result.grade_letter;
+      if (disqualificationBanner) disqualificationBanner.classList.add('hidden');
+      if (criteriaGrid) criteriaGrid.classList.remove('hidden');
+      if (angleReviewStrip) angleReviewStrip.classList.remove('hidden');
+      if (badgesAndTipsGrid) badgesAndTipsGrid.classList.remove('hidden');
+      if (downloadCertificateBtn) downloadCertificateBtn.classList.remove('hidden');
       if (submitLeaderboardBtn) {
-        if (!isDemoMode) {
+        if (!isDemoMode && !state.isExamplePreset) {
           submitLeaderboardBtn.classList.remove('hidden');
         } else {
           submitLeaderboardBtn.classList.add('hidden');
@@ -1338,40 +1404,7 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
         submitLeaderboardBtn.title = 'Submit to Official Leaderboard';
       }
-      
-      // Stamp colors & Physical Stamp Slam Animation
-      gradeStamp.classList.remove('stamp-slam');
-      void gradeStamp.offsetWidth; // Force reflow to re-trigger animation
-
-      if (result.grade_letter.includes('A')) {
-        gradeStamp.className = 'stamp text-orange-700 border-orange-700 text-lg font-black stamp-slam';
-      } else if (result.grade_letter.includes('B')) {
-        gradeStamp.className = 'stamp text-amber-700 border-amber-700 text-lg font-black stamp-slam';
-      } else if (result.grade_letter.includes('C')) {
-        gradeStamp.className = 'stamp text-stone-700 border-stone-700 text-lg font-black stamp-slam';
-      } else {
-        gradeStamp.className = 'stamp text-rose-700 border-rose-700 text-lg font-black stamp-slam';
-      }
     }
-
-    // Multi-angle badge
-    const multiAngleBadge = document.getElementById('multiAngleBadge');
-    if (result.multi_angle_bonus && result.multi_angle_bonus > 0) {
-      multiAngleBadge.classList.remove('hidden');
-    } else {
-      multiAngleBadge.classList.add('hidden');
-    }
-
-    // Oar / Loaf Boat badge
-    const oarBadge = document.getElementById('oarBadge');
-    if (result.oar_detected) {
-      oarBadge.classList.remove('hidden');
-    } else {
-      oarBadge.classList.add('hidden');
-    }
-
-    // Animated Score Counter & Circle Gauge
-    animateScore(result.overall_score);
 
     // Criteria Cards
     renderSubScore('paw', result.paw_tuck);
@@ -1409,6 +1442,21 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     refreshIcons();
+
+    // Smooth scroll to the score summary card (or disqualification banner) first,
+    // ensure the user has physically arrived and settled, then roll score & slam stamp!
+    const scoreHeroCard = document.getElementById('scoreHeroCard');
+    const scrollTarget = (result.is_cat === false && disqualificationBanner) ? disqualificationBanner : (scoreHeroCard || resultsSection);
+
+    scrollToSection(scrollTarget, () => {
+      if (result.is_cat === false) {
+        triggerStampSlam(result);
+      } else {
+        animateScore(result.overall_score, () => {
+          triggerStampSlam(result);
+        });
+      }
+    });
   }
 
   function renderSubScore(prefix, sub) {
@@ -1486,15 +1534,78 @@ document.addEventListener('DOMContentLoaded', () => {
     refreshIcons();
   }
 
-  function animateScore(target) {
+  function triggerStampSlam(result) {
+    const gradeStamp = document.getElementById('gradeStamp');
+    if (!gradeStamp) return;
+
+    gradeStamp.classList.remove('stamp-slam');
+    gradeStamp.style.opacity = '1';
+
+    if (result.is_cat === false) {
+      gradeStamp.textContent = 'DQ';
+      gradeStamp.className = 'stamp text-rose-700 border-rose-700 text-lg font-black';
+    } else {
+      gradeStamp.textContent = result.grade_letter || 'A';
+      if (result.grade_letter && result.grade_letter.includes('A')) {
+        gradeStamp.className = 'stamp text-orange-700 border-orange-700 text-lg font-black';
+      } else if (result.grade_letter && result.grade_letter.includes('B')) {
+        gradeStamp.className = 'stamp text-amber-700 border-amber-700 text-lg font-black';
+      } else if (result.grade_letter && result.grade_letter.includes('C')) {
+        gradeStamp.className = 'stamp text-stone-700 border-stone-700 text-lg font-black';
+      } else {
+        gradeStamp.className = 'stamp text-rose-700 border-rose-700 text-lg font-black';
+      }
+    }
+
+    // Force reflow and re-add stamp-slam animation
+    void gradeStamp.offsetWidth;
+    gradeStamp.classList.add('stamp-slam');
+
+    // Subtle tactile haptic vibration feedback on supported mobile devices
+    try {
+      if (typeof navigator !== 'undefined' && navigator.vibrate) {
+        navigator.vibrate([25, 30, 45]);
+      }
+    } catch (_) {}
+
+    // Reveal multi-angle and oar badges smoothly after impact
+    setTimeout(() => {
+      const multiAngleBadge = document.getElementById('multiAngleBadge');
+      if (multiAngleBadge) {
+        if (result.multi_angle_bonus && result.multi_angle_bonus > 0) {
+          multiAngleBadge.classList.remove('hidden');
+        } else {
+          multiAngleBadge.classList.add('hidden');
+        }
+      }
+
+      const oarBadge = document.getElementById('oarBadge');
+      if (oarBadge) {
+        if (result.oar_detected) {
+          oarBadge.classList.remove('hidden');
+        } else {
+          oarBadge.classList.add('hidden');
+        }
+      }
+    }, 200);
+  }
+
+  function animateScore(target, onComplete = null) {
     const numEl = document.getElementById('scoreNumber');
     const circleEl = document.getElementById('scoreMeterCircle');
     const circumference = 2 * Math.PI * 90;
 
-    circleEl.style.strokeDashoffset = circumference;
+    if (circleEl) circleEl.style.strokeDashoffset = circumference;
+    if (numEl) numEl.textContent = '0';
+
+    if (!target || target <= 0) {
+      if (numEl) numEl.textContent = '0';
+      if (typeof onComplete === 'function') onComplete();
+      return;
+    }
 
     let start = 0;
-    const duration = 1400;
+    const duration = 1200;
     const startTime = performance.now();
 
     function step(currTime) {
@@ -1503,13 +1614,20 @@ document.addEventListener('DOMContentLoaded', () => {
       const ease = 1 - Math.pow(1 - progress, 3);
       const currentScore = Math.round(start + (target - start) * ease);
 
-      numEl.textContent = currentScore;
+      if (numEl) numEl.textContent = currentScore;
 
-      const offset = circumference - (circumference * (currentScore / 100));
-      circleEl.style.strokeDashoffset = offset;
+      if (circleEl) {
+        const offset = circumference - (circumference * (currentScore / 100));
+        circleEl.style.strokeDashoffset = offset;
+      }
 
       if (progress < 1) {
         requestAnimationFrame(step);
+      } else {
+        if (numEl) numEl.textContent = target;
+        if (typeof onComplete === 'function') {
+          onComplete();
+        }
       }
     }
 
@@ -1576,6 +1694,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     resetBenchmarkButtons();
+    const gradeStamp = document.getElementById('gradeStamp');
+    if (gradeStamp) {
+      gradeStamp.classList.remove('stamp-slam');
+      gradeStamp.style.opacity = '0';
+    }
     if (scroll) {
       scrollToSection(inspectorBay);
     }
