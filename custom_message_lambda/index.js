@@ -1,10 +1,42 @@
-// Loafed AI - AWS Cognito Custom Message Lambda Trigger
-// Stylized responsive HTML email notifications for Baker authentication
+// RederSoft - AWS Cognito Custom Message Lambda Trigger
+// Multi-tenant email notification dispatcher supporting Loafed AI and Kalon Beauty Atelier
+
+const LOAFED_CLIENT_ID = '9qibinq77f26bat64unru8q77';
+const KALON_CLIENT_ID = '5gkqhnchdcmd20oko23q9jkgca';
 
 exports.handler = async (event) => {
   console.log('CustomMessage triggerSource:', event.triggerSource);
-  console.log('User attributes:', JSON.stringify(event.request.userAttributes || {}));
+  console.log('clientMetadata:', JSON.stringify(event.request.clientMetadata || {}));
+  console.log('callerContext:', JSON.stringify(event.callerContext || {}));
 
+  const clientMetadata = event.request.clientMetadata || {};
+  const clientId = event.callerContext?.clientId;
+
+  const isLoafed = clientId === LOAFED_CLIENT_ID ||
+                   clientMetadata.app === 'loafed' ||
+                   clientMetadata.slug === 'loafed';
+
+  const isKalonBeauty = clientId === KALON_CLIENT_ID ||
+                        clientMetadata.app === 'kalon-beauty' || 
+                        clientMetadata.tenant === 'kalon_beauty_424149' ||
+                        clientMetadata.slug === 'kalon-beauty';
+
+  if (isLoafed) {
+    return handleLoafedMessage(event);
+  }
+
+  if (isKalonBeauty) {
+    return handleKalonBeautyMessage(event);
+  }
+
+  // Fallback: If neither matches, return default event unmodified
+  return event;
+};
+
+// -------------------------------------------------------------
+// LOAFED AI - Feline Bakery Verification Template
+// -------------------------------------------------------------
+function handleLoafedMessage(event) {
   const code = event.request.codeParameter || '{####}';
   const logoUrl = 'https://loafed.redersoft.com/static/logo.png';
   const websiteUrl = 'https://loafed.redersoft.com';
@@ -39,7 +71,6 @@ exports.handler = async (event) => {
     reasonText = 'This confirms your ownership of the updated email address for Loafed AI.';
   }
 
-  // Generate responsive email-client compatible HTML
   const emailHtml = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -102,7 +133,6 @@ exports.handler = async (event) => {
   </style>
 </head>
 <body style="margin: 0; padding: 0; background-color: #fffaf4; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; color: #292524; -webkit-font-smoothing: antialiased;">
-  <!-- Pre-header text (hidden preview in inbox) -->
   <div style="display: none; font-size: 1px; color: #fffaf4; line-height: 1px; max-height: 0px; max-width: 0px; opacity: 0; overflow: hidden;">
     Your Loafed AI verification code is ${code}. Enter this code to verify your Baker account.
   </div>
@@ -110,19 +140,12 @@ exports.handler = async (event) => {
   <table width="100%" border="0" cellspacing="0" cellpadding="0" class="outer-wrapper" style="background-color: #fffaf4; padding: 36px 16px 48px 16px;">
     <tr>
       <td align="center">
-        <!-- Main Container Card -->
         <table width="100%" border="0" cellspacing="0" cellpadding="0" class="main-card" style="max-width: 580px; background-color: #ffffff; border: 1px solid #fed7aa; border-radius: 20px; box-shadow: 0 10px 30px -10px rgba(234, 88, 12, 0.12); overflow: hidden;">
-          
-          <!-- Top Orange/Amber Accent Line -->
           <tr>
             <td height="5" style="background: linear-gradient(90deg, #ea580c 0%, #f97316 50%, #d97706 100%);"></td>
           </tr>
-          
-          <!-- Content Padding -->
           <tr>
             <td class="card-content" style="padding: 36px 32px 28px 32px;">
-              
-              <!-- Brand Header -->
               <table width="100%" border="0" cellspacing="0" cellpadding="0" class="header-table" style="margin-bottom: 28px; border-bottom: 1px solid #ffedd5; padding-bottom: 22px;">
                 <tr>
                   <td valign="middle" class="header-left-col">
@@ -152,7 +175,6 @@ exports.handler = async (event) => {
                 </tr>
               </table>
 
-              <!-- Main Greeting & Description -->
               <h1 class="heading-title" style="color: #1c1917; font-size: 22px; font-weight: 900; margin: 0 0 12px 0; line-height: 1.3; letter-spacing: -0.3px;">
                 ${title}
               </h1>
@@ -160,7 +182,6 @@ exports.handler = async (event) => {
                 ${introParagraph}
               </p>
 
-              <!-- Stylized Code Box -->
               <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #fff7ed; border: 2px dashed #f97316; border-radius: 16px; margin: 24px 0;">
                 <tr>
                   <td align="center" class="code-box-td" style="padding: 24px 20px;">
@@ -181,7 +202,6 @@ exports.handler = async (event) => {
                 ${reasonText}
               </p>
 
-              <!-- Safety Notice Box -->
               <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #fafaf9; border: 1px solid #e7e5e4; border-radius: 12px; margin-bottom: 24px;">
                 <tr>
                   <td style="padding: 14px 16px; font-size: 12px; color: #78716c; line-height: 1.5;">
@@ -190,7 +210,6 @@ exports.handler = async (event) => {
                 </tr>
               </table>
 
-              <!-- Quick Links Button -->
               <table width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-top: 8px;">
                 <tr>
                   <td align="center">
@@ -204,7 +223,6 @@ exports.handler = async (event) => {
             </td>
           </tr>
 
-          <!-- Footer Area -->
           <tr>
             <td class="footer-td" style="background-color: #fafaf9; border-top: 1px solid #f5f5f4; padding: 22px 32px; text-align: center;">
               <p style="font-size: 11px; color: #78716c; line-height: 1.6; margin: 0 0 8px 0;">
@@ -230,6 +248,152 @@ exports.handler = async (event) => {
 
   event.response.emailSubject = subject;
   event.response.emailMessage = emailHtml;
+  return event;
+}
+
+// -------------------------------------------------------------
+// KALON BEAUTY ATELIER - Luxury Atelier Verification Template
+// -------------------------------------------------------------
+function handleKalonBeautyMessage(event) {
+  const code = event.request.codeParameter || '{####}';
+  const logoUrl = 'https://kalon-beauty.redersoft.com/assets/logo-Bf5Yh7ob.png';
+
+  if (event.triggerSource === 'CustomMessage_SignUp' || event.triggerSource === 'CustomMessage_ResendCode') {
+    event.response.emailSubject = 'Your Kalon Beauty Atelier Verification Code';
+    event.response.emailMessage = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your Kalon Beauty Verification Code</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #0c100d; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #fdfbf7;">
+  <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #0c100d; padding: 32px 16px;">
+    <tr>
+      <td align="center">
+        <table width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 580px; background-color: #141a15; border: 1px solid rgba(200, 160, 88, 0.35); border-radius: 20px; box-shadow: 0 12px 48px rgba(0, 0, 0, 0.65); overflow: hidden;">
+          <tr>
+            <td height="5" style="background: linear-gradient(90deg, #c8a058, #dfba73, #e2b49a);"></td>
+          </tr>
+          <tr>
+            <td style="padding: 36px 32px 28px 32px;">
+              <table width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 24px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); padding-bottom: 20px;">
+                <tr>
+                  <td width="70" valign="middle" style="padding-right: 16px;">
+                    <img src="${logoUrl}" alt="Kalon Beauty Atelier" width="64" height="64" style="display: block; width: 64px; height: 64px; border-radius: 50%; border: 1.5px solid rgba(200, 160, 88, 0.45); object-fit: cover;" />
+                  </td>
+                  <td valign="middle">
+                    <div style="font-size: 22px; font-weight: 800; letter-spacing: 1.5px; color: #ffffff; text-transform: uppercase; line-height: 1.2;">
+                      KALON <span style="color: #c8a058; font-style: italic;">BEAUTY</span>
+                    </div>
+                    <div style="font-size: 11px; color: #c8a058; letter-spacing: 2px; text-transform: uppercase; font-weight: 700; margin-top: 4px;">
+                      Lash &amp; Beauty Atelier &bull; Colorado Springs
+                    </div>
+                  </td>
+                  <td align="right" valign="middle">
+                    <span style="display: inline-block; padding: 6px 14px; background: rgba(200, 160, 88, 0.12); border: 1px solid rgba(200, 160, 88, 0.35); border-radius: 999px; font-size: 11px; font-weight: 700; color: #dfba73; letter-spacing: 0.5px; white-space: nowrap;">
+                      CLIENT PORTAL
+                    </span>
+                  </td>
+                </tr>
+              </table>
+
+              <h1 style="color: #ffffff; font-size: 24px; font-weight: 800; margin: 0 0 10px 0; line-height: 1.3;">
+                Welcome to Kalon Beauty
+              </h1>
+              <p style="color: #cbd5e1; font-size: 14px; line-height: 1.6; margin: 0 0 24px 0;">
+                Thank you for choosing Kalon Beauty Atelier. Please enter the 6-digit confirmation code below to verify your client profile and access your reservations.
+              </p>
+
+              <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background: rgba(200, 160, 88, 0.08); border: 2px solid #c8a058; border-radius: 14px; margin: 24px 0;">
+                <tr>
+                  <td align="center" style="padding: 24px 20px;">
+                    <div style="font-size: 11px; font-weight: 800; letter-spacing: 2.5px; color: #c8a058; text-transform: uppercase; margin-bottom: 8px;">
+                      Your 6-Digit Verification Code
+                    </div>
+                    <div style="font-size: 40px; font-weight: 900; letter-spacing: 12px; color: #ffffff; font-family: 'Courier New', Courier, monospace; text-shadow: 0 0 20px rgba(200, 160, 88, 0.4);">
+                      ${code}
+                    </div>
+                    <div style="font-size: 11px; color: #94a3b8; margin-top: 10px;">
+                      Valid for 15 minutes &bull; Single-use security code
+                    </div>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="color: #94a3b8; font-size: 13px; line-height: 1.6; margin: 0 0 24px 0;">
+                If you did not request this verification code, you can safely disregard this email. Your appointment history and card details remain secure.
+              </p>
+
+              <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 12px; padding: 16px; margin-bottom: 24px;">
+                <tr>
+                  <td style="font-size: 12px; color: #cbd5e1; line-height: 1.6;">
+                    <strong style="color: #ffffff;">Master Stylist:</strong> Samantha Lujan (6+ Years Mastery)<br>
+                    <strong style="color: #ffffff;">Studio Location:</strong> 5585 Erindale Drive, Suite 201, Colorado Springs, CO 80918<br>
+                    <strong style="color: #ffffff;">Studio Phone:</strong> (719) 424-9568
+                  </td>
+                </tr>
+              </table>
+
+              <table width="100%" border="0" cellspacing="0" cellpadding="0" style="border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 20px; text-align: center;">
+                <tr>
+                  <td style="font-size: 11px; color: #64748b; line-height: 1.6;">
+                    Kalon Beauty Atelier &bull; Private Boutique Lash Studio<br>
+                    <a href="https://www.instagram.com/kalon.beautyyy/" style="color: #dfba73; text-decoration: none; font-weight: 600;">@kalon.beautyyy</a> &bull; Colorado Springs, CO<br>
+                    &copy; ${new Date().getFullYear()} Kalon Beauty Atelier. All rights reserved. &bull; Powered by <a href="https://redersoft.com" style="color: #c8a058; text-decoration: none; font-weight: 600;">RederSoft</a>
+                  </td>
+                </tr>
+              </table>
+
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`.trim();
+  } else if (event.triggerSource === 'CustomMessage_ForgotPassword') {
+    event.response.emailSubject = 'Reset Your Kalon Beauty Atelier Password';
+    event.response.emailMessage = `
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Reset Your Password</title></head>
+<body style="margin: 0; padding: 0; background-color: #0c100d; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #fdfbf7;">
+  <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #0c100d; padding: 32px 16px;">
+    <tr>
+      <td align="center">
+        <table width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 580px; background-color: #141a15; border: 1px solid rgba(200, 160, 88, 0.35); border-radius: 20px; padding: 36px 32px;">
+          <tr>
+            <td>
+              <table width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 20px;">
+                <tr>
+                  <td width="64" valign="middle" style="padding-right: 14px;">
+                    <img src="${logoUrl}" alt="Kalon Beauty Atelier" width="56" height="56" style="display: block; width: 56px; height: 56px; border-radius: 50%; border: 1.5px solid rgba(200, 160, 88, 0.45); object-fit: cover;" />
+                  </td>
+                  <td valign="middle">
+                    <div style="font-size: 22px; font-weight: 800; color: #ffffff;">KALON <span style="color: #c8a058;">BEAUTY</span></div>
+                    <div style="font-size: 11px; color: #c8a058; letter-spacing: 2px; text-transform: uppercase; font-weight: 700;">Lash &amp; Beauty Atelier</div>
+                  </td>
+                </tr>
+              </table>
+
+              <h2 style="color: #ffffff; font-size: 20px; margin: 16px 0 10px 0;">Reset Your Password</h2>
+              <p style="color: #cbd5e1; font-size: 14px; line-height: 1.6;">You requested a password reset for your Kalon Beauty client account. Enter this verification code to proceed:</p>
+              <div style="background: rgba(200, 160, 88, 0.1); border: 2px solid #c8a058; border-radius: 12px; padding: 20px; text-align: center; margin: 20px 0;">
+                <div style="font-size: 36px; font-weight: 900; letter-spacing: 10px; color: #ffffff; font-family: monospace;">${code}</div>
+              </div>
+              <p style="color: #94a3b8; font-size: 12px;">This code expires in 15 minutes. If you did not initiate this request, please contact Samantha at (719) 424-9568.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`.trim();
+  }
 
   return event;
-};
+}

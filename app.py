@@ -385,10 +385,10 @@ async def read_and_validate_image(upload: UploadFile):
     return content, ALLOWED_IMAGE_FORMATS[fmt]
 
 
-# AWS & Auth Configuration
-COGNITO_USER_POOL_ID = os.getenv("COGNITO_USER_POOL_ID", "us-east-1_IiodbLOpW")
-COGNITO_CLIENT_ID = os.getenv("COGNITO_CLIENT_ID", "76eqq0ir3782t01unag505400b")
-COGNITO_DOMAIN = os.getenv("COGNITO_DOMAIN", "loafed-auth.auth.us-east-1.amazoncognito.com")
+# AWS & Auth Configuration (Unified RederSoft Auth Pattern)
+COGNITO_USER_POOL_ID = os.getenv("COGNITO_USER_POOL_ID", "us-east-1_WNuiA3Tyg")
+COGNITO_CLIENT_ID = os.getenv("COGNITO_CLIENT_ID", "9qibinq77f26bat64unru8q77")
+COGNITO_DOMAIN = os.getenv("COGNITO_DOMAIN", "auth.redersoft.com")
 AWS_REGION = os.getenv("AWS_REGION", "us-east-1")
 DYNAMODB_TABLE_NAME = os.getenv("DYNAMODB_TABLE", "Loafed-Leaderboard")
 S3_BUCKET_NAME = os.getenv("S3_THUMBNAILS_BUCKET", "loafed-thumbnails-686255947626")
