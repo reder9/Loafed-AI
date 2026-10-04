@@ -197,6 +197,144 @@ PRESET_BUTTERCUP = {
     }
 }
 
+PRESET_CHONKS = {
+    "cat_name": "Chonks",
+    "overall_score": 89,
+    "grade_letter": "A",
+    "loaf_rank": "Master Artisan Loaf",
+    "bread_classification": "Dark Rye Pumpernickel Boule",
+    "summary_critique": "Chonks demonstrates textbook high-elevation loaf technique. Perched atop the lookout tree, this dark rye pumpernickel boule displays exceptional undercarriage discipline with zero toe bean breaches and sleek, low-drag flank compression. A distinguished feline baker of the highest order.",
+    "paw_tuck": {
+        "score": 23,
+        "status": "95% Concealment (Sub-Perch Tuck)",
+        "critique": "Front and rear limbs are securely tucked into the plush undercarriage. While the cat tree rim assists in masking the lower extremities, zero illicit toe beans or claws are visibly breaching the perimeter.",
+        "observations": [
+            "Undercarriage limbs fully withdrawn into dark charcoal fur perimeter",
+            "No forward wrist extension detected from front-quarter view",
+            "Slight edge elevation supported by cat perch bolster"
+        ]
+    },
+    "tail_tuck": {
+        "score": 23,
+        "status": "Starboard Flank Curvature",
+        "critique": "Tail is smoothly curled along the lateral flank, providing unbroken curvature with negligible aerodynamic turbulence.",
+        "observations": [
+            "Tail tip resting flush against starboard haunch",
+            "Aerodynamic drag coefficient measured at 0.04",
+            "Uniform dark coat renders tail outline nearly imperceptible"
+        ]
+    },
+    "elbow_compactness": {
+        "score": 22,
+        "status": "Compact Dough Rise",
+        "critique": "Excellent lateral dough compression. Elbows pulled tightly against ribcage with zero chicken-wing flare, forming an imposing rectangular bread profile.",
+        "observations": [
+            "Zero lateral limb flare or oar protrusions",
+            "Solid muscular rise with uniform breadth",
+            "Slight upward gaze introduces minor cranial yaw"
+        ]
+    },
+    "crust_symmetry": {
+        "score": 21,
+        "status": "Dark Rye Boule Symmetry",
+        "critique": "Dense, beautifully baked charcoal-slate coat resembling a rustic pumpernickel boule. Topline curvature is even with a smooth spinal arch.",
+        "observations": [
+            "Uniform dark coat toastiness with velvety matte finish",
+            "Bilateral contour balanced across medial axis",
+            "Slight cranial turn toward starboard window"
+        ]
+    },
+    "drag_coefficient": 0.04,
+    "oar_detected": False,
+    "face_loaf": False,
+    "multi_angle_bonus": 4,
+    "badges": [
+        "Certified Dark Rye Pumpernickel",
+        "High-Perch Boule Formation",
+        "Stealth Peet Concealment",
+        "Sub-0.05 Aerodynamic Drag",
+        "Solid Slate Symmetry"
+    ],
+    "fun_tips_for_cat": [
+        "Align cranial axis directly forward for 100% bilateral boule symmetry.",
+        "Try the floor-level test to verify paw concealment without perch rim support.",
+        "A sub-perch ear tuck would push Chonks toward Grandmaster status."
+    ],
+    "angle_notes": {
+        "front": "Alert, observant gaze; chest squarely aligned over perch bolster.",
+        "side": "Continuous slate-grey parabolic topline with tight starboard tail tuck."
+    }
+}
+
+PRESET_FLASH = {
+    "cat_name": "Flash",
+    "overall_score": 83,
+    "grade_letter": "B+",
+    "loaf_rank": "Senior Artisan Loaf",
+    "bread_classification": "Marbled Sourdough Baton",
+    "summary_critique": "Flash presents an exquisite marbled sourdough baton resting atop prime cushion real estate. While full aerodynamic marks are awarded for the remarkable horizontal airplane ears, a minor wrist protrusion on the starboard side prevents an A+ rating. Nonetheless, an outstanding exhibition of feline baking discipline.",
+    "paw_tuck": {
+        "score": 20,
+        "status": "Minor Wrist Protrusion (Cushion Sink)",
+        "critique": "Right front wrist displays slight forward protrusion onto the cushion surface, breaching pure concealment by approximately 1.5 cm. Rear peet remain fully tucked.",
+        "observations": [
+            "Starboard front wrist joint visible resting on cushion piping",
+            "Rear peet and hocks firmly retracted beneath flank",
+            "Cushion softness causes slight dough sinking along lower seam"
+        ]
+    },
+    "tail_tuck": {
+        "score": 21,
+        "status": "Portside Flank Wrap",
+        "critique": "Tail is tucked along the portside flank, creating a tight sweep though slightly flattened by the cushion seam.",
+        "observations": [
+            "Calculated aerodynamic drag coefficient: 0.06",
+            "Tail tip resting flush against left rear haunch",
+            "Minimal swish turbulence detected"
+        ]
+    },
+    "elbow_compactness": {
+        "score": 21,
+        "status": "Marbled Dough Fold",
+        "critique": "Elbows pulled inwards with good bilateral compression. Distinctive 'airplane ears' deployed horizontally, creating an aerodynamically intriguing cranial profile.",
+        "observations": [
+            "Lateral airplane ear configuration detected (aerodynamic stabilizer mode)",
+            "Subtle leftward lean due to pillow contour",
+            "Suspicious facial expression indicates hyper-vigilant loaf state"
+        ]
+    },
+    "crust_symmetry": {
+        "score": 21,
+        "status": "Tiger-Stripe Sourdough Swirl",
+        "critique": "Gorgeous marbled silver-grey tiger stripes with distinct dorsal scoring. Bilateral symmetry is solid despite slight pillow elevation gradient.",
+        "observations": [
+            "Even tiger-stripe crust score markings across back",
+            "Bilateral symmetry graded at 84% due to cushion tilt",
+            "Coat luster exhibits pristine sourdough crust shine"
+        ]
+    },
+    "drag_coefficient": 0.06,
+    "oar_detected": False,
+    "face_loaf": False,
+    "multi_angle_bonus": 4,
+    "badges": [
+        "Aerodynamic Airplane Ears",
+        "Marbled Sourdough Certification",
+        "Cushion Loaf Specialist",
+        "Vigilant Baker Stance",
+        "Tiger-Stripe Crust Finish"
+    ],
+    "fun_tips_for_cat": [
+        "Retract the right front wrist 1.5 cm deeper into the chest fold to eliminate peet deductions.",
+        "Test on a firm, flat surface to prevent cushion-induced dough slumping.",
+        "Fold ears forward during inspection to reduce lateral cranial drag."
+    ],
+    "angle_notes": {
+        "front": "Signature horizontal airplane ears deployed; minor right wrist breach.",
+        "side": "Classic sourdough baton contour along cushion diagonal; tail tucked flush."
+    }
+}
+
 @app.get("/health")
 @app.get("/api/health")
 async def health_check():
@@ -226,6 +364,24 @@ async def get_samples():
                 "top": "/static/samples/buttercup_top.jpg"
             },
             "cached_analysis": PRESET_BUTTERCUP
+        },
+        "chonks": {
+            "name": "Chonks",
+            "description": "Dark Grey Domestic Shorthair (Clean Perch High-Elevation Loaf)",
+            "images": {
+                "front": "/static/samples/chonks_front.jpg",
+                "side": "/static/samples/chonks_side.jpg"
+            },
+            "cached_analysis": PRESET_CHONKS
+        },
+        "flash": {
+            "name": "Flash",
+            "description": "Light Grey Tabby (Airplane Ears Cushion Loaf)",
+            "images": {
+                "front": "/static/samples/flash_front.jpg",
+                "side": "/static/samples/flash_side.jpg"
+            },
+            "cached_analysis": PRESET_FLASH
         }
     }
 

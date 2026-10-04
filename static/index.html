@@ -65,13 +65,100 @@
         Upload 1 to 5 photos to see if your cat has reached absolute loaf purr-fection. Our AI vision model inspects undercarriage paw concealment, tail drag, and boule symmetry in seconds.
       </p>
 
-      <!-- Preset Quick Demo Bar -->
-      <div class="mt-5 flex items-center justify-center gap-2 flex-wrap">
-        <span class="text-xs font-semibold text-stone-500">Benchmark Test:</span>
-        <button id="loadButtercupBtn" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-orange-100 via-amber-100/90 to-orange-100 text-orange-950 hover:from-orange-200 hover:to-amber-200 text-xs font-bold border border-orange-300 hover:border-orange-400 transition-all shadow-2xs">
-          <i data-lucide="sparkles" class="w-3.5 h-3.5 text-orange-700"></i>
-          <span>Load Buttercup Dataset (Purr-fect Baseline)</span>
-        </button>
+      <!-- Benchmark Showcase Gallery -->
+      <div class="mt-8 mb-2 text-left">
+        <div class="flex items-center justify-between mb-3 px-1 flex-wrap gap-2">
+          <div>
+            <span class="text-xs font-black uppercase tracking-wider text-orange-950 flex items-center gap-1.5">
+              <i data-lucide="award" class="w-4 h-4 text-orange-600"></i>
+              <span>Feline Bakery Hall of Fame &bull; Benchmark Loaf Examples</span>
+            </span>
+            <p class="text-[11px] text-stone-600">Click any cat to load their dataset & inspect their simulated score</p>
+          </div>
+          <span class="text-[11px] font-bold text-orange-950 bg-orange-100/90 px-2.5 py-0.5 rounded-full border border-orange-300 shadow-2xs">
+            3 Certified Bakers
+          </span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+          <!-- Buttercup Card -->
+          <div class="p-3.5 rounded-2xl bg-white/95 border border-orange-200/90 hover:border-orange-400 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between group">
+            <div>
+              <div class="relative w-full h-36 rounded-xl overflow-hidden mb-2.5 bg-orange-50 border border-orange-200/60">
+                <img src="/static/samples/buttercup_front.jpg" alt="Buttercup" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200">
+                <span class="absolute top-2 right-2 stamp text-xs font-black text-orange-700 border-orange-700 bg-white/95">98 A+</span>
+                <span class="absolute bottom-2 left-2 text-[10px] font-bold bg-stone-900/80 text-white px-2 py-0.5 rounded-md">3 Angles</span>
+              </div>
+              <div class="flex items-baseline justify-between">
+                <h4 class="text-sm font-black text-stone-900">Buttercup</h4>
+                <span class="text-[11px] font-bold text-orange-800">Grandmaster</span>
+              </div>
+              <p class="text-[11px] text-stone-600 mt-0.5 leading-snug">Golden Brioche &bull; 100% Peet Concealment with sub-0.03 drag.</p>
+            </div>
+            <div class="mt-3 pt-2.5 border-t border-orange-100 flex items-center gap-2">
+              <button type="button" class="load-benchmark-btn flex-1 py-1.5 px-2 rounded-lg bg-orange-50 hover:bg-orange-100 text-orange-950 text-xs font-bold border border-orange-200 transition-colors flex items-center justify-center gap-1.5 shadow-2xs" data-cat="buttercup">
+                <i data-lucide="sparkles" class="w-3.5 h-3.5 text-orange-700"></i>
+                <span>Inspect Loaf</span>
+              </button>
+              <button type="button" class="preview-cert-btn py-1.5 px-2.5 rounded-lg bg-white hover:bg-orange-50 text-stone-700 hover:text-orange-950 text-xs font-bold border border-stone-200 hover:border-orange-300 transition-colors flex items-center gap-1 shadow-2xs" data-cat="buttercup" title="Preview Official Diploma">
+                <i data-lucide="file-badge" class="w-3.5 h-3.5 text-orange-600"></i>
+                <span>Diploma</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Chonks Card -->
+          <div class="p-3.5 rounded-2xl bg-white/95 border border-orange-200/90 hover:border-orange-400 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between group">
+            <div>
+              <div class="relative w-full h-36 rounded-xl overflow-hidden mb-2.5 bg-orange-50 border border-orange-200/60">
+                <img src="/static/samples/chonks_side.jpg" alt="Chonks" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200">
+                <span class="absolute top-2 right-2 stamp text-xs font-black text-orange-700 border-orange-700 bg-white/95">89 A</span>
+                <span class="absolute bottom-2 left-2 text-[10px] font-bold bg-stone-900/80 text-white px-2 py-0.5 rounded-md">2 Angles</span>
+              </div>
+              <div class="flex items-baseline justify-between">
+                <h4 class="text-sm font-black text-stone-900">Chonks</h4>
+                <span class="text-[11px] font-bold text-orange-800">Master Loaf</span>
+              </div>
+              <p class="text-[11px] text-stone-600 mt-0.5 leading-snug">Dark Rye Pumpernickel &bull; High-perch boule with stealth undercarriage.</p>
+            </div>
+            <div class="mt-3 pt-2.5 border-t border-orange-100 flex items-center gap-2">
+              <button type="button" class="load-benchmark-btn flex-1 py-1.5 px-2 rounded-lg bg-orange-50 hover:bg-orange-100 text-orange-950 text-xs font-bold border border-orange-200 transition-colors flex items-center justify-center gap-1.5 shadow-2xs" data-cat="chonks">
+                <i data-lucide="sparkles" class="w-3.5 h-3.5 text-orange-700"></i>
+                <span>Inspect Loaf</span>
+              </button>
+              <button type="button" class="preview-cert-btn py-1.5 px-2.5 rounded-lg bg-white hover:bg-orange-50 text-stone-700 hover:text-orange-950 text-xs font-bold border border-stone-200 hover:border-orange-300 transition-colors flex items-center gap-1 shadow-2xs" data-cat="chonks" title="Preview Official Diploma">
+                <i data-lucide="file-badge" class="w-3.5 h-3.5 text-orange-600"></i>
+                <span>Diploma</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Flash Card -->
+          <div class="p-3.5 rounded-2xl bg-white/95 border border-orange-200/90 hover:border-orange-400 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between group">
+            <div>
+              <div class="relative w-full h-36 rounded-xl overflow-hidden mb-2.5 bg-orange-50 border border-orange-200/60">
+                <img src="/static/samples/flash_front.jpg" alt="Flash" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200">
+                <span class="absolute top-2 right-2 stamp text-xs font-black text-amber-700 border-amber-700 bg-white/95">83 B+</span>
+                <span class="absolute bottom-2 left-2 text-[10px] font-bold bg-stone-900/80 text-white px-2 py-0.5 rounded-md">2 Angles</span>
+              </div>
+              <div class="flex items-baseline justify-between">
+                <h4 class="text-sm font-black text-stone-900">Flash</h4>
+                <span class="text-[11px] font-bold text-amber-800">Senior Loaf</span>
+              </div>
+              <p class="text-[11px] text-stone-600 mt-0.5 leading-snug">Marbled Sourdough &bull; Aerodynamic airplane ears with minor wrist peek.</p>
+            </div>
+            <div class="mt-3 pt-2.5 border-t border-orange-100 flex items-center gap-2">
+              <button type="button" class="load-benchmark-btn flex-1 py-1.5 px-2 rounded-lg bg-orange-50 hover:bg-orange-100 text-orange-950 text-xs font-bold border border-orange-200 transition-colors flex items-center justify-center gap-1.5 shadow-2xs" data-cat="flash">
+                <i data-lucide="sparkles" class="w-3.5 h-3.5 text-orange-700"></i>
+                <span>Inspect Loaf</span>
+              </button>
+              <button type="button" class="preview-cert-btn py-1.5 px-2.5 rounded-lg bg-white hover:bg-orange-50 text-stone-700 hover:text-orange-950 text-xs font-bold border border-stone-200 hover:border-orange-300 transition-colors flex items-center gap-1 shadow-2xs" data-cat="flash" title="Preview Official Diploma">
+                <i data-lucide="file-badge" class="w-3.5 h-3.5 text-orange-600"></i>
+                <span>Diploma</span>
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -216,6 +303,36 @@
         </button>
       </div>
 
+    </div>
+
+    <!-- Official Bureau Certificate Showcase -->
+    <div class="mb-10 p-5 sm:p-7 rounded-3xl bg-gradient-to-r from-orange-100/90 via-amber-50 to-orange-100/80 border border-orange-300 shadow-xs relative overflow-hidden">
+      <div class="flex flex-col md:flex-row items-center justify-between gap-6 relative z-10">
+        <div class="flex items-start gap-4">
+          <div class="w-13 h-13 rounded-2xl bg-white border border-orange-300 text-orange-700 flex items-center justify-center shrink-0 shadow-xs p-2.5">
+            <i data-lucide="file-badge-2" class="w-8 h-8"></i>
+          </div>
+          <div>
+            <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-orange-200/80 text-orange-950 text-[10px] font-extrabold uppercase tracking-wider mb-1.5 border border-orange-300">
+              <i data-lucide="shield-check" class="w-3 h-3 text-orange-700"></i>
+              <span>Official Bureau Credentials Included</span>
+            </div>
+            <h3 class="text-lg sm:text-xl font-black text-stone-900 tracking-tight">
+              High-Resolution Inspection Certificates Issued With Every Loaf
+            </h3>
+            <p class="text-xs sm:text-sm text-stone-700 mt-1 max-w-xl leading-relaxed">
+              Every feline audit generates an authentic, shareable 1200 &times; 800 PNG Diploma of Loaf Inspection. Features official planar sub-scores, aerodynamic drag coefficient, official Bureau stamp, and Chief Auditor findings suitable for framing or sharing!
+            </p>
+          </div>
+        </div>
+
+        <div class="flex flex-row md:flex-col gap-2 w-full md:w-auto shrink-0">
+          <button id="viewSampleCertBtn" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-orange-600 via-amber-600 to-orange-700 hover:from-orange-700 hover:to-amber-700 text-white font-bold text-xs shadow-md shadow-orange-600/20 transition-all flex items-center justify-center gap-2">
+            <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+            <span>Preview Sample Certificate</span>
+          </button>
+        </div>
+      </div>
     </div>
 
     <!-- Inspecting Loading State -->
@@ -608,6 +725,44 @@
         <button id="dismissLegalBtn" class="px-3.5 py-1.5 rounded-lg bg-orange-100/80 hover:bg-orange-200 text-orange-950 font-semibold text-xs transition-colors">
           Dismiss
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Certificate Modal Preview -->
+  <div id="certificateModal" class="hidden fixed inset-0 z-50 bg-stone-950/70 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bakery-card max-w-3xl w-full p-5 sm:p-6 relative bg-white border border-orange-300 shadow-2xl flex flex-col max-h-[92vh]">
+      <div class="flex items-center justify-between pb-3 mb-3 border-b border-orange-100">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg bg-orange-100 border border-orange-200 text-orange-700 flex items-center justify-center">
+            <i data-lucide="file-badge" class="w-4 h-4"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-black text-stone-900" id="certModalTitle">Official Certificate Diploma</h3>
+            <p class="text-[11px] text-stone-500">Certified by Loafed Feline Posture Bureau &bull; 1200 &times; 800 HD Canvas</p>
+          </div>
+        </div>
+        <button id="closeCertModalBtn" class="p-1.5 rounded-lg hover:bg-orange-50 text-stone-400 hover:text-stone-700 transition-colors">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <!-- Certificate Preview Image Wrapper -->
+      <div class="flex-1 overflow-auto flex items-center justify-center p-2 bg-stone-100/80 rounded-xl border border-stone-200 mb-3">
+        <img id="certModalImage" class="max-w-full max-h-[58vh] object-contain rounded-lg shadow-md border border-stone-300 bg-white" alt="Official Certificate Preview">
+      </div>
+
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs pt-1">
+        <span class="text-stone-500 text-[11px] text-center sm:text-left">Click Download to export your official 1200&times;800 PNG diploma for printing or framing!</span>
+        <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+          <button id="modalDownloadCertBtn" class="flex-1 sm:flex-none px-4 py-2 rounded-xl bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white font-bold text-xs shadow-sm transition-all flex items-center justify-center gap-1.5">
+            <i data-lucide="download" class="w-3.5 h-3.5"></i>
+            <span>Download PNG</span>
+          </button>
+          <button id="dismissCertModalBtn" class="px-4 py-2 rounded-xl bg-orange-100/80 hover:bg-orange-200 text-orange-950 font-bold text-xs transition-colors">
+            Close
+          </button>
+        </div>
       </div>
     </div>
   </div>
