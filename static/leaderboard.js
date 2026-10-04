@@ -610,11 +610,17 @@ document.addEventListener('DOMContentLoaded', () => {
       const loafRank = escapeHtml(entry.loaf_rank || 'Artisan Loaf');
       const bread = escapeHtml(entry.bread_classification || 'Brioche');
 
-      let deleteBtn = '';
+      let actionBtn = '';
       if (isMine) {
-        deleteBtn = `
+        actionBtn = `
           <button class="delete-loaf-btn p-2 rounded-xl text-stone-400 hover:text-red-600 hover:bg-red-50 transition-colors ml-2" data-id="${entry.entry_id}" aria-label="Delete ${catName} submission">
             <i data-lucide="trash-2" class="w-4 h-4"></i>
+          </button>
+        `;
+      } else {
+        actionBtn = `
+          <button class="report-loaf-btn p-2 rounded-xl text-stone-300 hover:text-amber-700 hover:bg-orange-50 transition-colors ml-2" data-id="${entry.entry_id}" data-score="${score}" aria-label="Report ${catName} submission" title="Report submission as inappropriate or non-cat">
+            <i data-lucide="flag" class="w-4 h-4"></i>
           </button>
         `;
       }
@@ -641,7 +647,7 @@ document.addEventListener('DOMContentLoaded', () => {
               Baked by <span class="font-medium text-stone-600">${bakerName}</span>
             </div>
           </div>
-          ${deleteBtn}
+          ${actionBtn}
         </div>
       `;
     }).join('');
@@ -667,6 +673,33 @@ document.addEventListener('DOMContentLoaded', () => {
             }
           } catch (err) {
             showToast({ type: 'error', title: 'Delete Error', message: err.message });
+          }
+        });
+      });
+    } else {
+      leaderboardEntriesList.querySelectorAll('.report-loaf-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          const id = e.currentTarget.getAttribute('data-id');
+          const score = e.currentTarget.getAttribute('data-score');
+          if (!id) return;
+          if (!confirm('Report this submission as inappropriate or not an authentic cat loaf? Our moderators will review it.')) return;
+          try {
+            const headers = { 'Content-Type': 'application/json' };
+            if (state.idToken) headers['Authorization'] = `Bearer ${state.idToken}`;
+            const res = await fetch('/api/leaderboard/report', {
+              method: 'POST',
+              headers,
+              body: JSON.stringify({ entry_id: id, score: parseInt(score, 10) })
+            });
+            const data = await res.json();
+            if (res.ok) {
+              showToast({ type: 'success', title: 'Report Submitted', message: 'Thank you for helping keep Loafed family friendly!' });
+              loadLeaderboard(state.period);
+            } else {
+              showToast({ type: 'error', title: 'Report Error', message: data.detail || 'Could not submit report.' });
+            }
+          } catch (err) {
+            showToast({ type: 'error', title: 'Report Error', message: err.message });
           }
         });
       });

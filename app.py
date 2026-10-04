@@ -15,7 +15,7 @@ from pathlib import Path
 
 from PIL import Image, UnidentifiedImageError
 import boto3
-from boto3.dynamodb.conditions import Key
+from boto3.dynamodb.conditions import Key, Attr
 from botocore.exceptions import ClientError
 import jwt
 from jwt.algorithms import RSAAlgorithm
@@ -458,13 +458,14 @@ def verify_cognito_token(auth_header: Optional[str]) -> dict:
         raise HTTPException(status_code=401, detail="Session expired or invalid authentication token.")
 
 
-def generate_grade_token(result_data: dict) -> str:
+def generate_grade_token(result_data: dict, image_hash: Optional[str] = None) -> str:
     payload = {
         "cat_name": result_data.get("cat_name", "Anonymous Loaf"),
         "overall_score": int(result_data.get("overall_score", 0)),
         "grade_letter": str(result_data.get("grade_letter", "")),
         "loaf_rank": str(result_data.get("loaf_rank", "")),
         "bread_classification": str(result_data.get("bread_classification", "")),
+        "image_sha256": image_hash,
         "ts": int(time.time()),
         "salt": uuid.uuid4().hex[:12]
     }
@@ -524,6 +525,8 @@ class LoafSubScore(BaseModel):
     observations: List[str] = Field(description="2-3 specific visual observations from the images")
 
 class LoafAnalysisResult(BaseModel):
+    is_cat: bool = Field(default=True, description="True if the subject in the photo is genuinely a real domestic cat or feline. False if the image depicts another animal, a human, food, an inanimate object, a vehicle, or contains inappropriate content.")
+    rejection_reason: Optional[str] = Field(default=None, description="If is_cat is False, a witty, polite inspection rejection reason explaining why this subject cannot be certified as a feline loaf. Zero emojis.")
     cat_name: str = Field(description="Name of the cat or bread designation if unspecified")
     overall_score: int = Field(description="Final composite loaf score from 0 to 100")
     grade_letter: str = Field(description="Letter grade: A+, A, B, C, D, or F")
@@ -546,6 +549,8 @@ class LoafAnalysisResult(BaseModel):
 
 # Pre-baked analysis for sample preset cats
 PRESET_BUTTERCUP = {
+    "is_cat": True,
+    "rejection_reason": None,
     "cat_name": "Buttercup",
     "overall_score": 98,
     "grade_letter": "A+",
@@ -616,6 +621,8 @@ PRESET_BUTTERCUP = {
 }
 
 PRESET_CHONKS = {
+    "is_cat": True,
+    "rejection_reason": None,
     "cat_name": "Chonks",
     "overall_score": 89,
     "grade_letter": "A",
@@ -685,6 +692,8 @@ PRESET_CHONKS = {
 }
 
 PRESET_FLASH = {
+    "is_cat": True,
+    "rejection_reason": None,
     "cat_name": "Flash",
     "overall_score": 83,
     "grade_letter": "B+",
@@ -832,6 +841,23 @@ def get_gemini_client(client_key: Optional[str] = None):
 SYSTEM_PROMPT = """You are the Senior Inspector and Chief Technical Director of the Official Cat Loaf Certification Bureau (inspired by loafed.app, Michelin-starred bakery standards, and feline aerodynamic engineering).
 Your mission is to evaluate uploaded cat photos as a STRICT, DISCERNING, HIGHLY CRITICAL, YET HILARIOUSLY WITTY JUDGE.
 
+CRITICAL DIRECTIVE ON FELINE SUBJECT VERIFICATION & SAFETY:
+Your very first duty before any grading is to verify that the photo genuinely depicts a real domestic feline / cat.
+- Non-Feline Animals, Humans, or Objects:
+  If the photo depicts any other animal (dog, puppy, ferret, rabbit, bird, etc.), a human, food, vehicle, meme, or inanimate object:
+  Set is_cat = False.
+  Set overall_score = 0, grade_letter = "F", loaf_rank = "Audit Disqualification: Non-Feline Subject", bread_classification = "Non-Feline Imposter".
+  Set paw_tuck.score = 0, tail_tuck.score = 0, elbow_compactness.score = 0, crust_symmetry.score = 0, multi_angle_bonus = 0.
+  Set rejection_reason to a witty, polite inspection refusal (e.g. 'Disqualification: Inspector sensors detected a canine imposter rather than an authentic feline loaf!' or 'Disqualification: Subject appears to be a sandwich, not an authentic feline.').
+  Set summary_critique to match this refusal.
+- Inappropriate or Policy-Breaching Content:
+  If the photo contains inappropriate, offensive, explicit, or non-family-friendly content:
+  Set is_cat = False, overall_score = 0, grade_letter = "F", loaf_rank = "Audit Disqualification: Policy Infraction", bread_classification = "Rejected".
+  Set rejection_reason = 'Disqualification: Uploaded image breaches family-friendly certification guidelines.'
+  Set summary_critique = 'Disqualification: Uploaded image breaches family-friendly certification guidelines.'
+- Authentic Feline:
+  Only if the subject is genuinely a real domestic cat or kitten, set is_cat = True, rejection_reason = None, and proceed with full loaf certification.
+
 CRITICAL DIRECTIVE ON GRADING STRICTNESS & CURVE:
 In past inspections you were far too generous. Real feline loafing is an exacting, competitive discipline! Most household cats DO NOT achieve an A or scores in the 90s.
 You must grade on a demanding, realistic curve:
@@ -954,10 +980,12 @@ async def grade_loaf(
         result = dict(PRESET_BUTTERCUP)
         if cat_name:
             result["cat_name"] = cat_name
-        grade_token = generate_grade_token(result)
+        demo_image_hash = hashlib.sha256(submitted_images[0][1]).hexdigest() if submitted_images else None
+        grade_token = generate_grade_token(result, image_hash=demo_image_hash)
         return JSONResponse(content={
             "result": result,
             "grade_token": grade_token,
+            "can_submit": True,
             "demo_mode": True,
             "message": "Graded using Demo Mode (Sample Preset). To grade your own cat photos in real-time with Gemini 3.8 Flash, enter your Gemini API key in the top right settings!"
         })
@@ -1001,6 +1029,25 @@ async def grade_loaf(
         target_model = model or "gemini-3.8-flash"
         logger.info(f"Sending request to Gemini model {target_model} with {len(submitted_images)} images from IP {client_ip}...")
 
+        safety_settings = [
+            types.SafetySetting(
+                category=types.HarmCategory.HARM_CATEGORY_HARASSMENT,
+                threshold=types.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+            ),
+            types.SafetySetting(
+                category=types.HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+                threshold=types.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+            ),
+            types.SafetySetting(
+                category=types.HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+                threshold=types.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+            ),
+            types.SafetySetting(
+                category=types.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+                threshold=types.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+            ),
+        ]
+
         # Robust execution with automatic fallback if primary model experiences 503 high demand
         response = None
         models_to_try = [target_model]
@@ -1016,6 +1063,7 @@ async def grade_loaf(
                         response_mime_type="application/json",
                         response_schema=LoafAnalysisResult,
                         system_instruction=SYSTEM_PROMPT,
+                        safety_settings=safety_settings,
                         temperature=0.3
                     )
                 )
@@ -1028,18 +1076,42 @@ async def grade_loaf(
                     continue
                 raise attempt_err
 
+        if not response or not response.text:
+            raise HTTPException(
+                status_code=400,
+                detail="The uploaded photo could not be evaluated due to content safety guidelines. Please ensure your photos are family-friendly cat pictures."
+            )
+
         analysis_data = json.loads(response.text)
-        grade_token = generate_grade_token(analysis_data)
+        is_cat = bool(analysis_data.get("is_cat", True))
+
+        if not is_cat:
+            logger.info(f"Loaf inspection disqualified (non-feline or policy). Reason: {analysis_data.get('rejection_reason')}")
+            return JSONResponse(content={
+                "result": analysis_data,
+                "grade_token": None,
+                "can_submit": False,
+                "demo_mode": False
+            })
+
+        primary_image_hash = hashlib.sha256(submitted_images[0][1]).hexdigest() if submitted_images else None
+        grade_token = generate_grade_token(analysis_data, image_hash=primary_image_hash)
         return JSONResponse(content={
             "result": analysis_data,
             "grade_token": grade_token,
+            "can_submit": True,
             "demo_mode": False
         })
 
     except Exception as e:
         logger.error(f"Gemini API error: {e}", exc_info=True)
         err_str = str(e)
-        if "API_KEY_INVALID" in err_str or "403" in err_str or "unregistered" in err_str:
+        if "SAFETY" in err_str or "harm" in err_str.lower() or "blocked" in err_str.lower():
+            raise HTTPException(
+                status_code=400,
+                detail="The uploaded photo could not be processed due to content safety guidelines. Please ensure your photos are family-friendly cat pictures."
+            )
+        elif "API_KEY_INVALID" in err_str or "403" in err_str or "unregistered" in err_str:
             raise HTTPException(
                 status_code=401,
                 detail="Invalid API key. Please verify your Google Gemini API key in Configuration."
@@ -1062,7 +1134,7 @@ async def grade_loaf(
         else:
             raise HTTPException(
                 status_code=500,
-                detail="An unexpected error occurred during the visual inspection. Please try again."
+                detail=f"An error occurred during evaluation: {err_str[:200]}"
             )
 
 
@@ -1425,6 +1497,18 @@ async def submit_to_leaderboard(
     if not content:
         raise HTTPException(status_code=400, detail="A valid photo is required for leaderboard submission.")
 
+    # Cryptographic Image Binding check: confirm uploaded photo matches audited photo
+    submitted_sha256 = hashlib.sha256(content).hexdigest()
+    expected_sha256 = score_data.get("image_sha256")
+    if expected_sha256 and submitted_sha256 != expected_sha256:
+        logger.warning(
+            f"Image hash mismatch on leaderboard submission! Expected: {expected_sha256}, Got: {submitted_sha256}"
+        )
+        raise HTTPException(
+            status_code=400,
+            detail="The uploaded photo does not match the image certified during grading. Please submit the exact photo that was inspected."
+        )
+
     # Create optimized WebP thumbnail (strips EXIF, under 40 KB)
     thumb_bytes = create_leaderboard_thumbnail(content)
 
@@ -1472,7 +1556,9 @@ async def submit_to_leaderboard(
         "bread_classification": score_data.get("bread_classification", ""),
         "thumbnail_url": thumbnail_url,
         "created_at": now_iso,
-        "periods": ["ALL", month_str, week_str]
+        "periods": ["ALL", month_str, week_str],
+        "report_count": 0,
+        "is_hidden": False
     }
 
     # Partition items for Month and Week (without user_id to keep GSI clean)
@@ -1523,6 +1609,7 @@ async def get_leaderboard(period: str = "all", limit: int = 50):
     try:
         response = table.query(
             KeyConditionExpression=Key("pk").eq(pk),
+            FilterExpression=Attr("is_hidden").ne(True),
             ScanIndexForward=False,
             Limit=limit
         )
@@ -1533,6 +1620,8 @@ async def get_leaderboard(period: str = "all", limit: int = 50):
 
     entries = []
     for rank, it in enumerate(raw_items, start=1):
+        if it.get("is_hidden") is True or int(it.get("report_count", 0)) >= 3:
+            continue
         entries.append({
             "rank": rank,
             "entry_id": it.get("entry_id", ""),
@@ -1551,6 +1640,134 @@ async def get_leaderboard(period: str = "all", limit: int = 50):
         "count": len(entries),
         "entries": entries
     }
+
+
+class LeaderboardReportRequest(BaseModel):
+    entry_id: str
+    score: Optional[int] = None
+    reason: Optional[str] = None
+
+
+@app.post("/api/leaderboard/report")
+async def report_leaderboard_entry(
+    request: Request,
+    req: LeaderboardReportRequest,
+    authorization: Optional[str] = Header(None)
+):
+    """Allows users to report an inappropriate or non-cat submission.
+    Automatically hides entries that receive 3 or more community reports."""
+    entry_id = req.entry_id.strip()
+    if not entry_id:
+        raise HTTPException(status_code=400, detail="Entry ID is required.")
+
+    client_ip = get_client_ip(request)
+    session = get_boto3_session()
+    ddb = session.resource("dynamodb")
+    table = ddb.Table(DYNAMODB_TABLE_NAME)
+
+    matching_item = None
+    if req.score is not None:
+        sk = f"SCORE#{req.score:03d}#{entry_id}"
+        resp = table.get_item(Key={"pk": "PERIOD#ALL", "sk": sk})
+        matching_item = resp.get("Item")
+
+    if not matching_item:
+        resp = table.query(
+            KeyConditionExpression=Key("pk").eq("PERIOD#ALL"),
+            FilterExpression=Attr("entry_id").eq(entry_id)
+        )
+        items = resp.get("Items", [])
+        if items:
+            matching_item = items[0]
+
+    if not matching_item:
+        raise HTTPException(status_code=404, detail="Leaderboard entry not found.")
+
+    score = int(matching_item.get("overall_score", 0))
+    sk = f"SCORE#{score:03d}#{entry_id}"
+    periods = matching_item.get("periods", ["ALL"])
+    current_reports = int(matching_item.get("report_count", 0)) + 1
+    should_hide = current_reports >= 3
+
+    for p in periods:
+        pk = "PERIOD#ALL" if p == "ALL" else f"PERIOD#{p}"
+        try:
+            table.update_item(
+                Key={"pk": pk, "sk": sk},
+                UpdateExpression="SET report_count = :rc, is_hidden = :hid",
+                ExpressionAttributeValues={
+                    ":rc": current_reports,
+                    ":hid": should_hide
+                }
+            )
+        except Exception as e:
+            logger.warning(f"Error updating report count on {pk}/{sk}: {e}")
+
+    logger.info(f"Entry {entry_id} reported by IP {client_ip}. Total reports: {current_reports}. Hidden: {should_hide}")
+    return {
+        "success": True,
+        "entry_id": entry_id,
+        "report_count": current_reports,
+        "is_hidden": should_hide,
+        "message": "Thank you for reporting. Our moderation system has recorded your report."
+    }
+
+
+class AdminRemoveRequest(BaseModel):
+    entry_id: str
+    admin_key: str
+    score: Optional[int] = None
+
+
+@app.post("/api/admin/leaderboard/remove")
+async def admin_remove_entry(req: AdminRemoveRequest):
+    """Admin endpoint to forcefully purge an offensive submission from DynamoDB and S3."""
+    expected_secret = os.getenv("ADMIN_SECRET", SIGNATURE_SECRET)
+    if not req.admin_key or req.admin_key != expected_secret:
+        raise HTTPException(status_code=403, detail="Unauthorized admin access.")
+
+    entry_id = req.entry_id.strip()
+    session = get_boto3_session()
+    ddb = session.resource("dynamodb")
+    table = ddb.Table(DYNAMODB_TABLE_NAME)
+    s3_client = session.client("s3")
+
+    matching_item = None
+    if req.score is not None:
+        sk = f"SCORE#{req.score:03d}#{entry_id}"
+        resp = table.get_item(Key={"pk": "PERIOD#ALL", "sk": sk})
+        matching_item = resp.get("Item")
+
+    if not matching_item:
+        resp = table.query(
+            KeyConditionExpression=Key("pk").eq("PERIOD#ALL"),
+            FilterExpression=Attr("entry_id").eq(entry_id)
+        )
+        items = resp.get("Items", [])
+        if items:
+            matching_item = items[0]
+
+    if not matching_item:
+        raise HTTPException(status_code=404, detail="Entry not found in DynamoDB.")
+
+    score = int(matching_item.get("overall_score", 0))
+    sk = f"SCORE#{score:03d}#{entry_id}"
+    periods = matching_item.get("periods", ["ALL"])
+
+    for p in periods:
+        pk = "PERIOD#ALL" if p == "ALL" else f"PERIOD#{p}"
+        try:
+            table.delete_item(Key={"pk": pk, "sk": sk})
+        except Exception as e:
+            logger.warning(f"Admin delete item error {pk}/{sk}: {e}")
+
+    try:
+        s3_client.delete_object(Bucket=S3_BUCKET_NAME, Key=f"thumbnails/{entry_id}.webp")
+    except Exception as e:
+        logger.warning(f"Admin delete S3 thumbnail error for {entry_id}: {e}")
+
+    logger.info(f"Admin successfully purged entry {entry_id} and its thumbnail.")
+    return {"success": True, "purged_id": entry_id, "message": "Entry purged from leaderboard and S3."}
 
 
 @app.get("/api/leaderboard/my-entries")

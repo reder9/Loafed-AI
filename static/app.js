@@ -1050,17 +1050,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Grade Stamp & Badges
     const gradeStamp = document.getElementById('gradeStamp');
-    gradeStamp.textContent = result.grade_letter;
-    
-    // Stamp colors
-    if (result.grade_letter.includes('A')) {
-      gradeStamp.className = 'stamp text-orange-700 border-orange-700 text-lg font-black';
-    } else if (result.grade_letter.includes('B')) {
-      gradeStamp.className = 'stamp text-amber-700 border-amber-700 text-lg font-black';
-    } else if (result.grade_letter.includes('C')) {
-      gradeStamp.className = 'stamp text-stone-700 border-stone-700 text-lg font-black';
-    } else {
+    if (result.is_cat === false) {
+      gradeStamp.textContent = 'DQ';
       gradeStamp.className = 'stamp text-rose-700 border-rose-700 text-lg font-black';
+      if (submitLeaderboardBtn) {
+        submitLeaderboardBtn.disabled = true;
+        submitLeaderboardBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        submitLeaderboardBtn.title = result.rejection_reason || 'Audit Disqualified: Not an authentic feline loaf';
+      }
+    } else {
+      gradeStamp.textContent = result.grade_letter;
+      if (submitLeaderboardBtn) {
+        submitLeaderboardBtn.disabled = false;
+        submitLeaderboardBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        submitLeaderboardBtn.title = '';
+      }
+      
+      // Stamp colors
+      if (result.grade_letter.includes('A')) {
+        gradeStamp.className = 'stamp text-orange-700 border-orange-700 text-lg font-black';
+      } else if (result.grade_letter.includes('B')) {
+        gradeStamp.className = 'stamp text-amber-700 border-amber-700 text-lg font-black';
+      } else if (result.grade_letter.includes('C')) {
+        gradeStamp.className = 'stamp text-stone-700 border-stone-700 text-lg font-black';
+      } else {
+        gradeStamp.className = 'stamp text-rose-700 border-rose-700 text-lg font-black';
+      }
     }
 
     // Multi-angle badge
@@ -2199,11 +2214,17 @@ Certified by Loafed Inspection Engine`;
       const gradeLetter = entry.grade_letter || '';
       const loafRank = escapeHtml(entry.loaf_rank || 'Artisan Loaf');
 
-      let deleteBtn = '';
+      let actionBtn = '';
       if (isMine) {
-        deleteBtn = `
+        actionBtn = `
           <button class="delete-loaf-btn p-1.5 rounded-lg text-stone-400 hover:text-red-600 hover:bg-red-50 transition-colors ml-2" data-id="${entry.entry_id}" aria-label="Delete ${catName} submission">
             <i data-lucide="trash-2" class="w-4 h-4"></i>
+          </button>
+        `;
+      } else {
+        actionBtn = `
+          <button class="report-loaf-btn p-1.5 rounded-lg text-stone-300 hover:text-amber-700 hover:bg-orange-50 transition-colors ml-2" data-id="${entry.entry_id}" data-score="${score}" aria-label="Report ${catName} submission" title="Report submission as inappropriate or non-cat">
+            <i data-lucide="flag" class="w-4 h-4"></i>
           </button>
         `;
       }
@@ -2225,7 +2246,7 @@ Certified by Loafed Inspection Engine`;
               <span class="truncate">by ${bakerName}</span>
             </div>
           </div>
-          ${deleteBtn}
+          ${actionBtn}
         </div>
       `;
     }).join('');
@@ -2251,6 +2272,33 @@ Certified by Loafed Inspection Engine`;
             }
           } catch (err) {
             showToast({ type: 'error', title: 'Delete Error', message: err.message });
+          }
+        });
+      });
+    } else {
+      leaderboardList.querySelectorAll('.report-loaf-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          const id = e.currentTarget.getAttribute('data-id');
+          const score = e.currentTarget.getAttribute('data-score');
+          if (!id) return;
+          if (!confirm('Report this submission as inappropriate or not an authentic cat loaf? Our moderators will review it.')) return;
+          try {
+            const headers = { 'Content-Type': 'application/json' };
+            if (state.idToken) headers['Authorization'] = `Bearer ${state.idToken}`;
+            const res = await fetch('/api/leaderboard/report', {
+              method: 'POST',
+              headers,
+              body: JSON.stringify({ entry_id: id, score: parseInt(score, 10) })
+            });
+            const data = await res.json();
+            if (res.ok) {
+              showToast({ type: 'success', title: 'Report Submitted', message: 'Thank you for helping keep Loafed family friendly!' });
+              loadLeaderboardEntries('all');
+            } else {
+              showToast({ type: 'error', title: 'Report Error', message: data.detail || 'Could not submit report.' });
+            }
+          } catch (err) {
+            showToast({ type: 'error', title: 'Report Error', message: err.message });
           }
         });
       });
@@ -2820,6 +2868,14 @@ Certified by Loafed Inspection Engine`;
     submitLeaderboardBtn.addEventListener('click', () => {
       if (!state.currentResult) {
         showToast({ type: 'warning', title: 'No Loaf Graded', message: 'Please grade a cat loaf before submitting to the leaderboard.' });
+        return;
+      }
+      if (state.currentResult.is_cat === false) {
+        showToast({
+          type: 'error',
+          title: 'Audit Disqualification',
+          message: state.currentResult.rejection_reason || 'This photo was disqualified as a non-feline subject and cannot be published to the leaderboard.'
+        });
         return;
       }
       if (!state.user) {
