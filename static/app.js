@@ -51,7 +51,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const resetInspectorBtn = document.getElementById('resetInspectorBtn');
   const copySummaryBtn = document.getElementById('copySummaryBtn');
   const downloadCertificateBtn = document.getElementById('downloadCertificateBtn');
+  const downloadStoryCardBtn = document.getElementById('downloadStoryCardBtn');
   const certificateCanvas = document.getElementById('certificateCanvas');
+  const storyCanvas = document.getElementById('storyCanvas');
 
   // Example Preview & Collapsible Inspection Elements
   const exampleLoafBanner = document.getElementById('exampleLoafBanner');
@@ -1382,6 +1384,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (angleReviewStrip) angleReviewStrip.classList.add('hidden');
       if (badgesAndTipsGrid) badgesAndTipsGrid.classList.add('hidden');
       if (downloadCertificateBtn) downloadCertificateBtn.classList.add('hidden');
+      if (downloadStoryCardBtn) downloadStoryCardBtn.classList.add('hidden');
 
       if (submitLeaderboardBtn) {
         submitLeaderboardBtn.classList.remove('hidden');
@@ -1405,6 +1408,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (angleReviewStrip) angleReviewStrip.classList.remove('hidden');
       if (badgesAndTipsGrid) badgesAndTipsGrid.classList.remove('hidden');
       if (downloadCertificateBtn) downloadCertificateBtn.classList.remove('hidden');
+      if (downloadStoryCardBtn) downloadStoryCardBtn.classList.remove('hidden');
       if (submitLeaderboardBtn) {
         if (!isDemoMode && !state.isExamplePreset) {
           submitLeaderboardBtn.classList.remove('hidden');
@@ -1487,6 +1491,9 @@ document.addEventListener('DOMContentLoaded', () => {
         a11yEl.textContent = `Inspection completed! ${result.cat_name || 'Subject'} scored ${result.overall_score} out of 100, Grade ${result.grade_letter}, classified as ${result.loaf_rank}.`;
       }
     }
+
+    // Chime pleasant oven timer ding bell when baking completes
+    playOvenTimerDing();
 
     // Smooth scroll to the score summary card (or disqualification banner) first,
     // ensure the user has physically arrived and settled, then roll score & slam stamp!
@@ -1579,6 +1586,101 @@ document.addEventListener('DOMContentLoaded', () => {
     refreshIcons();
   }
 
+  // Synthesized Bakery Sound Engine (Web Audio API - Zero External Dependencies)
+  let audioCtx = null;
+  function getAudioContext() {
+    if (!audioCtx) {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (AudioContextClass) audioCtx = new AudioContextClass();
+    }
+    if (audioCtx && audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
+    return audioCtx;
+  }
+
+  function isSoundMuted() {
+    try {
+      return localStorage.getItem('loafed_sound_muted') === 'true';
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function playOvenTimerDing() {
+    if (isSoundMuted()) return;
+    try {
+      const ctx = getAudioContext();
+      if (!ctx) return;
+      const now = ctx.currentTime;
+      [1200, 1800].forEach((freq, idx) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now);
+        gain.gain.setValueAtTime(idx === 0 ? 0.22 : 0.12, now);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 1.2);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 1.2);
+      });
+    } catch (_) {}
+  }
+
+  function playStampThud() {
+    if (isSoundMuted()) return;
+    try {
+      const ctx = getAudioContext();
+      if (!ctx) return;
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(140, now);
+      osc.frequency.exponentialRampToValueAtTime(45, now + 0.18);
+      gain.gain.setValueAtTime(0.3, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.18);
+    } catch (_) {}
+  }
+
+  function initSoundToggle() {
+    const soundToggleBtn = document.getElementById('soundToggleBtn');
+    const soundIcon = document.getElementById('soundIcon');
+    const soundText = document.getElementById('soundText');
+    if (!soundToggleBtn) return;
+
+    function updateSoundUI() {
+      const muted = isSoundMuted();
+      if (soundIcon) {
+        soundIcon.setAttribute('data-lucide', muted ? 'volume-x' : 'volume-2');
+      }
+      if (soundText) {
+        soundText.textContent = muted ? 'Muted' : 'Sound';
+      }
+      soundToggleBtn.title = muted ? 'Unmute bakery sound effects' : 'Mute bakery sound effects';
+      soundToggleBtn.setAttribute('aria-label', soundToggleBtn.title);
+      refreshIcons();
+    }
+
+    soundToggleBtn.addEventListener('click', () => {
+      const currentlyMuted = isSoundMuted();
+      try {
+        localStorage.setItem('loafed_sound_muted', currentlyMuted ? 'false' : 'true');
+      } catch (_) {}
+      updateSoundUI();
+      if (currentlyMuted) {
+        playOvenTimerDing();
+      }
+    });
+
+    updateSoundUI();
+  }
+
   function triggerStampSlam(result) {
     const gradeStamp = document.getElementById('gradeStamp');
     if (!gradeStamp) return;
@@ -1605,6 +1707,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Force reflow and re-add stamp-slam animation
     void gradeStamp.offsetWidth;
     gradeStamp.classList.add('stamp-slam');
+    playStampThud();
 
     // Subtle tactile haptic vibration feedback on supported mobile devices
     try {
@@ -1917,21 +2020,22 @@ Certified by Loafed Inspection Engine`;
   }
 
   // Draw Ornate Corner Bracket at (cx, cy)
-  function drawCornerFlourish(ctx, cx, cy, dirX, dirY) {
+  function drawCornerFlourish(ctx, cx, cy, dirX, dirY, arm = 24) {
     ctx.save();
     ctx.strokeStyle = '#c27803';
     ctx.fillStyle = '#b45309';
-    ctx.lineWidth = 2;
+    ctx.lineWidth = arm > 30 ? 3 : 2;
 
-    const arm = 24;
     ctx.beginPath();
     ctx.moveTo(cx + dirX * arm, cy);
     ctx.lineTo(cx, cy);
     ctx.lineTo(cx, cy + dirY * arm);
     ctx.stroke();
 
+    const dotOffset = arm > 30 ? 10 : 6;
+    const dotRadius = arm > 30 ? 4 : 2.5;
     ctx.beginPath();
-    ctx.arc(cx + dirX * 6, cy + dirY * 6, 2.5, 0, Math.PI * 2);
+    ctx.arc(cx + dirX * dotOffset, cy + dirY * dotOffset, dotRadius, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.restore();
@@ -1940,33 +2044,34 @@ Certified by Loafed Inspection Engine`;
   // Draw Official Gold Foil Embossed Seal
   function drawGoldEmbossedSeal(ctx, cx, cy, radius = 42) {
     ctx.save();
+    const scale = radius / 42;
     
     // Ribbon Tails hanging down
     ctx.fillStyle = '#b45309';
     ctx.beginPath();
-    ctx.moveTo(cx - 16, cy + 28);
-    ctx.lineTo(cx - 28, cy + 62);
-    ctx.lineTo(cx - 16, cy + 54);
-    ctx.lineTo(cx - 4, cy + 62);
-    ctx.lineTo(cx - 8, cy + 28);
+    ctx.moveTo(cx - 16 * scale, cy + 28 * scale);
+    ctx.lineTo(cx - 28 * scale, cy + 62 * scale);
+    ctx.lineTo(cx - 16 * scale, cy + 54 * scale);
+    ctx.lineTo(cx - 4 * scale, cy + 62 * scale);
+    ctx.lineTo(cx - 8 * scale, cy + 28 * scale);
     ctx.closePath();
     ctx.fill();
 
     ctx.fillStyle = '#9a3412';
     ctx.beginPath();
-    ctx.moveTo(cx + 8, cy + 28);
-    ctx.lineTo(cx + 4, cy + 62);
-    ctx.lineTo(cx + 16, cy + 54);
-    ctx.lineTo(cx + 28, cy + 62);
-    ctx.lineTo(cx + 16, cy + 28);
+    ctx.moveTo(cx + 8 * scale, cy + 28 * scale);
+    ctx.lineTo(cx + 4 * scale, cy + 62 * scale);
+    ctx.lineTo(cx + 16 * scale, cy + 54 * scale);
+    ctx.lineTo(cx + 28 * scale, cy + 62 * scale);
+    ctx.lineTo(cx + 16 * scale, cy + 28 * scale);
     ctx.closePath();
     ctx.fill();
 
     // 24-point Scalloped Starburst Seal
     const pts = 24;
-    const innerR = radius - 4;
+    const innerR = radius - (4 * scale);
     const outerR = radius;
-    const sealGrad = ctx.createRadialGradient(cx - 10, cy - 10, 5, cx, cy, radius);
+    const sealGrad = ctx.createRadialGradient(cx - (10 * scale), cy - (10 * scale), 5 * scale, cx, cy, radius);
     sealGrad.addColorStop(0, '#fde68a');
     sealGrad.addColorStop(0.35, '#f59e0b');
     sealGrad.addColorStop(0.85, '#d97706');
@@ -1987,35 +2092,50 @@ Certified by Loafed Inspection Engine`;
 
     // Concentric Inset Gold Rings
     ctx.strokeStyle = '#fef3c7';
-    ctx.lineWidth = 1.5;
+    ctx.lineWidth = 1.5 * scale;
     ctx.beginPath();
-    ctx.arc(cx, cy, radius - 8, 0, Math.PI * 2);
+    ctx.arc(cx, cy, radius - (8 * scale), 0, Math.PI * 2);
     ctx.stroke();
 
     ctx.strokeStyle = '#78350f';
-    ctx.lineWidth = 0.8;
+    ctx.lineWidth = 0.8 * scale;
     ctx.beginPath();
-    ctx.arc(cx, cy, radius - 11, 0, Math.PI * 2);
+    ctx.arc(cx, cy, radius - (11 * scale), 0, Math.PI * 2);
     ctx.stroke();
 
     // Center Seal Emblem
     ctx.fillStyle = '#78350f';
-    ctx.font = 'bold 8px -apple-system, sans-serif';
+    ctx.font = `bold ${Math.max(7, Math.round(8 * scale))}px -apple-system, sans-serif`;
     ctx.textAlign = 'center';
-    ctx.fillText('OFFICIAL', cx, cy - 8);
-    ctx.font = '900 10px -apple-system, sans-serif';
-    ctx.fillText('100% ARTISAN', cx, cy + 4);
-    ctx.font = 'bold 7px -apple-system, sans-serif';
-    ctx.fillText('ACCREDITED', cx, cy + 14);
+    ctx.fillText('OFFICIAL', cx, cy - (8 * scale));
+    ctx.font = `900 ${Math.max(9, Math.round(10 * scale))}px -apple-system, sans-serif`;
+    ctx.fillText('100% ARTISAN', cx, cy + (4 * scale));
+    ctx.font = `bold ${Math.max(6, Math.round(7 * scale))}px -apple-system, sans-serif`;
+    ctx.fillText('ACCREDITED', cx, cy + (14 * scale));
 
     ctx.restore();
   }
 
   // Certificate Download & Preview Generator (Canvas with clean professional styling, zero emojis)
-  downloadCertificateBtn.addEventListener('click', () => {
-    if (!state.currentResult) return;
-    openCertificateModal(state.currentResult);
-  });
+  if (downloadCertificateBtn) {
+    downloadCertificateBtn.addEventListener('click', () => {
+      if (!state.currentResult) return;
+      openCertificateModal(state.currentResult);
+    });
+  }
+
+  if (downloadStoryCardBtn) {
+    downloadStoryCardBtn.addEventListener('click', async () => {
+      const res = state.currentResult || (activeModalCertResult || BENCHMARK_PRESETS.buttercup.result);
+      if (!res) return;
+      await generateStoryCard(res, true);
+      showToast({
+        type: 'success',
+        title: 'Story Card Exported',
+        message: `Exported 1080x1920 9:16 vertical story card for ${res.cat_name || 'Subject'}.`
+      });
+    });
+  }
 
   async function generateCertificate(result, shouldDownload = true, prefetchedImg = null) {
     const canvas = certificateCanvas;
@@ -2378,6 +2498,243 @@ Certified by Loafed Inspection Engine`;
     return dataUrl;
   }
 
+  // 9:16 Vertical Story Card Generator (1080x1920 HD for Instagram / TikTok / WhatsApp)
+  async function generateStoryCard(result, shouldDownload = true, prefetchedImg = null) {
+    const canvas = storyCanvas || document.getElementById('storyCanvas');
+    if (!canvas) return null;
+    canvas.width = 1080;
+    canvas.height = 1920;
+    const ctx = canvas.getContext('2d');
+    const w = 1080;
+    const h = 1920;
+
+    // Load active cat photo
+    let catImg = prefetchedImg;
+    if (!catImg) {
+      const imgUrl = getActiveLoafImageUrl(result);
+      if (imgUrl) {
+        catImg = await loadImage(imgUrl);
+      }
+    }
+
+    // 1. Archival Parchment Background
+    const bgGrad = ctx.createRadialGradient(w / 2, 600, 100, w / 2, h / 2, 1200);
+    bgGrad.addColorStop(0, '#fffdfa');
+    bgGrad.addColorStop(0.5, '#fbf5e8');
+    bgGrad.addColorStop(1, '#f1e5d0');
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, w, h);
+
+    // Guilloche security diagonal lines
+    ctx.save();
+    ctx.strokeStyle = 'rgba(180, 140, 90, 0.035)';
+    ctx.lineWidth = 1;
+    for (let x = -1000; x < w + 1000; x += 40) {
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x + h, h);
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    // 2. Triple Border
+    ctx.strokeStyle = '#1c1917';
+    ctx.lineWidth = 5;
+    ctx.strokeRect(40, 40, w - 80, h - 80);
+
+    ctx.strokeStyle = '#c27803';
+    ctx.lineWidth = 2.5;
+    ctx.strokeRect(52, 52, w - 104, h - 104);
+
+    ctx.strokeStyle = '#d6cebe';
+    ctx.lineWidth = 1.2;
+    ctx.strokeRect(62, 62, w - 124, h - 124);
+
+    // Corner flourishes
+    drawCornerFlourish(ctx, 54, 54, 1, 1, 38);
+    drawCornerFlourish(ctx, w - 54, 54, -1, 1, 38);
+    drawCornerFlourish(ctx, 54, h - 54, 1, -1, 38);
+    drawCornerFlourish(ctx, w - 54, h - 54, -1, -1, 38);
+
+    // 3. Header Section
+    if (mascotLogoImg && mascotLogoImg.complete && mascotLogoImg.naturalWidth > 0) {
+      ctx.drawImage(mascotLogoImg, (w - 70) / 2, 90, 70, 70);
+    }
+    ctx.fillStyle = '#9a3412';
+    ctx.font = 'bold 18px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('BUREAU OF FELINE POSTURE & LOAF CERTIFICATION', w / 2, 195);
+
+    ctx.fillStyle = '#1c1917';
+    ctx.font = '900 46px Georgia, serif';
+    ctx.fillText('OFFICIAL LOAF REPORT', w / 2, 255);
+
+    ctx.strokeStyle = '#c27803';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(w / 2 - 160, 280);
+    ctx.lineTo(w / 2 + 160, 280);
+    ctx.stroke();
+
+    // 4. Cat Photo Portrait
+    const photoX = 90;
+    const photoY = 310;
+    const photoW = 900;
+    const photoH = 800;
+
+    if (catImg) {
+      drawCoverImage(ctx, catImg, photoX, photoY, photoW, photoH, 32);
+      ctx.save();
+      ctx.strokeStyle = '#9a3412';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.roundRect(photoX, photoY, photoW, photoH, 32);
+      ctx.stroke();
+
+      ctx.strokeStyle = '#f59e0b';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.roundRect(photoX + 5, photoY + 5, photoW - 10, photoH - 10, 28);
+      ctx.stroke();
+      ctx.restore();
+    } else {
+      ctx.fillStyle = '#e7e5e4';
+      ctx.beginPath();
+      ctx.roundRect(photoX, photoY, photoW, photoH, 32);
+      ctx.fill();
+    }
+
+    // Photo Exhibit Ribbon Badge
+    ctx.save();
+    ctx.fillStyle = 'rgba(28, 25, 23, 0.88)';
+    ctx.beginPath();
+    ctx.roundRect(photoX + 24, photoY + 24, 340, 44, 12);
+    ctx.fill();
+    ctx.strokeStyle = '#f59e0b';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.fillStyle = '#fef3c7';
+    ctx.font = 'bold 15px -apple-system, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('EXHIBIT A: AUDITED SPECIMEN', photoX + 194, photoY + 52);
+    ctx.restore();
+
+    // 5. Cat Name & Bread Rank
+    ctx.fillStyle = '#1c1917';
+    ctx.font = '900 52px Georgia, serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(result.cat_name || 'Anonymous Loaf', w / 2, 1175);
+
+    ctx.fillStyle = '#c2410c';
+    ctx.font = 'bold 24px -apple-system, sans-serif';
+    ctx.fillText(`${result.loaf_rank || 'Artisan Loaf'} • ${result.bread_classification || 'Brioche'}`, w / 2, 1218);
+
+    // 6. Score & Grade Ink Box
+    const scoreBoxX = 100;
+    const scoreBoxY = 1255;
+    const scoreBoxW = 880;
+    const scoreBoxH = 175;
+
+    ctx.fillStyle = '#fff7ed';
+    ctx.beginPath();
+    ctx.roundRect(scoreBoxX, scoreBoxY, scoreBoxW, scoreBoxH, 24);
+    ctx.fill();
+    ctx.strokeStyle = '#f97316';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+
+    // Score on the left
+    ctx.fillStyle = '#9a3412';
+    ctx.font = '900 84px -apple-system, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText(`${result.overall_score || 0}`, scoreBoxX + 50, scoreBoxY + 115);
+
+    ctx.fillStyle = '#78350f';
+    ctx.font = 'bold 28px -apple-system, sans-serif';
+    ctx.fillText('/ 100', scoreBoxX + 190, scoreBoxY + 115);
+
+    // Grade Rubber Stamp on the right
+    ctx.save();
+    ctx.translate(scoreBoxX + 660, scoreBoxY + 88);
+    ctx.rotate(-0.06);
+    ctx.strokeStyle = '#c2410c';
+    ctx.lineWidth = 4;
+    ctx.strokeRect(-120, -50, 240, 100);
+    ctx.fillStyle = 'rgba(194, 65, 12, 0.08)';
+    ctx.fillRect(-120, -50, 240, 100);
+    ctx.fillStyle = '#c2410c';
+    ctx.font = '900 48px -apple-system, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(`GRADE ${result.grade_letter || 'A'}`, 0, 16);
+    ctx.restore();
+
+    // 7. Subscore Telemetry Progress Bars
+    const subBarsY = 1470;
+    const criteria = [
+      { label: 'Paw Tuck (Limbs Concealed)', score: result.tuck ? result.tuck.score : 24 },
+      { label: 'Boule Bilateral Symmetry', score: result.symmetry ? result.symmetry.score : 23 },
+      { label: 'Spherical Compactness', score: result.compactness ? result.compactness.score : 24 },
+      { label: 'Tail Wrap Concealment', score: result.tail ? result.tail.score : 23 }
+    ];
+
+    criteria.forEach((item, idx) => {
+      const rowY = subBarsY + idx * 46;
+      ctx.fillStyle = '#44403c';
+      ctx.font = 'bold 18px -apple-system, sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText(item.label, 110, rowY + 18);
+
+      const barX = 520;
+      const barW = 340;
+      const barH = 16;
+      ctx.fillStyle = '#e7e5e4';
+      ctx.beginPath();
+      ctx.roundRect(barX, rowY + 4, barW, barH, 8);
+      ctx.fill();
+
+      const pct = Math.min(1, Math.max(0, item.score / 25));
+      const fillGrad = ctx.createLinearGradient(barX, 0, barX + barW, 0);
+      fillGrad.addColorStop(0, '#f59e0b');
+      fillGrad.addColorStop(1, '#ea580c');
+      ctx.fillStyle = fillGrad;
+      ctx.beginPath();
+      ctx.roundRect(barX, rowY + 4, barW * pct, barH, 8);
+      ctx.fill();
+
+      ctx.fillStyle = '#9a3412';
+      ctx.font = 'bold 18px -apple-system, sans-serif';
+      ctx.textAlign = 'right';
+      ctx.fillText(`${item.score}/25`, 960, rowY + 18);
+    });
+
+    // 8. Seal, Signature & Footer Call to Action
+    drawGoldEmbossedSeal(ctx, 880, 1750, 70);
+
+    ctx.fillStyle = '#78350f';
+    ctx.font = 'italic 28px Georgia, serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('Dr. Oliver Pawsbury, Chief Crust Inspector', 110, 1740);
+
+    const hashStr = Math.abs((result.cat_name || 'cat').split('').reduce((a, b) => { a = ((a << 5) - a) + b.charCodeAt(0); return a & a; }, 0)).toString(16).toUpperCase().padStart(6, '0');
+    ctx.fillStyle = '#78716c';
+    ctx.font = 'bold 16px monospace';
+    ctx.fillText(`VERIFICATION ID: LF-2026-${hashStr}`, 110, 1780);
+
+    ctx.fillStyle = '#ea580c';
+    ctx.font = '900 22px -apple-system, sans-serif';
+    ctx.fillText('loafed.redersoft.com • Grade Your Cat Today', 110, 1820);
+
+    const dataUrl = canvas.toDataURL('image/png');
+    if (shouldDownload) {
+      const a = document.createElement('a');
+      a.href = dataUrl;
+      const safeName = (result.cat_name || 'subject').toLowerCase().replace(/[^a-z0-9]/g, '_');
+      a.download = `loaf_story_${safeName}.png`;
+      a.click();
+    }
+    return dataUrl;
+  }
+
   // Certificate Preview Modal Controller
   let activeModalCertResult = null;
   const certificateModal = document.getElementById('certificateModal');
@@ -2424,6 +2781,20 @@ Certified by Loafed Inspection Engine`;
           type: 'success',
           title: 'Diploma Downloaded',
           message: `Exported 1200x800 HD diploma for ${activeModalCertResult.cat_name}.`
+        });
+      }
+    });
+  }
+
+  const modalDownloadStoryBtn = document.getElementById('modalDownloadStoryBtn');
+  if (modalDownloadStoryBtn) {
+    modalDownloadStoryBtn.addEventListener('click', async () => {
+      if (activeModalCertResult) {
+        await generateStoryCard(activeModalCertResult, true);
+        showToast({
+          type: 'success',
+          title: 'Story Card Downloaded',
+          message: `Exported 1080x1920 9:16 vertical story card for ${activeModalCertResult.cat_name}.`
         });
       }
     });
@@ -2522,8 +2893,30 @@ Certified by Loafed Inspection Engine`;
     }
   }
 
+  function updateMyBakeryStats(history) {
+    const bakeryTopScoreEl = document.getElementById('bakeryTopScore');
+    const bakeryTotalAuditsEl = document.getElementById('bakeryTotalAudits');
+    const bakeryTopCrustEl = document.getElementById('bakeryTopCrust');
+    if (!bakeryTopScoreEl || !bakeryTotalAuditsEl || !bakeryTopCrustEl) return;
+
+    if (history && history.length > 0) {
+      const maxScore = Math.max(...history.map(h => h.overall_score || 0));
+      const bestEntry = history.find(h => (h.overall_score || 0) === maxScore) || history[0];
+      bakeryTopScoreEl.textContent = `${maxScore}/100`;
+      bakeryTotalAuditsEl.textContent = history.length;
+      bakeryTopCrustEl.textContent = bestEntry.loaf_rank || bestEntry.bread_classification || 'Artisan Loaf';
+      bakeryTopCrustEl.title = bakeryTopCrustEl.textContent;
+    } else {
+      bakeryTopScoreEl.textContent = '--';
+      bakeryTotalAuditsEl.textContent = '0';
+      bakeryTopCrustEl.textContent = '--';
+      bakeryTopCrustEl.title = '';
+    }
+  }
+
   function renderHistoryModal() {
     const history = getSavedHistory();
+    updateMyBakeryStats(history);
     if (!historyListContainer) return;
 
     if (history.length === 0) {
@@ -2659,11 +3052,15 @@ Certified by Loafed Inspection Engine`;
       <p class="text-stone-600 leading-relaxed">Unless you explicitly opt in and click "Submit to Leaderboard", uploaded cat photographs are streamed in-memory to Google Gemini Vision API solely to generate your real-time posture audit. Unsubmitted photos are never retained on server disks or shared.</p>
     </div>
     <div>
-      <h4 class="font-bold text-stone-900 text-xs mb-1">4. No Tracking, Profiling, or Advertising</h4>
+      <h4 class="font-bold text-stone-900 text-xs mb-1">4. Animal Silhouette Analysis & Zero Human Biometrics</h4>
+      <p class="text-stone-600 leading-relaxed">Loafed AI processes animal posture contours exclusively. Our system does not scan, extract, retain, or identify human facial geometry, biometric signatures, or personal identity vectors, even if an individual appears incidentally in the background of an audited photograph.</p>
+    </div>
+    <div>
+      <h4 class="font-bold text-stone-900 text-xs mb-1">5. No Tracking, Profiling, or Advertising</h4>
       <p class="text-stone-600 leading-relaxed">We do not employ third-party advertising trackers, cross-site profiling pixels, or marketing analytics. Your browsing activity on this service remains private.</p>
     </div>
     <div>
-      <h4 class="font-bold text-stone-900 text-xs mb-1">5. Third-Party AI & Cloud Services</h4>
+      <h4 class="font-bold text-stone-900 text-xs mb-1">6. Third-Party AI & Cloud Services</h4>
       <p class="text-stone-600 leading-relaxed">Visual inspection is processed via Google Gemini API in accordance with Google API terms. Authentication and leaderboard storage are hosted on AWS infrastructure (Cognito, DynamoDB, and S3).</p>
     </div>
   `;
@@ -2675,18 +3072,22 @@ Certified by Loafed Inspection Engine`;
     </div>
     <div>
       <h4 class="font-bold text-stone-900 text-xs mb-1">2. Not Veterinary or Medical Advice</h4>
-      <p class="text-stone-600 leading-relaxed">The analysis generated by this engine does not constitute veterinary medical diagnosis, orthopedic assessment, or health advice. If your cat demonstrates sudden changes in resting posture, gait abnormalities, or tucks its limbs due to pain or illness, please consult a licensed veterinarian immediately.</p>
+      <p class="text-stone-600 leading-relaxed">The analysis generated by this engine does not constitute veterinary medical diagnosis, musculoskeletal evaluation, orthopedic assessment, or health advice. If your cat demonstrates sudden changes in resting posture, abnormal weight loss, or tucks its limbs due to pain or illness, please consult a licensed veterinarian immediately.</p>
     </div>
     <div>
-      <h4 class="font-bold text-stone-900 text-xs mb-1">3. Permitted Content</h4>
-      <p class="text-stone-600 leading-relaxed">You agree to submit only images of cats that you own or have permission to inspect. Submissions of unlawful, abusive, or non-feline graphic content are strictly prohibited.</p>
+      <h4 class="font-bold text-stone-900 text-xs mb-1">3. Age Requirements & Children's Privacy (COPPA / GDPR-K)</h4>
+      <p class="text-stone-600 leading-relaxed">This service is intended for users 13 years of age and older (16 in the EEA/UK). If you are under 13, you may only use Loafed AI under direct parental or guardian supervision without creating an account or submitting personal data.</p>
     </div>
     <div>
-      <h4 class="font-bold text-stone-900 text-xs mb-1">4. Fair Use & Abuse Prevention</h4>
+      <h4 class="font-bold text-stone-900 text-xs mb-1">4. Permitted Content</h4>
+      <p class="text-stone-600 leading-relaxed">You agree to submit only images of domestic felines that you own or have permission to inspect. Submissions of unlawful, abusive, infringing, or non-feline graphic content are strictly prohibited.</p>
+    </div>
+    <div>
+      <h4 class="font-bold text-stone-900 text-xs mb-1">5. Fair Use & Abuse Prevention</h4>
       <p class="text-stone-600 leading-relaxed">To ensure this service remains 100% free for everyone, automated scraping, bot submissions, high-frequency script attacks, or attempts to circumvent rate-limiting guardrails are prohibited.</p>
     </div>
     <div>
-      <h4 class="font-bold text-stone-900 text-xs mb-1">5. Disclaimer of Warranty ("As-Is")</h4>
+      <h4 class="font-bold text-stone-900 text-xs mb-1">6. Disclaimer of Warranty ("As-Is")</h4>
       <p class="text-stone-600 leading-relaxed">Loafed AI is provided on an "as-is" and "as-available" basis without warranties of any kind, either express or implied.</p>
     </div>
   `;
@@ -4205,5 +4606,6 @@ Certified by Loafed Inspection Engine`;
   }
 
   updateHistoryBadge();
+  initSoundToggle();
   refreshIcons();
 });

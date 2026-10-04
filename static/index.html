@@ -108,6 +108,11 @@
           <span id="historyBadgeCount" class="px-1.5 py-0.2 rounded-full bg-orange-200/80 text-[10px] font-bold text-orange-950 border border-orange-300/80">0</span>
         </button>
 
+        <button id="soundToggleBtn" class="min-h-[40px] sm:min-h-[44px] px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl border border-orange-200/90 bg-orange-50/70 hover:bg-orange-100 text-stone-700 hover:text-orange-950 text-xs font-semibold flex items-center gap-1 shadow-2xs transition-all hover:border-orange-400 active:scale-95 btn-tactile cursor-pointer" aria-label="Toggle bakery sound effects" title="Toggle bakery sound effects">
+          <i data-lucide="volume-2" id="soundIcon" class="w-3.5 h-3.5 text-orange-700 shrink-0"></i>
+          <span class="hidden md:inline text-[11px]" id="soundText">Sound</span>
+        </button>
+
         <div id="authHeaderContainer" class="flex items-center">
           <button id="headerSignInBtn" class="btn-header-signin shimmer-btn btn-tactile" aria-label="Sign In to Loafed AI">
             <i data-lucide="log-in" class="w-3.5 h-3.5 shrink-0"></i>
@@ -702,6 +707,10 @@
               <i data-lucide="file-badge" class="w-4 h-4 text-amber-200"></i>
               <span>Export Official Diploma (PNG)</span>
             </button>
+            <button id="downloadStoryCardBtn" class="min-h-[48px] px-5 py-3 bg-gradient-to-r from-rose-600 via-pink-600 to-amber-600 hover:from-rose-700 hover:to-pink-700 text-white rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 shadow-sm active:scale-95 shimmer-btn btn-tactile cursor-pointer" aria-label="Export 9:16 Mobile Story Card">
+              <i data-lucide="smartphone" class="w-4 h-4 text-pink-100"></i>
+              <span>Export 9:16 Story (IG/TikTok)</span>
+            </button>
             <button id="submitLeaderboardBtn" class="btn-submit-leaderboard shimmer-btn btn-tactile w-full" aria-label="Submit to Official Leaderboard">
               <i data-lucide="trophy" class="w-4 h-4 text-amber-200"></i>
               <span>Submit to Leaderboard</span>
@@ -954,6 +963,14 @@
         </button>
       </div>
     </div>
+
+    <!-- Persistent Veterinary Medical & Age Disclaimer -->
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 pt-4 mt-4 border-t border-orange-200/50 flex flex-col sm:flex-row items-center justify-between text-[11px] text-stone-500 gap-2 text-center sm:text-left">
+      <p class="leading-relaxed">
+        <strong class="font-bold text-stone-700">Disclaimer:</strong> Loafed AI is a novelty entertainment experiment and does not constitute veterinary medical, musculoskeletal, or orthopedic advice. Intended for users 13+.
+      </p>
+      <span class="shrink-0 text-stone-400">Animal silhouette geometric analysis only &bull; Zero human biometrics</span>
+    </div>
   </footer>
 
   <!-- Capacity Notice Modal -->
@@ -1029,6 +1046,22 @@
         <div>
           <h3 class="text-base font-bold text-stone-900">Saved Loaf Inspections</h3>
           <p class="text-xs text-stone-500">Stored privately in your browser &bull; Zero login required</p>
+        </div>
+      </div>
+
+      <!-- My Bakery Personal Best Stats Banner -->
+      <div id="myBakeryStatsBanner" class="grid grid-cols-3 gap-2.5 p-3 bg-gradient-to-r from-orange-50/90 via-amber-50/70 to-orange-50/90 border border-orange-200/90 rounded-2xl mb-4 text-center">
+        <div class="p-2 bg-white/90 rounded-xl border border-orange-100 shadow-2xs">
+          <span class="block text-[10px] uppercase font-bold text-stone-500 tracking-wider">Top Score</span>
+          <span id="bakeryTopScore" class="text-base font-black text-orange-700">--</span>
+        </div>
+        <div class="p-2 bg-white/90 rounded-xl border border-orange-100 shadow-2xs">
+          <span class="block text-[10px] uppercase font-bold text-stone-500 tracking-wider">Audits</span>
+          <span id="bakeryTotalAudits" class="text-base font-black text-amber-900">0</span>
+        </div>
+        <div class="p-2 bg-white/90 rounded-xl border border-orange-100 shadow-2xs">
+          <span class="block text-[10px] uppercase font-bold text-stone-500 tracking-wider">Top Crust</span>
+          <span id="bakeryTopCrust" class="text-[11px] font-bold text-orange-950 truncate block mt-0.5" title="Top Crust">--</span>
         </div>
       </div>
 
@@ -1115,11 +1148,15 @@
       <div class="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs pt-1">
         <span class="text-stone-500 text-[11px] text-center sm:text-left">Click Download to export your official 1200&times;800 PNG diploma for printing or framing!</span>
         <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
-          <button id="modalDownloadCertBtn" class="flex-1 sm:flex-none min-h-[44px] px-5 py-2.5 rounded-xl bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white font-bold text-xs shadow-sm transition-all flex items-center justify-center gap-1.5 active:scale-95" aria-label="Download PNG Diploma">
+          <button id="modalDownloadCertBtn" class="flex-1 sm:flex-none min-h-[44px] px-4 py-2.5 rounded-xl bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white font-bold text-xs shadow-sm transition-all flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer" aria-label="Download PNG Diploma">
             <i data-lucide="download" class="w-4 h-4"></i>
-            <span>Download PNG</span>
+            <span>Download Diploma</span>
           </button>
-          <button id="dismissCertModalBtn" class="min-h-[44px] px-5 py-2.5 rounded-xl bg-orange-100/80 hover:bg-orange-200 text-orange-950 font-bold text-xs transition-colors active:scale-95" aria-label="Close certificate preview modal">
+          <button id="modalDownloadStoryBtn" class="flex-1 sm:flex-none min-h-[44px] px-4 py-2.5 rounded-xl bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-700 hover:to-pink-700 text-white font-bold text-xs shadow-sm transition-all flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer" aria-label="Download 9:16 Vertical Story">
+            <i data-lucide="smartphone" class="w-4 h-4"></i>
+            <span>9:16 Story</span>
+          </button>
+          <button id="dismissCertModalBtn" class="min-h-[44px] px-5 py-2.5 rounded-xl bg-orange-100/80 hover:bg-orange-200 text-orange-950 font-bold text-xs transition-colors active:scale-95 cursor-pointer" aria-label="Close certificate preview modal">
             Close
           </button>
         </div>
@@ -1581,8 +1618,9 @@
   <!-- Toast Notification Container -->
   <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2.5 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
 
-  <!-- Offscreen Canvas for generating shareable Loaf Certificate -->
+  <!-- Offscreen Canvas for generating shareable Loaf Certificate & Story Card -->
   <canvas id="certificateCanvas" class="hidden" width="1200" height="800"></canvas>
+  <canvas id="storyCanvas" class="hidden" width="1080" height="1920"></canvas>
 
   <script src="/static/app.min.js" defer></script>
 </body>
