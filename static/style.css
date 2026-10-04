@@ -1,8 +1,11 @@
-/* Mobile Tap and Safe Area Optimizations */
+/* Mobile Tap, Safe Area, and Responsive Containment */
 html {
   -webkit-text-size-adjust: 100%;
   touch-action: manipulation;
   scroll-behavior: smooth;
+  overflow-x: hidden;
+  max-width: 100%;
+  width: 100%;
 }
 
 :root {
@@ -43,6 +46,8 @@ body {
   color: var(--text-primary);
   min-height: 100vh;
   overflow-x: hidden;
+  max-width: 100%;
+  width: 100%;
   padding-bottom: max(4rem, env(safe-area-inset-bottom, 2rem));
 }
 
@@ -148,6 +153,34 @@ body {
   border-radius: 0.5rem;
   transform: rotate(-6deg);
   mask-image: linear-gradient(135deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,1) 50%, rgba(0,0,0,0.85) 100%);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* RederSoft Physical Stamp Slam Impact Animation */
+@keyframes stamp-slam {
+  0% {
+    opacity: 0;
+    transform: scale(2.8) rotate(-22deg);
+    filter: drop-shadow(0 18px 24px rgba(234, 88, 12, 0.45));
+  }
+  50% {
+    opacity: 0.95;
+    transform: scale(0.88) rotate(-4deg);
+    filter: drop-shadow(0 2px 4px rgba(234, 88, 12, 0.2));
+  }
+  75% {
+    transform: scale(1.08) rotate(-7deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(-6deg);
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+  }
+}
+
+.stamp-slam {
+  animation: stamp-slam 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) both !important;
+  transform-origin: center center;
 }
 
 /* Animations */
@@ -683,6 +716,8 @@ body.user-logged-in #headerSignInBtn {
   justify-content: center !important;
   gap: 0.5rem !important;
   cursor: pointer !important;
+  position: relative !important;
+  overflow: hidden !important;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
@@ -693,7 +728,8 @@ body.user-logged-in #headerSignInBtn {
 }
 
 .btn-submit-leaderboard:active {
-  transform: translateY(0);
+  transform: translateY(1.5px) scale(0.985) !important;
+  box-shadow: 0 2px 8px rgba(217, 119, 6, 0.4) !important;
 }
 
 .btn-download-cert {
@@ -711,6 +747,8 @@ body.user-logged-in #headerSignInBtn {
   justify-content: center !important;
   gap: 0.5rem !important;
   cursor: pointer !important;
+  position: relative !important;
+  overflow: hidden !important;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
@@ -721,7 +759,8 @@ body.user-logged-in #headerSignInBtn {
 }
 
 .btn-download-cert:active {
-  transform: translateY(0);
+  transform: translateY(1.5px) scale(0.985) !important;
+  box-shadow: 0 2px 6px rgba(234, 88, 12, 0.3) !important;
 }
 
 /* ==========================================================================
@@ -1013,8 +1052,115 @@ body.user-logged-in #headerSignInBtn {
 }
 
 /* ==========================================================================
+   RederSoft Interactive Button Suite (Shimmer Sweep & 3D Tactile Press)
+   ========================================================================== */
+.shimmer-btn {
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+.shimmer-btn::after {
+  content: '';
+  position: absolute;
+  top: -60%;
+  left: -130%;
+  width: 200%;
+  height: 220%;
+  background: linear-gradient(
+    105deg,
+    transparent 20%,
+    rgba(255, 255, 255, 0.32) 50%,
+    transparent 80%
+  );
+  transform: rotate(25deg);
+  animation: shimmer-sweep 3.6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  pointer-events: none;
+}
+
+@keyframes shimmer-sweep {
+  0% { transform: translateX(-100%) rotate(25deg); }
+  35%, 100% { transform: translateX(120%) rotate(25deg); }
+}
+
+/* 3D Tactile Press Mechanical Micro-interaction */
+.btn-tactile {
+  transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.15s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.btn-tactile:active {
+  transform: translateY(1.5px) scale(0.982) !important;
+}
+
+/* ==========================================================================
+   Bakery Hearth Oven Glowing Loader & Molten Shimmer Progress Bar
+   ========================================================================== */
+@keyframes hearth-glow {
+  0%, 100% {
+    box-shadow: 0 0 25px -4px rgba(249, 115, 22, 0.24), 0 20px 38px -10px rgba(234, 88, 12, 0.14);
+    border-color: rgba(251, 146, 60, 0.65);
+    background-color: #ffffff;
+  }
+  50% {
+    box-shadow: 0 0 48px 8px rgba(234, 88, 12, 0.38), 0 24px 44px -8px rgba(234, 88, 12, 0.26);
+    border-color: rgba(234, 88, 12, 0.9);
+    background-color: #fffaf5;
+  }
+}
+
+.hearth-oven-active {
+  animation: hearth-glow 2.2s ease-in-out infinite !important;
+}
+
+#loadingProgressBar {
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+#loadingProgressBar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.5) 50%,
+    transparent 100%
+  );
+  animation: progress-shimmer 1.6s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes progress-shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+@keyframes step-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.loading-step-item {
+  animation: step-slide-in 0.24s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* ==========================================================================
    Mobile Accessibility & Usability Enhancements
    ========================================================================== */
+img, video, canvas {
+  max-width: 100%;
+  height: auto;
+}
+
 @media screen and (max-width: 640px) {
   /* Prevent iOS Safari 115% automatic viewport zoom on input focus */
   input,
@@ -1024,9 +1170,49 @@ body.user-logged-in #headerSignInBtn {
     font-size: 16px !important;
   }
 
-  /* Ensure modal card scrolls cleanly within small phone viewports / virtual keyboards */
-  .bakery-card {
+  /* Scoped specifically to overlay modals so page cards never trigger accidental internal scrolling */
+  #authModal .bakery-card,
+  #profileModal .bakery-card,
+  #deleteAccountModal .bakery-card,
+  #sampleCertModal .bakery-card,
+  #submitLeaderboardModal .bakery-card {
     max-height: 92vh;
     overflow-y: auto;
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* Ensure the championship pedestal fits seamlessly on narrow mobile viewports without horizontal scrolling */
+  .pedestal-stage {
+    gap: 0.35rem;
+    padding: 0;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  .pedestal-step {
+    min-width: 0 !important;
+    flex: 1 1 0% !important;
+    max-width: 33.333% !important;
+  }
+
+  .pedestal-photo-frame {
+    width: 72px !important;
+    height: 72px !important;
+    border-radius: 0.75rem !important;
+    margin-bottom: 0.3rem !important;
+  }
+
+  .pedestal-step-1 .pedestal-photo-frame {
+    width: 86px !important;
+    height: 86px !important;
+    border-width: 2.5px !important;
+  }
+
+  .pedestal-card {
+    padding: 0.5rem 0.25rem !important;
+    border-radius: 0.85rem 0.85rem 0 0 !important;
   }
 }

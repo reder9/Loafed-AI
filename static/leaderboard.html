@@ -51,38 +51,39 @@
 
   <!-- Navigation Bar -->
   <header class="border-b border-orange-200/80 bg-[#fffbf5]/95 backdrop-blur-md sticky top-0 z-40 shadow-xs shadow-orange-500/5">
-    <div class="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-      <a href="/" class="flex items-center gap-3 group" aria-label="Loafed AI Home">
-        <div class="w-10 h-10 rounded-xl bg-orange-100/80 border border-orange-300 flex items-center justify-center text-orange-700 shadow-xs p-1 transition-transform group-hover:scale-105">
-          <img src="/static/logo.png" alt="Loafed AI Mascot" width="32" height="32" class="w-8 h-8 object-contain">
+    <div class="max-w-5xl mx-auto px-3 sm:px-6 h-16 flex items-center justify-between">
+      <a href="/" class="flex items-center gap-2 sm:gap-3 group min-w-0" aria-label="Loafed AI Home">
+        <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-orange-100/80 border border-orange-300 flex items-center justify-center text-orange-700 shadow-xs p-1 transition-transform group-hover:scale-105 shrink-0">
+          <img src="/static/logo.png" alt="Loafed AI Mascot" width="32" height="32" class="w-7 h-7 sm:w-8 sm:h-8 object-contain">
         </div>
-        <div>
-          <div class="flex items-center gap-2">
-            <span class="font-extrabold text-xl tracking-tight text-stone-900">Loafed<span class="text-orange-600 font-black">AI</span></span>
-            <span class="text-xs text-stone-400 font-normal">by <span class="text-stone-600 font-medium">RederSoft</span></span>
+        <div class="min-w-0">
+          <div class="flex items-baseline gap-1.5 sm:gap-2">
+            <span class="font-extrabold text-lg sm:text-xl tracking-tight text-stone-900 truncate">Loafed<span class="text-orange-600 font-black">AI</span></span>
+            <span class="text-[10px] sm:text-xs text-stone-400 font-normal hidden xs:inline sm:inline">by <span class="text-stone-600 font-medium">RederSoft</span></span>
           </div>
-          <p class="text-xs text-stone-500 hidden sm:block">Feline Posture &amp; Silhouette Certification Bureau</p>
+          <p class="text-[11px] text-stone-500 hidden sm:block truncate">Feline Posture &amp; Silhouette Certification Bureau</p>
         </div>
       </a>
 
-      <div class="flex items-center gap-2.5">
-        <a href="/" class="min-h-[44px] px-3.5 py-2 rounded-xl border border-orange-200/90 bg-orange-50/70 hover:bg-orange-100 text-stone-800 hover:text-orange-950 text-xs font-semibold flex items-center gap-1.5 shadow-2xs transition-all hover:border-orange-400 active:scale-95" aria-label="Return to Loaf Inspector">
-          <i data-lucide="arrow-left" class="w-3.5 h-3.5 text-orange-700"></i>
-          <span>Inspect a Loaf</span>
+      <div class="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+        <a href="/" class="min-h-[40px] sm:min-h-[44px] px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl border border-orange-200/90 bg-orange-50/70 hover:bg-orange-100 text-stone-800 hover:text-orange-950 text-xs font-semibold flex items-center gap-1.5 shadow-2xs transition-all hover:border-orange-400 active:scale-95 btn-tactile" aria-label="Return to Loaf Inspector">
+          <i data-lucide="arrow-left" class="w-3.5 h-3.5 text-orange-700 shrink-0"></i>
+          <span class="hidden sm:inline">Inspect a Loaf</span>
+          <span class="sm:hidden text-[11px]">Inspect</span>
         </a>
 
         <!-- Auth Controls -->
         <div id="authHeaderContainer" class="flex items-center">
-          <button id="headerSignInBtn" class="btn-header-signin" aria-label="Sign In to Loafed AI">
-            <i data-lucide="log-in" class="w-3.5 h-3.5"></i>
+          <button id="headerSignInBtn" class="btn-header-signin shimmer-btn btn-tactile" aria-label="Sign In to Loafed AI">
+            <i data-lucide="log-in" class="w-3.5 h-3.5 shrink-0"></i>
             <span>Sign In</span>
           </button>
           
           <div id="headerUserMenu" class="hidden relative">
-            <button id="headerUserMenuBtn" class="min-h-[44px] px-3 py-1.5 rounded-xl border border-orange-200/90 bg-white hover:bg-orange-50/80 flex items-center gap-2 shadow-2xs text-xs font-bold text-stone-800 transition-all active:scale-95" aria-label="User Account Menu" aria-expanded="false">
+            <button id="headerUserMenuBtn" class="min-h-[40px] sm:min-h-[44px] px-2.5 sm:px-3 py-1.5 rounded-xl border border-orange-200/90 bg-white hover:bg-orange-50/80 flex items-center gap-1.5 sm:gap-2 shadow-2xs text-xs font-bold text-stone-800 transition-all active:scale-95 btn-tactile" aria-label="User Account Menu" aria-expanded="false">
               <span id="headerUserAvatar" class="w-6 h-6 rounded-full bg-orange-500 text-white flex items-center justify-center text-[11px] font-black uppercase">U</span>
               <span id="headerUserName" class="max-w-[100px] truncate text-stone-800 hidden sm:inline">Baker</span>
-              <i data-lucide="chevron-down" class="w-3 h-3 text-stone-500"></i>
+              <i data-lucide="chevron-down" class="w-3 h-3 text-stone-500 shrink-0"></i>
             </button>
             <div id="headerUserDropdown" class="hidden absolute right-0 mt-2 w-52 bg-white rounded-2xl border border-orange-200 shadow-xl py-1.5 z-50">
               <div class="px-3.5 py-2 border-b border-orange-100">
@@ -108,7 +109,7 @@
     </div>
   </header>
 
-  <main class="max-w-5xl mx-auto px-4 sm:px-6 pt-6 sm:pt-10">
+  <main class="max-w-5xl mx-auto px-3 sm:px-6 pt-6 sm:pt-10">
 
     <!-- Hero Header -->
     <div class="text-center max-w-2xl mx-auto mb-8 sm:mb-10">
@@ -194,7 +195,7 @@
           Upload 1 to 5 photos to receive an instant, multi-angle posture inspection from our AI vision model and claim your spot among the finest feline bakers.
         </p>
       </div>
-      <a href="/" class="min-h-[48px] px-6 py-3 rounded-xl bg-white text-orange-800 hover:bg-orange-50 font-bold text-xs sm:text-sm shadow-md transition-all shrink-0 active:scale-95 inline-flex items-center justify-center gap-2">
+      <a href="/" class="min-h-[48px] px-6 py-3 rounded-xl bg-white text-orange-800 hover:bg-orange-50 font-bold text-xs sm:text-sm shadow-md transition-all shrink-0 active:scale-95 inline-flex items-center justify-center gap-2 shimmer-btn btn-tactile" aria-label="Grade Your Cat Loaf">
         <i data-lucide="camera" class="w-4 h-4 text-orange-600"></i>
         <span>Grade Your Cat Loaf</span>
       </a>

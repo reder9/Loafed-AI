@@ -609,7 +609,7 @@ document.addEventListener('DOMContentLoaded', () => {
               ? 'You have not submitted any cat loaves to the public leaderboard yet. Grade your cat to claim your spot!' 
               : 'Be the first baker to audit a feline loaf and claim the #1 ranking for this period!'}
           </p>
-          <a href="/" class="mt-4 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-bold text-xs shadow-xs transition-all active:scale-95">
+          <a href="/" class="mt-4 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-bold text-xs shadow-xs transition-all active:scale-95 shimmer-btn btn-tactile">
             <i data-lucide="camera" class="w-3.5 h-3.5"></i>
             <span>Inspect a Cat Loaf</span>
           </a>
@@ -764,7 +764,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <p class="text-xs text-stone-500 mt-1 max-w-xs mx-auto">
               Authenticate with Google or email to see all your certified loaves and manage your entries.
             </p>
-            <button id="pageSignInPromptBtn" class="mt-4 px-5 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-bold text-xs shadow-xs transition-all active:scale-95">
+            <button id="pageSignInPromptBtn" class="mt-4 px-5 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-bold text-xs shadow-xs transition-all active:scale-95 shimmer-btn btn-tactile">
               Sign In
             </button>
           </div>

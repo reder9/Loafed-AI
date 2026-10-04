@@ -476,12 +476,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const count = state.photos.length;
     if (count === 0) {
       gradeLoafBtn.disabled = true;
-      gradeLoafBtn.className = 'w-full sm:w-auto px-8 py-3.5 rounded-xl font-bold text-sm text-stone-400 bg-stone-200 cursor-not-allowed shadow-none transition-all flex items-center justify-center gap-2';
+      gradeLoafBtn.className = 'w-full sm:w-auto px-8 py-3.5 rounded-xl font-bold text-sm text-stone-400 bg-stone-200 cursor-not-allowed shadow-none transition-all flex items-center justify-center gap-2 btn-tactile';
       photoCountBadge.textContent = '0 photos selected';
       photoCountBadge.className = 'font-semibold text-stone-600 bg-orange-50 px-2.5 py-0.5 rounded border border-orange-200';
     } else {
       gradeLoafBtn.disabled = false;
-      gradeLoafBtn.className = 'w-full sm:w-auto px-8 py-3.5 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600 hover:from-orange-600 hover:via-amber-600 hover:to-orange-700 shadow-md shadow-orange-500/25 transition-all hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-2 cursor-pointer';
+      gradeLoafBtn.className = 'w-full sm:w-auto px-8 py-3.5 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600 hover:from-orange-600 hover:via-amber-600 hover:to-orange-700 shadow-md shadow-orange-500/25 transition-all hover:scale-[1.01] active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer shimmer-btn btn-tactile';
       
       if (count === 1) {
         photoCountBadge.textContent = '1 photo staged (Single-Angle Mode)';
@@ -813,7 +813,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <i data-lucide="sparkles" class="w-3.5 h-3.5 text-orange-700 shrink-0"></i>
         <span>Inspect</span>
       `;
-      btn.className = 'load-benchmark-btn flex-1 min-h-[44px] py-2 px-3 rounded-xl bg-orange-50 hover:bg-orange-100 text-orange-950 text-xs font-bold border border-orange-200 transition-all flex items-center justify-center gap-1.5 shadow-2xs active:scale-95 whitespace-nowrap';
+      btn.className = 'load-benchmark-btn flex-1 min-h-[44px] py-2 px-3 rounded-xl bg-orange-50 hover:bg-orange-100 text-orange-950 text-xs font-bold border border-orange-200 transition-all flex items-center justify-center gap-1.5 shadow-2xs active:scale-95 whitespace-nowrap btn-tactile';
     });
     refreshIcons();
   }
@@ -828,7 +828,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <i data-lucide="chevron-up" class="w-3.5 h-3.5 text-white shrink-0"></i>
           <span>Collapse</span>
         `;
-        btn.className = 'load-benchmark-btn flex-1 min-h-[44px] py-2 px-3 rounded-xl bg-gradient-to-r from-orange-600 via-amber-600 to-orange-700 hover:from-orange-700 hover:to-amber-700 text-white text-xs font-black border border-transparent transition-all flex items-center justify-center gap-1.5 shadow-sm active:scale-95 whitespace-nowrap';
+        btn.className = 'load-benchmark-btn flex-1 min-h-[44px] py-2 px-3 rounded-xl bg-gradient-to-r from-orange-600 via-amber-600 to-orange-700 hover:from-orange-700 hover:to-amber-700 text-white text-xs font-black border border-transparent transition-all flex items-center justify-center gap-1.5 shadow-sm active:scale-95 whitespace-nowrap shimmer-btn btn-tactile';
 
         if (card) {
           card.classList.remove('border-orange-200/90', 'bg-white/95');
@@ -841,7 +841,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <i data-lucide="sparkles" class="w-3.5 h-3.5 text-orange-700 shrink-0"></i>
           <span>Inspect</span>
         `;
-        btn.className = 'load-benchmark-btn flex-1 min-h-[44px] py-2 px-3 rounded-xl bg-orange-50 hover:bg-orange-100 text-orange-950 text-xs font-bold border border-orange-200 transition-all flex items-center justify-center gap-1.5 shadow-2xs active:scale-95 whitespace-nowrap';
+        btn.className = 'load-benchmark-btn flex-1 min-h-[44px] py-2 px-3 rounded-xl bg-orange-50 hover:bg-orange-100 text-orange-950 text-xs font-bold border border-orange-200 transition-all flex items-center justify-center gap-1.5 shadow-2xs active:scale-95 whitespace-nowrap btn-tactile';
 
         if (card) {
           card.classList.remove('ring-2', 'ring-orange-500', 'border-orange-500', 'bg-orange-50/30', 'shadow-md');
@@ -962,8 +962,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const isCurrent = (i === activeIdx && activeIdx < bakeryAuditSteps.length - 1);
       const el = document.createElement('div');
       el.className = isCurrent 
-        ? 'flex items-center gap-2 text-orange-950 font-semibold bg-orange-50/90 px-2.5 py-1 rounded-lg border border-orange-200/70 transition-all duration-300'
-        : 'flex items-center gap-2 text-stone-600 font-medium px-2.5 py-0.5 transition-all duration-300';
+        ? 'flex items-center gap-2 text-orange-950 font-semibold bg-orange-50/90 px-2.5 py-1 rounded-lg border border-orange-200/70 transition-all duration-300 loading-step-item'
+        : 'flex items-center gap-2 text-stone-600 font-medium px-2.5 py-0.5 transition-all duration-300 loading-step-item';
       
       const iconName = isCurrent ? 'loader-2' : 'check-circle-2';
       const iconClass = isCurrent ? 'w-3.5 h-3.5 text-orange-600 animate-spin shrink-0' : 'w-3.5 h-3.5 text-emerald-600 shrink-0';
@@ -992,6 +992,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (progressInterval) clearInterval(progressInterval);
 
     loadingState.classList.remove('hidden');
+    loadingState.classList.add('hearth-oven-active');
     inspectorBay.classList.add('hidden');
     resultsSection.classList.add('hidden');
     scrollToSection(loadingState);
@@ -1047,6 +1048,7 @@ document.addEventListener('DOMContentLoaded', () => {
     renderStepLog(bakeryAuditSteps.length - 1);
 
     setTimeout(() => {
+      loadingState.classList.remove('hearth-oven-active');
       loadingState.classList.add('hidden');
     }, 380);
   }
@@ -1216,15 +1218,18 @@ document.addEventListener('DOMContentLoaded', () => {
         submitLeaderboardBtn.title = '';
       }
       
-      // Stamp colors
+      // Stamp colors & Physical Stamp Slam Animation
+      gradeStamp.classList.remove('stamp-slam');
+      void gradeStamp.offsetWidth; // Force reflow to re-trigger animation
+
       if (result.grade_letter.includes('A')) {
-        gradeStamp.className = 'stamp text-orange-700 border-orange-700 text-lg font-black';
+        gradeStamp.className = 'stamp text-orange-700 border-orange-700 text-lg font-black stamp-slam';
       } else if (result.grade_letter.includes('B')) {
-        gradeStamp.className = 'stamp text-amber-700 border-amber-700 text-lg font-black';
+        gradeStamp.className = 'stamp text-amber-700 border-amber-700 text-lg font-black stamp-slam';
       } else if (result.grade_letter.includes('C')) {
-        gradeStamp.className = 'stamp text-stone-700 border-stone-700 text-lg font-black';
+        gradeStamp.className = 'stamp text-stone-700 border-stone-700 text-lg font-black stamp-slam';
       } else {
-        gradeStamp.className = 'stamp text-rose-700 border-rose-700 text-lg font-black';
+        gradeStamp.className = 'stamp text-rose-700 border-rose-700 text-lg font-black stamp-slam';
       }
     }
 

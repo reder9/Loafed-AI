@@ -81,43 +81,44 @@
 
   <!-- Navigation Bar -->
   <header class="border-b border-orange-200/80 bg-[#fffbf5]/95 backdrop-blur-md sticky top-0 z-40 shadow-xs shadow-orange-500/5">
-    <div class="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-orange-100/80 border border-orange-300 flex items-center justify-center text-orange-700 shadow-xs p-1">
-          <img src="/static/logo.png" alt="Loafed AI Cat Loaf Logo" width="32" height="32" class="w-8 h-8 object-contain">
+    <div class="max-w-5xl mx-auto px-3 sm:px-6 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+        <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-orange-100/80 border border-orange-300 flex items-center justify-center text-orange-700 shadow-xs p-1 shrink-0">
+          <img src="/static/logo.png" alt="Loafed AI Cat Loaf Logo" width="32" height="32" class="w-7 h-7 sm:w-8 sm:h-8 object-contain">
         </div>
-        <div>
-          <div class="flex items-center gap-2">
-            <span class="font-extrabold text-xl tracking-tight text-stone-900">Loafed<span class="text-orange-600 font-black">AI</span></span>
-            <span class="text-xs text-stone-400 font-normal">by <a href="https://redersoft.com" target="_blank" rel="noopener noreferrer" class="text-stone-600 hover:text-orange-700 font-medium transition-colors hover:underline">RederSoft</a></span>
+        <div class="min-w-0">
+          <div class="flex items-baseline gap-1.5 sm:gap-2">
+            <span class="font-extrabold text-lg sm:text-xl tracking-tight text-stone-900 truncate">Loafed<span class="text-orange-600 font-black">AI</span></span>
+            <span class="text-[10px] sm:text-xs text-stone-400 font-normal hidden xs:inline sm:inline">by <a href="https://redersoft.com" target="_blank" rel="noopener noreferrer" class="text-stone-600 hover:text-orange-700 font-medium transition-colors hover:underline">RederSoft</a></span>
           </div>
-          <p class="text-xs text-stone-500 hidden sm:block">Feline Posture & Silhouette Certification Bureau</p>
+          <p class="text-[11px] text-stone-500 hidden sm:block truncate">Feline Posture &amp; Silhouette Certification Bureau</p>
         </div>
       </div>
 
-      <div class="flex items-center gap-2">
-        <a href="/leaderboard" id="openLeaderboardBtn" class="min-h-[44px] px-3.5 py-2 rounded-xl border border-amber-300/90 bg-amber-50/80 hover:bg-amber-100 text-stone-900 hover:text-amber-950 text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-all hover:border-amber-400 active:scale-95" aria-label="View Loafed Leaderboard">
-          <i data-lucide="trophy" class="w-3.5 h-3.5 text-amber-700"></i>
-          <span>Leaderboard</span>
+      <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+        <a href="/leaderboard" id="openLeaderboardBtn" class="min-h-[40px] sm:min-h-[44px] px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl border border-amber-300/90 bg-amber-50/80 hover:bg-amber-100 text-stone-900 hover:text-amber-950 text-xs font-bold flex items-center gap-1 sm:gap-1.5 shadow-2xs transition-all hover:border-amber-400 active:scale-95 btn-tactile" aria-label="View Loafed Leaderboard">
+          <i data-lucide="trophy" class="w-3.5 h-3.5 text-amber-700 shrink-0"></i>
+          <span class="hidden sm:inline">Leaderboard</span>
+          <span class="sm:hidden text-[11px]">Ranks</span>
         </a>
 
-        <button id="openHistoryBtn" class="min-h-[44px] px-3.5 py-2 rounded-xl border border-orange-200/90 bg-orange-50/70 hover:bg-orange-100 text-stone-800 hover:text-orange-950 text-xs font-semibold flex items-center gap-1.5 shadow-2xs transition-all hover:border-orange-400 active:scale-95" aria-label="View past inspected loaves">
-          <i data-lucide="history" class="w-3.5 h-3.5 text-orange-700"></i>
+        <button id="openHistoryBtn" class="min-h-[40px] sm:min-h-[44px] px-2 sm:px-3.5 py-1.5 sm:py-2 rounded-xl border border-orange-200/90 bg-orange-50/70 hover:bg-orange-100 text-stone-800 hover:text-orange-950 text-xs font-semibold flex items-center gap-1 sm:gap-1.5 shadow-2xs transition-all hover:border-orange-400 active:scale-95 btn-tactile" aria-label="View past inspected loaves">
+          <i data-lucide="history" class="w-3.5 h-3.5 text-orange-700 shrink-0"></i>
           <span class="hidden sm:inline">Past Loaves</span>
           <span id="historyBadgeCount" class="px-1.5 py-0.2 rounded-full bg-orange-200/80 text-[10px] font-bold text-orange-950 border border-orange-300/80">0</span>
         </button>
 
         <div id="authHeaderContainer" class="flex items-center">
-          <button id="headerSignInBtn" class="btn-header-signin" aria-label="Sign In to Loafed AI">
-            <i data-lucide="log-in" class="w-3.5 h-3.5"></i>
+          <button id="headerSignInBtn" class="btn-header-signin shimmer-btn btn-tactile" aria-label="Sign In to Loafed AI">
+            <i data-lucide="log-in" class="w-3.5 h-3.5 shrink-0"></i>
             <span>Sign In</span>
           </button>
           
           <div id="headerUserMenu" class="hidden relative">
-            <button id="headerUserMenuBtn" class="min-h-[44px] px-3 py-1.5 rounded-xl border border-orange-200/90 bg-white hover:bg-orange-50/80 flex items-center gap-2 shadow-2xs text-xs font-bold text-stone-800 transition-all active:scale-95" aria-label="User Account Menu" aria-expanded="false">
+            <button id="headerUserMenuBtn" class="min-h-[40px] sm:min-h-[44px] px-2.5 sm:px-3 py-1.5 rounded-xl border border-orange-200/90 bg-white hover:bg-orange-50/80 flex items-center gap-1.5 sm:gap-2 shadow-2xs text-xs font-bold text-stone-800 transition-all active:scale-95 btn-tactile" aria-label="User Account Menu" aria-expanded="false">
               <span id="headerUserAvatar" class="w-6 h-6 rounded-full bg-orange-500 text-white flex items-center justify-center text-[11px] font-black uppercase">U</span>
               <span id="headerUserName" class="max-w-[100px] truncate text-stone-800 hidden sm:inline">Baker</span>
-              <i data-lucide="chevron-down" class="w-3 h-3 text-stone-500"></i>
+              <i data-lucide="chevron-down" class="w-3 h-3 text-stone-500 shrink-0"></i>
             </button>
             <div id="headerUserDropdown" class="hidden absolute right-0 mt-2 w-52 bg-white rounded-2xl border border-orange-200 shadow-xl py-1.5 z-50">
               <div class="px-3.5 py-2 border-b border-orange-100">
@@ -143,7 +144,7 @@
     </div>
   </header>
 
-  <main class="max-w-5xl mx-auto px-4 sm:px-6 pt-6 sm:pt-8">
+  <main class="max-w-5xl mx-auto px-3 sm:px-6 pt-6 sm:pt-8">
     
     <!-- Hero Header -->
     <div class="text-center max-w-2xl mx-auto mb-8">
@@ -185,7 +186,7 @@
 
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
           <!-- Buttercup Card -->
-          <div class="benchmark-card p-3.5 rounded-2xl bg-white/95 border border-orange-200/90 hover:border-orange-400 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between group">
+          <div class="benchmark-card p-3 sm:p-3.5 rounded-2xl bg-white/95 border border-orange-200/90 hover:border-orange-400 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between group">
             <div>
               <div class="relative w-full h-36 rounded-xl overflow-hidden mb-2.5 bg-orange-50 border border-orange-200/60">
                 <img src="/samples/buttercup_front.jpg" alt="Buttercup - Golden Brioche Loaf" width="600" height="425" loading="lazy" decoding="async" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200">
@@ -203,11 +204,11 @@
               <p class="text-[11px] text-stone-600 mt-0.5 leading-snug">Golden Brioche &bull; 100% Peet Concealment with sub-0.03 drag.</p>
             </div>
             <div class="mt-3 pt-2.5 border-t border-orange-100 flex items-center gap-2">
-              <button type="button" class="load-benchmark-btn flex-1 min-h-[44px] py-2 px-3 rounded-xl bg-orange-50 hover:bg-orange-100 text-orange-950 text-xs font-bold border border-orange-200 transition-all flex items-center justify-center gap-1.5 shadow-2xs active:scale-95 whitespace-nowrap" data-cat="buttercup" aria-label="Inspect Buttercup Loaf">
+              <button type="button" class="load-benchmark-btn flex-1 min-h-[44px] py-2 px-3 rounded-xl bg-orange-50 hover:bg-orange-100 text-orange-950 text-xs font-bold border border-orange-200 transition-all flex items-center justify-center gap-1.5 shadow-2xs active:scale-95 whitespace-nowrap btn-tactile" data-cat="buttercup" aria-label="Inspect Buttercup Loaf">
                 <i data-lucide="sparkles" class="w-3.5 h-3.5 text-orange-700 shrink-0"></i>
                 <span>Inspect</span>
               </button>
-              <button type="button" class="preview-cert-btn min-h-[44px] py-2 px-3 rounded-xl bg-white hover:bg-orange-50 text-stone-700 hover:text-orange-950 text-xs font-bold border border-stone-200 hover:border-orange-300 transition-all flex items-center justify-center gap-1 shadow-2xs active:scale-95 whitespace-nowrap" data-cat="buttercup" title="Preview Official Diploma" aria-label="Preview Buttercup Diploma">
+              <button type="button" class="preview-cert-btn min-h-[44px] py-2 px-3 rounded-xl bg-white hover:bg-orange-50 text-stone-700 hover:text-orange-950 text-xs font-bold border border-stone-200 hover:border-orange-300 transition-all flex items-center justify-center gap-1 shadow-2xs active:scale-95 whitespace-nowrap btn-tactile" data-cat="buttercup" title="Preview Official Diploma" aria-label="Preview Buttercup Diploma">
                 <i data-lucide="file-badge" class="w-3.5 h-3.5 text-orange-600 shrink-0"></i>
                 <span>Diploma</span>
               </button>
@@ -215,7 +216,7 @@
           </div>
 
           <!-- Chonks Card -->
-          <div class="benchmark-card p-3.5 rounded-2xl bg-white/95 border border-orange-200/90 hover:border-orange-400 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between group">
+          <div class="benchmark-card p-3 sm:p-3.5 rounded-2xl bg-white/95 border border-orange-200/90 hover:border-orange-400 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between group">
             <div>
               <div class="relative w-full h-36 rounded-xl overflow-hidden mb-2.5 bg-orange-50 border border-orange-200/60">
                 <img src="/samples/chonks_side.jpg" alt="Chonks - Dark Rye Pumpernickel Boule" width="600" height="425" loading="lazy" decoding="async" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200">
@@ -233,11 +234,11 @@
               <p class="text-[11px] text-stone-600 mt-0.5 leading-snug">Dark Rye Pumpernickel &bull; High-perch boule with stealth undercarriage.</p>
             </div>
             <div class="mt-3 pt-2.5 border-t border-orange-100 flex items-center gap-2">
-              <button type="button" class="load-benchmark-btn flex-1 min-h-[44px] py-2 px-3 rounded-xl bg-orange-50 hover:bg-orange-100 text-orange-950 text-xs font-bold border border-orange-200 transition-all flex items-center justify-center gap-1.5 shadow-2xs active:scale-95 whitespace-nowrap" data-cat="chonks" aria-label="Inspect Chonks Loaf">
+              <button type="button" class="load-benchmark-btn flex-1 min-h-[44px] py-2 px-3 rounded-xl bg-orange-50 hover:bg-orange-100 text-orange-950 text-xs font-bold border border-orange-200 transition-all flex items-center justify-center gap-1.5 shadow-2xs active:scale-95 whitespace-nowrap btn-tactile" data-cat="chonks" aria-label="Inspect Chonks Loaf">
                 <i data-lucide="sparkles" class="w-3.5 h-3.5 text-orange-700 shrink-0"></i>
                 <span>Inspect</span>
               </button>
-              <button type="button" class="preview-cert-btn min-h-[44px] py-2 px-3 rounded-xl bg-white hover:bg-orange-50 text-stone-700 hover:text-orange-950 text-xs font-bold border border-stone-200 hover:border-orange-300 transition-all flex items-center justify-center gap-1 shadow-2xs active:scale-95 whitespace-nowrap" data-cat="chonks" title="Preview Official Diploma" aria-label="Preview Chonks Diploma">
+              <button type="button" class="preview-cert-btn min-h-[44px] py-2 px-3 rounded-xl bg-white hover:bg-orange-50 text-stone-700 hover:text-orange-950 text-xs font-bold border border-stone-200 hover:border-orange-300 transition-all flex items-center justify-center gap-1 shadow-2xs active:scale-95 whitespace-nowrap btn-tactile" data-cat="chonks" title="Preview Official Diploma" aria-label="Preview Chonks Diploma">
                 <i data-lucide="file-badge" class="w-3.5 h-3.5 text-orange-600 shrink-0"></i>
                 <span>Diploma</span>
               </button>
@@ -245,7 +246,7 @@
           </div>
 
           <!-- Flash Card -->
-          <div class="benchmark-card p-3.5 rounded-2xl bg-white/95 border border-orange-200/90 hover:border-orange-400 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between group">
+          <div class="benchmark-card p-3 sm:p-3.5 rounded-2xl bg-white/95 border border-orange-200/90 hover:border-orange-400 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between group">
             <div>
               <div class="relative w-full h-36 rounded-xl overflow-hidden mb-2.5 bg-orange-50 border border-orange-200/60">
                 <img src="/samples/flash_front.jpg" alt="Flash - Marbled Sourdough Baton" width="600" height="425" loading="lazy" decoding="async" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200">
@@ -263,11 +264,11 @@
               <p class="text-[11px] text-stone-600 mt-0.5 leading-snug">Marbled Sourdough &bull; Aerodynamic airplane ears with minor wrist peek.</p>
             </div>
             <div class="mt-3 pt-2.5 border-t border-orange-100 flex items-center gap-2">
-              <button type="button" class="load-benchmark-btn flex-1 min-h-[44px] py-2 px-3 rounded-xl bg-orange-50 hover:bg-orange-100 text-orange-950 text-xs font-bold border border-orange-200 transition-all flex items-center justify-center gap-1.5 shadow-2xs active:scale-95 whitespace-nowrap" data-cat="flash" aria-label="Inspect Flash Loaf">
+              <button type="button" class="load-benchmark-btn flex-1 min-h-[44px] py-2 px-3 rounded-xl bg-orange-50 hover:bg-orange-100 text-orange-950 text-xs font-bold border border-orange-200 transition-all flex items-center justify-center gap-1.5 shadow-2xs active:scale-95 whitespace-nowrap btn-tactile" data-cat="flash" aria-label="Inspect Flash Loaf">
                 <i data-lucide="sparkles" class="w-3.5 h-3.5 text-orange-700 shrink-0"></i>
                 <span>Inspect</span>
               </button>
-              <button type="button" class="preview-cert-btn min-h-[44px] py-2 px-3 rounded-xl bg-white hover:bg-orange-50 text-stone-700 hover:text-orange-950 text-xs font-bold border border-stone-200 hover:border-orange-300 transition-all flex items-center justify-center gap-1 shadow-2xs active:scale-95 whitespace-nowrap" data-cat="flash" title="Preview Official Diploma" aria-label="Preview Flash Diploma">
+              <button type="button" class="preview-cert-btn min-h-[44px] py-2 px-3 rounded-xl bg-white hover:bg-orange-50 text-stone-700 hover:text-orange-950 text-xs font-bold border border-stone-200 hover:border-orange-300 transition-all flex items-center justify-center gap-1 shadow-2xs active:scale-95 whitespace-nowrap btn-tactile" data-cat="flash" title="Preview Official Diploma" aria-label="Preview Flash Diploma">
                 <i data-lucide="file-badge" class="w-3.5 h-3.5 text-orange-600 shrink-0"></i>
                 <span>Diploma</span>
               </button>
@@ -278,7 +279,7 @@
     </div>
 
     <!-- Main Inspection Form -->
-    <div id="inspectorBay" class="bakery-card p-5 sm:p-8 mb-10 border border-orange-200/90 shadow-md shadow-orange-500/5">
+    <div id="inspectorBay" class="bakery-card p-4 sm:p-8 mb-10 border border-orange-200/90 shadow-md shadow-orange-500/5">
       
       <!-- Anti-bot honeypot field (hidden from real users) -->
       <div style="position: absolute; left: -9999px; top: -9999px;" aria-hidden="true">
@@ -286,7 +287,7 @@
       </div>
 
       <!-- Cat Name Input -->
-      <div class="mb-6 p-4 rounded-2xl bg-gradient-to-r from-orange-50/90 via-amber-50/60 to-orange-50/90 border border-orange-200 flex flex-col sm:flex-row gap-3 sm:items-center justify-between transition-all shadow-2xs">
+      <div class="mb-5 sm:mb-6 p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-orange-50/90 via-amber-50/60 to-orange-50/90 border border-orange-200 flex flex-col sm:flex-row gap-3 sm:items-center justify-between transition-all shadow-2xs">
         <div class="flex items-center gap-3">
           <div class="w-10 h-10 rounded-xl bg-white border border-orange-300 text-orange-600 flex items-center justify-center shrink-0 shadow-xs">
             <i data-lucide="tag" class="w-5 h-5"></i>
@@ -311,7 +312,7 @@
       </div>
 
       <!-- Recommended Angles Guidance Banner -->
-      <div class="mb-5 p-4.5 rounded-2xl bg-gradient-to-br from-amber-50/90 via-orange-50/70 to-amber-50/50 border border-orange-200/90 shadow-2xs">
+      <div class="mb-5 p-3.5 sm:p-4.5 rounded-2xl bg-gradient-to-br from-amber-50/90 via-orange-50/70 to-amber-50/50 border border-orange-200/90 shadow-2xs">
         <div class="flex items-center justify-between mb-2">
           <span class="text-xs font-extrabold text-amber-950 uppercase tracking-wider flex items-center gap-1.5">
             <i data-lucide="compass" class="w-4 h-4 text-orange-600"></i>
@@ -354,7 +355,7 @@
         <!-- Unified Dropzone (Shown when 0 photos uploaded) -->
         <div 
           id="mainDropzone" 
-          class="upload-slot p-8 sm:p-12 flex flex-col items-center justify-center text-center cursor-pointer transition-all border-2 border-dashed border-orange-300 hover:border-orange-500 rounded-2xl group shadow-xs"
+          class="upload-slot p-6 sm:p-12 flex flex-col items-center justify-center text-center cursor-pointer transition-all border-2 border-dashed border-orange-300 hover:border-orange-500 rounded-2xl group shadow-xs"
         >
           <input type="file" id="photosInput" accept="image/*" multiple class="hidden" aria-label="Upload cat photos">
           <div class="w-16 h-16 rounded-2xl bg-gradient-to-b from-orange-100 to-white text-orange-600 border border-orange-300/90 flex items-center justify-center mb-3.5 shadow-sm group-hover:scale-105 transition-transform">
@@ -393,7 +394,7 @@
             <div id="telemetryStatusText" class="text-stone-700 flex items-center gap-2 font-medium">
               <!-- Dynamically populated -->
             </div>
-            <button type="button" id="addMorePhotosBtn" class="px-3.5 py-1.5 rounded-lg bg-white border border-orange-300 hover:border-orange-500 text-orange-950 font-bold flex items-center gap-1.5 transition-colors shadow-2xs hover:bg-orange-50" aria-label="Add more photos">
+            <button type="button" id="addMorePhotosBtn" class="px-3.5 py-1.5 rounded-lg bg-white border border-orange-300 hover:border-orange-500 text-orange-950 font-bold flex items-center gap-1.5 transition-colors shadow-2xs hover:bg-orange-50 btn-tactile" aria-label="Add more photos">
               <i data-lucide="plus" class="w-3.5 h-3.5 text-orange-600"></i>
               <span>Add More (Max 5)</span>
             </button>
@@ -411,7 +412,7 @@
         <button 
           id="gradeLoafBtn" 
           disabled
-          class="w-full sm:w-auto px-8 py-3.5 rounded-xl font-bold text-sm text-stone-400 bg-stone-200 cursor-not-allowed shadow-none transition-all flex items-center justify-center gap-2"
+          class="w-full sm:w-auto px-8 py-3.5 rounded-xl font-bold text-sm text-stone-400 bg-stone-200 cursor-not-allowed shadow-none transition-all flex items-center justify-center gap-2 btn-tactile"
           aria-label="Grade cat loaf and calculate posture telemetry"
         >
           <i data-lucide="sparkles" class="w-4 h-4"></i>
@@ -422,7 +423,7 @@
     </div>
 
     <!-- Official Bureau Certificate Showcase -->
-    <div class="mb-10 p-5 sm:p-7 rounded-3xl bg-gradient-to-r from-orange-100/90 via-amber-50 to-orange-100/80 border border-orange-300 shadow-xs relative overflow-hidden">
+    <div class="mb-10 p-4 sm:p-7 rounded-3xl bg-gradient-to-r from-orange-100/90 via-amber-50 to-orange-100/80 border border-orange-300 shadow-xs relative overflow-hidden">
       <div class="flex flex-col md:flex-row items-center justify-between gap-6 relative z-10">
         <div class="flex items-start gap-4">
           <div class="w-13 h-13 rounded-2xl bg-white border border-orange-300 text-orange-700 flex items-center justify-center shrink-0 shadow-xs p-2.5">
@@ -443,7 +444,7 @@
         </div>
 
         <div class="flex flex-row md:flex-col gap-2 w-full md:w-auto shrink-0">
-          <button id="viewSampleCertBtn" class="min-h-[48px] w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-orange-600 via-amber-600 to-orange-700 hover:from-orange-700 hover:to-amber-700 text-white font-bold text-xs sm:text-sm shadow-md shadow-orange-600/20 transition-all flex items-center justify-center gap-2 active:scale-95" aria-label="Preview Sample Certificate">
+          <button id="viewSampleCertBtn" class="min-h-[48px] w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-orange-600 via-amber-600 to-orange-700 hover:from-orange-700 hover:to-amber-700 text-white font-bold text-xs sm:text-sm shadow-md shadow-orange-600/20 transition-all flex items-center justify-center gap-2 active:scale-95 shimmer-btn btn-tactile" aria-label="Preview Sample Certificate">
             <i data-lucide="eye" class="w-4 h-4"></i>
             <span>Preview Sample Certificate</span>
           </button>
@@ -452,7 +453,7 @@
     </div>
 
     <!-- Inspecting Loading State -->
-    <div id="loadingState" class="hidden bakery-card p-8 sm:p-10 text-center max-w-xl mx-auto my-12 border border-orange-200/90 shadow-lg shadow-orange-500/5">
+    <div id="loadingState" class="hidden bakery-card p-6 sm:p-10 text-center max-w-xl mx-auto my-12 border border-orange-200/90 shadow-lg shadow-orange-500/5">
       <!-- Animated Oven / Whisk Icon -->
       <div class="relative w-16 h-16 mx-auto mb-5">
         <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-orange-100 to-amber-100 border border-orange-300 text-orange-700 flex items-center justify-center animate-pulse-gentle shadow-md shadow-orange-500/10">
@@ -466,7 +467,7 @@
       <h3 class="text-xl font-black text-stone-900 mb-1">Baking Right Meow...</h3>
       <p id="loadingPhrase" class="text-orange-800 font-bold text-sm h-6 transition-all duration-300">Loading the oven right meow...</p>
       
-      <!-- Progress Bar -->
+      <!-- Progress Bar with Molten Shimmer -->
       <div class="w-full bg-orange-100/70 h-3 rounded-full overflow-hidden mt-5 max-w-sm mx-auto border border-orange-200">
         <div id="loadingProgressBar" class="h-full bg-gradient-to-r from-orange-500 to-amber-500 transition-all duration-300 rounded-full shadow-xs" style="width: 0%;"></div>
       </div>
@@ -487,7 +488,7 @@
     <div id="resultsSection" class="hidden space-y-6">
       
       <!-- Example Loaf Inspection Notice & Collapse Bar -->
-      <div id="exampleLoafBanner" class="hidden p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-amber-50 via-orange-50 to-amber-50 border-2 border-orange-300 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div id="exampleLoafBanner" class="hidden p-3.5 sm:p-5 rounded-2xl bg-gradient-to-r from-amber-50 via-orange-50 to-amber-50 border-2 border-orange-300 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
         <div class="flex items-center gap-3.5">
           <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 text-white flex items-center justify-center shrink-0 shadow-xs">
             <i data-lucide="award" class="w-5 h-5"></i>
@@ -506,7 +507,7 @@
         <button 
           type="button" 
           id="collapseExampleBtn" 
-          class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-gradient-to-r from-orange-600 via-amber-600 to-orange-700 hover:from-orange-700 hover:to-amber-700 text-white font-bold text-xs sm:text-sm shadow-sm transition-all flex items-center justify-center gap-2 active:scale-95 shrink-0"
+          class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-gradient-to-r from-orange-600 via-amber-600 to-orange-700 hover:from-orange-700 hover:to-amber-700 text-white font-bold text-xs sm:text-sm shadow-sm transition-all flex items-center justify-center gap-2 active:scale-95 shrink-0 shimmer-btn btn-tactile"
           aria-label="Collapse example and upload your own cat"
         >
           <i data-lucide="upload" class="w-4 h-4"></i>
@@ -515,13 +516,13 @@
       </div>
 
       <!-- Top Score Hero Card -->
-      <div class="bakery-card p-6 sm:p-10 relative overflow-hidden bg-gradient-to-br from-white via-orange-50/40 to-amber-50/50 border border-orange-200/90 shadow-lg shadow-orange-500/5">
+      <div class="bakery-card p-4 sm:p-10 relative overflow-hidden bg-gradient-to-br from-white via-orange-50/40 to-amber-50/50 border border-orange-200/90 shadow-lg shadow-orange-500/5">
         
         <!-- Close / Return to Upload Button -->
         <button 
           type="button" 
           id="closeResultsSectionBtn" 
-          class="absolute top-3.5 right-3.5 sm:top-5 sm:right-5 w-9 h-9 rounded-xl bg-white/90 hover:bg-orange-100 text-stone-500 hover:text-stone-900 border border-orange-200/80 hover:border-orange-300 flex items-center justify-center transition-all shadow-2xs z-10 active:scale-95" 
+          class="absolute top-3.5 right-3.5 sm:top-5 sm:right-5 w-9 h-9 rounded-xl bg-white/90 hover:bg-orange-100 text-stone-500 hover:text-stone-900 border border-orange-200/80 hover:border-orange-300 flex items-center justify-center transition-all shadow-2xs z-10 active:scale-95 btn-tactile" 
           title="Return to upload bay" 
           aria-label="Return to upload bay"
         >
@@ -571,23 +572,23 @@
 
           <!-- Quick Action Buttons -->
           <div class="flex flex-col sm:flex-row lg:flex-col gap-2.5 w-full lg:w-auto">
-            <button id="submitLeaderboardBtn" class="btn-submit-leaderboard" aria-label="Submit to Official Leaderboard">
+            <button id="submitLeaderboardBtn" class="btn-submit-leaderboard shimmer-btn btn-tactile" aria-label="Submit to Official Leaderboard">
               <i data-lucide="trophy" class="w-4 h-4 text-amber-200"></i>
               <span>Submit to Leaderboard</span>
             </button>
-            <button id="uploadOwnLoafBtn" class="min-h-[48px] px-5 py-3 bg-gradient-to-r from-orange-600 via-amber-600 to-orange-700 hover:from-orange-700 hover:to-amber-700 text-white rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 shadow-sm active:scale-95" aria-label="Upload Your Own Cat">
+            <button id="uploadOwnLoafBtn" class="min-h-[48px] px-5 py-3 bg-gradient-to-r from-orange-600 via-amber-600 to-orange-700 hover:from-orange-700 hover:to-amber-700 text-white rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 shadow-sm active:scale-95 shimmer-btn btn-tactile" aria-label="Upload Your Own Cat">
               <i data-lucide="upload" class="w-4 h-4"></i>
               <span id="uploadOwnLoafBtnText">Grade Your Own Cat</span>
             </button>
-            <button id="downloadCertificateBtn" class="btn-download-cert" aria-label="Export Certificate PNG">
+            <button id="downloadCertificateBtn" class="btn-download-cert shimmer-btn btn-tactile" aria-label="Export Certificate PNG">
               <i data-lucide="download" class="w-4 h-4"></i>
               <span>Export Certificate (PNG)</span>
             </button>
-            <button id="copySummaryBtn" class="min-h-[48px] px-5 py-3 bg-white hover:bg-orange-50/70 border border-orange-200 text-stone-800 hover:text-orange-950 rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 hover:border-orange-400 shadow-2xs active:scale-95" aria-label="Copy Technical Summary">
+            <button id="copySummaryBtn" class="min-h-[48px] px-5 py-3 bg-white hover:bg-orange-50/70 border border-orange-200 text-stone-800 hover:text-orange-950 rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 hover:border-orange-400 shadow-2xs active:scale-95 btn-tactile" aria-label="Copy Technical Summary">
               <i data-lucide="copy" class="w-4 h-4 text-orange-700" id="copyIcon"></i>
               <span id="copyBtnText">Copy Technical Summary</span>
             </button>
-            <button id="resetInspectorBtn" class="min-h-[48px] px-5 py-3 bg-orange-50 hover:bg-orange-100/80 border border-orange-200 text-orange-950 rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 shadow-2xs active:scale-95" aria-label="Start New Inspection">
+            <button id="resetInspectorBtn" class="min-h-[48px] px-5 py-3 bg-orange-50 hover:bg-orange-100/80 border border-orange-200 text-orange-950 rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 shadow-2xs active:scale-95 btn-tactile" aria-label="Start New Inspection">
               <i data-lucide="rotate-ccw" class="w-4 h-4 text-orange-700"></i>
               <span>New Inspection</span>
             </button>
