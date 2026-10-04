@@ -16,6 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
     currentResult: null,
     gradeToken: null,
     submittedPhotoBlob: null,
+    primaryPhotoIndex: 0,
     samplePresets: {},
     // User & Authentication State
     user: null,
@@ -385,23 +386,77 @@ document.addEventListener('DOMContentLoaded', () => {
       const optimized = await optimizeImage(rawFile);
       const previewUrl = URL.createObjectURL(optimized);
       const id = 'photo_' + Math.random().toString(36).substring(2, 9);
+      const detectedAngle = detectPhotoAngle(rawFile.name, state.photos.length);
       state.photos.push({
         id,
         file: optimized,
         previewUrl,
-        name: rawFile.name
+        name: rawFile.name,
+        angleType: detectedAngle
       });
     }
 
+    selectBestThumbnail();
     syncLegacySlots();
     renderStagedPhotos();
     updateSubmitButton();
   }
 
+  function detectPhotoAngle(filename, currentIdx) {
+    const lower = (filename || '').toLowerCase();
+    if (lower.includes('top') || lower.includes('overhead') || lower.includes('dorsal') || lower.includes('bird')) {
+      return 'top';
+    }
+    if (lower.includes('side') || lower.includes('profile') || lower.includes('lateral')) {
+      return 'side';
+    }
+    if (lower.includes('front') || lower.includes('chest') || lower.includes('anterior') || lower.includes('head_on')) {
+      return 'front';
+    }
+    if (currentIdx === 0) return 'front';
+    if (currentIdx === 1) return 'side';
+    if (currentIdx === 2) return 'top';
+    return 'other';
+  }
+
+  function selectBestThumbnail() {
+    if (!state.photos || state.photos.length === 0) {
+      state.primaryPhotoIndex = 0;
+      return 0;
+    }
+    // 1. If currently chosen index is non-top and valid, retain it
+    if (state.primaryPhotoIndex !== null && state.primaryPhotoIndex >= 0 && state.primaryPhotoIndex < state.photos.length) {
+      if (state.photos[state.primaryPhotoIndex].angleType !== 'top') {
+        return state.primaryPhotoIndex;
+      }
+    }
+    // 2. Look for Front view
+    const frontIdx = state.photos.findIndex(p => p.angleType === 'front');
+    if (frontIdx !== -1) {
+      state.primaryPhotoIndex = frontIdx;
+      return frontIdx;
+    }
+    // 3. Look for Side view
+    const sideIdx = state.photos.findIndex(p => p.angleType === 'side');
+    if (sideIdx !== -1) {
+      state.primaryPhotoIndex = sideIdx;
+      return sideIdx;
+    }
+    // 4. Look for any non-top view
+    const nonTopIdx = state.photos.findIndex(p => p.angleType !== 'top');
+    if (nonTopIdx !== -1) {
+      state.primaryPhotoIndex = nonTopIdx;
+      return nonTopIdx;
+    }
+    // 5. Fallback to 0 if all are top
+    state.primaryPhotoIndex = 0;
+    return 0;
+  }
+
   function syncLegacySlots() {
-    state.slots.front = state.photos[0] || null;
-    state.slots.side = state.photos[1] || null;
-    state.slots.top = state.photos[2] || null;
+    state.slots.front = state.photos.find(p => p.angleType === 'front') || state.photos[0] || null;
+    state.slots.side = state.photos.find(p => p.angleType === 'side') || state.photos[1] || null;
+    state.slots.top = state.photos.find(p => p.angleType === 'top') || state.photos[2] || null;
   }
 
   function removePhoto(id) {
@@ -409,6 +464,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (idx !== -1) {
       URL.revokeObjectURL(state.photos[idx].previewUrl);
       state.photos.splice(idx, 1);
+      selectBestThumbnail();
       syncLegacySlots();
       renderStagedPhotos();
       updateSubmitButton();
@@ -418,6 +474,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function clearAllPhotos() {
     state.photos.forEach(p => URL.revokeObjectURL(p.previewUrl));
     state.photos = [];
+    state.primaryPhotoIndex = 0;
     syncLegacySlots();
     if (photosInput) photosInput.value = '';
     renderStagedPhotos();
@@ -438,28 +495,59 @@ document.addEventListener('DOMContentLoaded', () => {
     if (mainDropzone) mainDropzone.classList.add('hidden');
     if (stagedPhotosContainer) stagedPhotosContainer.classList.remove('hidden');
 
-    const suggestedLabels = [
-      { title: 'Front View', icon: 'eye' },
-      { title: 'Side View', icon: 'move-horizontal' },
-      { title: 'Overhead View', icon: 'compass' },
-      { title: 'Angle 4', icon: 'camera' },
-      { title: 'Angle 5', icon: 'camera' }
-    ];
+    selectBestThumbnail();
 
     state.photos.forEach((photo, idx) => {
-      const labelInfo = suggestedLabels[idx] || { title: `Angle ${idx + 1}`, icon: 'camera' };
+      const isPrimary = (state.primaryPhotoIndex === idx);
+      const isTop = (photo.angleType === 'top');
+
+      let badgeHtml = '';
+      if (isPrimary) {
+        badgeHtml = `
+          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500 text-white font-extrabold text-[10px] shadow-xs">
+            <i data-lucide="star" class="w-3 h-3 text-amber-100 fill-amber-100"></i>
+            <span>Main Thumbnail</span>
+          </span>
+        `;
+      } else if (!isTop) {
+        badgeHtml = `
+          <button type="button" class="set-primary-thumb-btn text-[10px] font-bold text-amber-200 hover:text-white underline transition-colors cursor-pointer" data-idx="${idx}" title="Set as primary leaderboard portrait">
+            Set as Thumbnail
+          </button>
+        `;
+      } else {
+        badgeHtml = `
+          <span class="text-[9px] text-amber-200/90 font-medium italic" title="Top angles are stored as 360-degree telemetry but front/side is used as the primary portrait">
+            Overhead Angle
+          </span>
+        `;
+      }
+
       const card = document.createElement('div');
-      card.className = 'relative group rounded-xl overflow-hidden border border-orange-200/80 bg-white shadow-2xs flex flex-col';
+      card.className = `relative group rounded-xl overflow-hidden border ${isPrimary ? 'border-amber-400 ring-2 ring-amber-400/50' : 'border-orange-200/80'} bg-white shadow-2xs flex flex-col`;
       card.innerHTML = `
         <div class="relative w-full aspect-square bg-stone-100 overflow-hidden">
           <img src="${photo.previewUrl}" class="w-full h-full object-cover transition-transform group-hover:scale-105 duration-200 ortho-photo-img" alt="${photo.name}">
-          <div class="absolute inset-0 bg-gradient-to-t from-stone-950/75 via-transparent to-transparent flex items-end justify-between p-2 text-white">
-            <span class="text-[10px] font-bold flex items-center gap-1 drop-shadow-xs truncate max-w-[80%]">
-              <i data-lucide="${labelInfo.icon}" class="w-3 h-3 shrink-0"></i> ${labelInfo.title}
-            </span>
-            <button type="button" class="remove-photo-btn bg-stone-900/80 hover:bg-rose-600 text-white rounded-md p-1 transition-colors shrink-0" data-id="${photo.id}" title="Remove photo" aria-label="Remove photo ${idx + 1}">
-              <i data-lucide="x" class="w-3.5 h-3.5"></i>
-            </button>
+          <div class="absolute inset-0 bg-gradient-to-t from-stone-950/85 via-stone-950/30 to-transparent flex flex-col justify-between p-2 text-white">
+            <div class="flex items-center justify-between">
+              ${isPrimary ? '<span class="px-1.5 py-0.5 rounded bg-amber-500/95 text-white text-[9px] font-black uppercase tracking-wider shadow-2xs">Primary</span>' : '<span></span>'}
+              <button type="button" class="remove-photo-btn bg-stone-900/80 hover:bg-rose-600 text-white rounded-md p-1 transition-colors shrink-0 cursor-pointer" data-id="${photo.id}" title="Remove photo" aria-label="Remove photo ${idx + 1}">
+                <i data-lucide="x" class="w-3.5 h-3.5"></i>
+              </button>
+            </div>
+            <div class="flex flex-col gap-1.5">
+              <div class="flex items-center justify-between gap-1">
+                <select class="angle-type-select w-full bg-stone-900/90 text-white text-[10px] font-bold rounded-md px-1.5 py-1 border border-white/20 outline-none cursor-pointer" data-id="${photo.id}" title="Designate angle perspective">
+                  <option value="front" ${photo.angleType === 'front' ? 'selected' : ''}>Front View</option>
+                  <option value="side" ${photo.angleType === 'side' ? 'selected' : ''}>Side Profile</option>
+                  <option value="top" ${photo.angleType === 'top' ? 'selected' : ''}>Overhead (Top)</option>
+                  <option value="other" ${photo.angleType === 'other' ? 'selected' : ''}>Other Perspective</option>
+                </select>
+              </div>
+              <div class="flex items-center justify-between">
+                ${badgeHtml}
+              </div>
+            </div>
           </div>
         </div>
       `;
@@ -472,6 +560,32 @@ document.addEventListener('DOMContentLoaded', () => {
         e.stopPropagation();
         const id = btn.getAttribute('data-id');
         removePhoto(id);
+      });
+    });
+
+    // Bind angle dropdowns
+    stagedPhotosGrid.querySelectorAll('.angle-type-select').forEach(sel => {
+      sel.addEventListener('change', (e) => {
+        const id = sel.getAttribute('data-id');
+        const photo = state.photos.find(p => p.id === id);
+        if (photo) {
+          photo.angleType = sel.value;
+          selectBestThumbnail();
+          syncLegacySlots();
+          renderStagedPhotos();
+        }
+      });
+    });
+
+    // Bind set-primary-thumb buttons
+    stagedPhotosGrid.querySelectorAll('.set-primary-thumb-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const targetIdx = parseInt(btn.getAttribute('data-idx'), 10);
+        if (!isNaN(targetIdx) && targetIdx >= 0 && targetIdx < state.photos.length) {
+          state.primaryPhotoIndex = targetIdx;
+          renderStagedPhotos();
+        }
       });
     });
 
@@ -1253,12 +1367,12 @@ document.addEventListener('DOMContentLoaded', () => {
       formData.append('api_key', state.apiKey);
     }
 
-    // Append all staged photos (1 to 5)
+    // Append all staged photos (1 to 5) with angle hints
     state.photos.forEach((photo, idx) => {
       formData.append('images', photo.file);
-      if (idx === 0) formData.append('front', photo.file);
-      else if (idx === 1) formData.append('side', photo.file);
-      else if (idx === 2) formData.append('top', photo.file);
+      if (photo.angleType === 'front') formData.append('front', photo.file);
+      else if (photo.angleType === 'side') formData.append('side', photo.file);
+      else if (photo.angleType === 'top') formData.append('top', photo.file);
     });
 
     try {
@@ -1281,7 +1395,18 @@ document.addEventListener('DOMContentLoaded', () => {
       stopLoadingAnimation(() => {
         state.currentResult = data.result;
         state.gradeToken = data.grade_token || null;
-        if (state.photos.length > 0 && state.photos[0].file) {
+        if (data.best_thumbnail_index !== undefined && data.best_thumbnail_index !== null) {
+          if (data.best_thumbnail_index >= 0 && data.best_thumbnail_index < state.photos.length) {
+            if (state.photos[data.best_thumbnail_index].angleType !== 'top') {
+              state.primaryPhotoIndex = data.best_thumbnail_index;
+            }
+          }
+        }
+        selectBestThumbnail();
+        const pIdx = (state.primaryPhotoIndex !== null && state.primaryPhotoIndex >= 0 && state.primaryPhotoIndex < state.photos.length) ? state.primaryPhotoIndex : 0;
+        if (state.photos.length > pIdx && state.photos[pIdx].file) {
+          state.submittedPhotoBlob = state.photos[pIdx].file;
+        } else if (state.photos.length > 0 && state.photos[0].file) {
           state.submittedPhotoBlob = state.photos[0].file;
         }
         renderResults(data.result, data.demo_mode);
@@ -3781,7 +3906,10 @@ Certified by Loafed Inspection Engine`;
     updateSubmitButtonState();
 
     if (submitModalThumbnail) {
-      if (state.photos.length > 0 && state.photos[0].previewUrl) {
+      const pIdx = (state.primaryPhotoIndex !== null && state.primaryPhotoIndex >= 0 && state.primaryPhotoIndex < state.photos.length) ? state.primaryPhotoIndex : 0;
+      if (state.photos.length > pIdx && state.photos[pIdx].previewUrl) {
+        submitModalThumbnail.src = state.photos[pIdx].previewUrl;
+      } else if (state.photos.length > 0 && state.photos[0].previewUrl) {
         submitModalThumbnail.src = state.photos[0].previewUrl;
       } else {
         submitModalThumbnail.src = '/static/logo.png';
@@ -3858,7 +3986,10 @@ Certified by Loafed Inspection Engine`;
 
       try {
         let photoFile = state.submittedPhotoBlob;
-        if (!photoFile && state.photos.length > 0 && state.photos[0].file) {
+        const pIdx = (state.primaryPhotoIndex !== null && state.primaryPhotoIndex >= 0 && state.primaryPhotoIndex < state.photos.length) ? state.primaryPhotoIndex : 0;
+        if (!photoFile && state.photos.length > pIdx && state.photos[pIdx].file) {
+          photoFile = state.photos[pIdx].file;
+        } else if (!photoFile && state.photos.length > 0 && state.photos[0].file) {
           photoFile = state.photos[0].file;
         }
 
@@ -3889,6 +4020,20 @@ Certified by Loafed Inspection Engine`;
         submitForm.append('cat_name', validation.catName);
         submitForm.append('display_name', validation.displayName);
         submitForm.append('photo', photoFile);
+        submitForm.append('primary_photo_index', pIdx);
+
+        if (state.photos && state.photos.length > 0) {
+          state.photos.forEach(p => {
+            if (p.file) submitForm.append('photos', p.file);
+          });
+          const labels = state.photos.map(p => {
+            if (p.angleType === 'front') return 'Front View';
+            if (p.angleType === 'side') return 'Side Profile';
+            if (p.angleType === 'top') return 'Overhead (Top) View';
+            return p.name || 'Perspective Angle';
+          });
+          submitForm.append('photo_labels', JSON.stringify(labels));
+        }
 
         const subRes = await fetch('/api/leaderboard/submit', {
           method: 'POST',
@@ -3906,6 +4051,13 @@ Certified by Loafed Inspection Engine`;
         }
 
         state.submittedEntryId = subData.entry_id;
+        try {
+          const saved = JSON.parse(localStorage.getItem('loafed_my_submissions') || '[]');
+          if (!saved.includes(subData.entry_id)) {
+            saved.push(subData.entry_id);
+            localStorage.setItem('loafed_my_submissions', JSON.stringify(saved));
+          }
+        } catch (_) {}
 
         // Populate success view
         const shareUrl = `${window.location.origin}/leaderboard?loaf=${encodeURIComponent(subData.entry_id)}`;

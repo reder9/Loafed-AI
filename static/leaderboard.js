@@ -216,6 +216,14 @@ document.addEventListener('DOMContentLoaded', () => {
   const loafDetailsCrustStatus = document.getElementById('loafDetailsCrustStatus');
   const loafDetailsCrustCritique = document.getElementById('loafDetailsCrustCritique');
   const loafDetailsBadgesList = document.getElementById('loafDetailsBadgesList');
+  const loafDetailsAnglesStrip = document.getElementById('loafDetailsAnglesStrip');
+  const loafDetailsAnglesButtons = document.getElementById('loafDetailsAnglesButtons');
+  const loafDetailsOwnerCertSection = document.getElementById('loafDetailsOwnerCertSection');
+  const loafDetailsDownloadCertBtn = document.getElementById('loafDetailsDownloadCertBtn');
+  const loafDetailsPublicVerificationNote = document.getElementById('loafDetailsPublicVerificationNote');
+  const certificateCanvas = document.getElementById('certificateCanvas');
+  const mascotLogoImg = new Image();
+  mascotLogoImg.src = '/static/logo.png';
   const loafDetailsShareUrlInput = document.getElementById('loafDetailsShareUrlInput');
   const copyLoafShareUrlBtn = document.getElementById('copyLoafShareUrlBtn');
   const modalNativeShareBtn = document.getElementById('modalNativeShareBtn');
@@ -681,6 +689,503 @@ document.addEventListener('DOMContentLoaded', () => {
   // Loaf Inspection Details Modal View
   let activeLoafDetail = null;
 
+  function isLocalOwner(entryId) {
+    try {
+      const list = JSON.parse(localStorage.getItem('loafed_my_submissions') || '[]');
+      if (Array.isArray(list) && list.includes(entryId)) return true;
+    } catch (_) {}
+    return false;
+  }
+
+  function loadImage(src) {
+    return new Promise((resolve) => {
+      if (!src) { resolve(null); return; }
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => resolve(img);
+      img.onerror = () => resolve(null);
+      img.src = src;
+    });
+  }
+
+  function drawCoverImage(ctx, img, x, y, w, h, radius = 0) {
+    if (!img) return;
+    ctx.save();
+    if (radius > 0) {
+      ctx.beginPath();
+      ctx.roundRect(x, y, w, h, radius);
+      ctx.clip();
+    }
+    const imgRatio = img.naturalWidth / img.naturalHeight;
+    const targetRatio = w / h;
+    let sx = 0, sy = 0, sw = img.naturalWidth, sh = img.naturalHeight;
+    if (imgRatio > targetRatio) {
+      sw = img.naturalHeight * targetRatio;
+      sx = (img.naturalWidth - sw) / 2;
+    } else {
+      sh = img.naturalWidth / targetRatio;
+      sy = (img.naturalHeight - sh) / 2;
+    }
+    ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
+    ctx.restore();
+  }
+
+  function drawCornerFlourish(ctx, cx, cy, dirX, dirY, arm = 24) {
+    ctx.save();
+    ctx.strokeStyle = '#c27803';
+    ctx.fillStyle = '#b45309';
+    ctx.lineWidth = arm > 30 ? 3 : 2;
+
+    ctx.beginPath();
+    ctx.moveTo(cx + dirX * arm, cy);
+    ctx.lineTo(cx, cy);
+    ctx.lineTo(cx, cy + dirY * arm);
+    ctx.stroke();
+
+    const dotOffset = arm > 30 ? 10 : 6;
+    const dotRadius = arm > 30 ? 4 : 2.5;
+    ctx.beginPath();
+    ctx.arc(cx + dirX * dotOffset, cy + dirY * dotOffset, dotRadius, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  function drawGoldEmbossedSeal(ctx, cx, cy, radius = 42) {
+    ctx.save();
+    const scale = radius / 42;
+    
+    // Ribbon Tails hanging down
+    ctx.fillStyle = '#b45309';
+    ctx.beginPath();
+    ctx.moveTo(cx - 16 * scale, cy + 28 * scale);
+    ctx.lineTo(cx - 28 * scale, cy + 62 * scale);
+    ctx.lineTo(cx - 16 * scale, cy + 54 * scale);
+    ctx.lineTo(cx - 4 * scale, cy + 62 * scale);
+    ctx.lineTo(cx - 8 * scale, cy + 28 * scale);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = '#9a3412';
+    ctx.beginPath();
+    ctx.moveTo(cx + 8 * scale, cy + 28 * scale);
+    ctx.lineTo(cx + 4 * scale, cy + 62 * scale);
+    ctx.lineTo(cx + 16 * scale, cy + 54 * scale);
+    ctx.lineTo(cx + 28 * scale, cy + 62 * scale);
+    ctx.lineTo(cx + 16 * scale, cy + 28 * scale);
+    ctx.closePath();
+    ctx.fill();
+
+    // 24-point Scalloped Starburst Seal
+    const pts = 24;
+    const innerR = radius - (4 * scale);
+    const outerR = radius;
+    const sealGrad = ctx.createRadialGradient(cx - (10 * scale), cy - (10 * scale), 5 * scale, cx, cy, radius);
+    sealGrad.addColorStop(0, '#fde68a');
+    sealGrad.addColorStop(0.35, '#f59e0b');
+    sealGrad.addColorStop(0.85, '#d97706');
+    sealGrad.addColorStop(1, '#92400e');
+
+    ctx.fillStyle = sealGrad;
+    ctx.beginPath();
+    for (let i = 0; i < pts * 2; i++) {
+      const r = i % 2 === 0 ? outerR : innerR;
+      const angle = (i * Math.PI) / pts;
+      const x = cx + Math.cos(angle) * r;
+      const y = cy + Math.sin(angle) * r;
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.fill();
+
+    // Concentric Inset Gold Rings
+    ctx.strokeStyle = '#fef3c7';
+    ctx.lineWidth = 1.5 * scale;
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius - (8 * scale), 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.strokeStyle = '#78350f';
+    ctx.lineWidth = 0.8 * scale;
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius - (11 * scale), 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Center Seal Emblem
+    ctx.fillStyle = '#78350f';
+    ctx.font = `bold ${Math.max(7, Math.round(8 * scale))}px -apple-system, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText('OFFICIAL', cx, cy - (8 * scale));
+    ctx.font = `900 ${Math.max(9, Math.round(10 * scale))}px -apple-system, sans-serif`;
+    ctx.fillText('100% ARTISAN', cx, cy + (4 * scale));
+    ctx.font = `bold ${Math.max(6, Math.round(7 * scale))}px -apple-system, sans-serif`;
+    ctx.fillText('ACCREDITED', cx, cy + (14 * scale));
+
+    ctx.restore();
+  }
+
+  async function generateCertificate(result, shouldDownload = true) {
+    const canvas = certificateCanvas;
+    if (!canvas) return null;
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width;
+    const h = canvas.height;
+
+    // Load active cat photo
+    let catImg = null;
+    const imgUrl = (result.photo_urls && result.photo_urls[0]) || result.thumbnail_url || null;
+    if (imgUrl) {
+      catImg = await loadImage(imgUrl);
+    }
+
+    // 1. Background Antique Archival Parchment
+    const bgGrad = ctx.createRadialGradient(w / 2, h / 2, 80, w / 2, h / 2, 720);
+    bgGrad.addColorStop(0, '#fffefc');
+    bgGrad.addColorStop(0.65, '#fbf7ef');
+    bgGrad.addColorStop(1, '#f4ede0');
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, w, h);
+
+    // Archival Guilloche Security Micro-Lines
+    ctx.save();
+    ctx.strokeStyle = 'rgba(180, 140, 90, 0.035)';
+    ctx.lineWidth = 1;
+    for (let x = -800; x < w + 800; x += 36) {
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x + h, h);
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    // 2. Triple Architectural Borders
+    ctx.strokeStyle = '#1c1917';
+    ctx.lineWidth = 4;
+    ctx.strokeRect(32, 32, w - 64, h - 64);
+
+    ctx.strokeStyle = '#c27803';
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(40, 40, w - 80, h - 80);
+
+    ctx.strokeStyle = '#d6cebe';
+    ctx.lineWidth = 0.8;
+    ctx.strokeRect(46, 46, w - 92, h - 92);
+
+    // 4 Corner Flourishes
+    drawCornerFlourish(ctx, 42, 42, 1, 1);
+    drawCornerFlourish(ctx, w - 42, 42, -1, 1);
+    drawCornerFlourish(ctx, 42, h - 42, 1, -1);
+    drawCornerFlourish(ctx, w - 42, h - 42, -1, -1);
+
+    // 3. Official Bureau Mascot Emblems in Header
+    if (mascotLogoImg && mascotLogoImg.complete && mascotLogoImg.naturalWidth > 0) {
+      try {
+        ctx.drawImage(mascotLogoImg, 65, 58, 68, 58);
+        ctx.drawImage(mascotLogoImg, w - 133, 58, 68, 58);
+      } catch (e) {
+        // Skip silently if tainted canvas
+      }
+    }
+
+    // Top Bureau Header
+    ctx.fillStyle = '#57534e';
+    ctx.font = 'bold 11px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.letterSpacing = '3.5px';
+    ctx.fillText('INTERNATIONAL BUREAU OF FELINE POSTURE & KINEMATICS', w / 2, 80);
+
+    // Main Certificate Title
+    ctx.fillStyle = '#1c1917';
+    ctx.font = 'bold 34px Georgia, serif';
+    ctx.fillText('Official Certificate of Loaf Posture', w / 2, 122);
+
+    // Subtitle
+    ctx.fillStyle = '#78716c';
+    ctx.font = 'italic 13.5px Georgia, serif';
+    ctx.fillText('This hereby certifies that the domestic feline subject identified as', w / 2, 150);
+
+    // Cat Name
+    ctx.fillStyle = '#7c2d12';
+    ctx.font = 'bold 38px Georgia, serif';
+    ctx.fillText(result.cat_name || 'Anonymous Subject', w / 2, 192);
+
+    // Rank & Bread Classification Ribbon Banner
+    const rankText = `${result.loaf_rank || 'Certified Loaf'}   •   ${result.bread_classification || 'Artisan Loaf'}`;
+    ctx.font = 'bold 13.5px -apple-system, BlinkMacSystemFont, sans-serif';
+    const rankWidth = ctx.measureText(rankText).width + 36;
+    
+    ctx.fillStyle = '#fef3c7';
+    ctx.strokeStyle = '#d97706';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.roundRect((w - rankWidth) / 2, 206, rankWidth, 26, 13);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = '#78350f';
+    ctx.fillText(rankText, w / 2, 224);
+
+    // 4. Left Column: Inspected Subject Portrait & Score Dial (x: 65, y: 248, w: 330, h: 450)
+    ctx.fillStyle = '#ffffff';
+    ctx.strokeStyle = '#e7e5e4';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.roundRect(65, 248, 330, 450, 14);
+    ctx.fill();
+    ctx.stroke();
+
+    // Cat's Actual Photograph Frame
+    ctx.fillStyle = '#faf8f5';
+    ctx.strokeStyle = '#fed7aa';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.roundRect(80, 262, 300, 215, 10);
+    ctx.fill();
+    ctx.stroke();
+
+    if (catImg) {
+      drawCoverImage(ctx, catImg, 82, 264, 296, 211, 8);
+    } else {
+      ctx.fillStyle = '#fef3c7';
+      ctx.fillRect(82, 264, 296, 211);
+      ctx.fillStyle = '#b45309';
+      ctx.font = 'bold 15px -apple-system, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('Audited Feline Specimen', 230, 375);
+    }
+
+    // Photo Exhibit Plaque
+    ctx.fillStyle = '#1c1917';
+    ctx.beginPath();
+    ctx.roundRect(145, 458, 170, 20, 10);
+    ctx.fill();
+    ctx.fillStyle = '#fbbf24';
+    ctx.font = 'bold 9px -apple-system, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('EXHIBIT A: AUDITED SPECIMEN', 230, 471);
+
+    // Composite Score Dial & Number
+    ctx.fillStyle = '#78716c';
+    ctx.font = 'bold 11px -apple-system, BlinkMacSystemFont, sans-serif';
+    ctx.fillText('COMPOSITE SCORE', 230, 508);
+
+    ctx.fillStyle = '#7c2d12';
+    ctx.font = 'bold 64px -apple-system, BlinkMacSystemFont, sans-serif';
+    ctx.fillText((result.overall_score || 0).toString(), 230, 568);
+
+    ctx.fillStyle = '#a8a29e';
+    ctx.font = 'bold 15px -apple-system, BlinkMacSystemFont, sans-serif';
+    ctx.fillText('/ 100', 230, 592);
+
+    // Physical Rubber Stamp
+    ctx.save();
+    ctx.translate(230, 642);
+    ctx.rotate(-0.1);
+    const gradeLetter = result.grade_letter || 'A';
+    let stampColor = '#c2410c'; // A
+    if (gradeLetter.includes('B')) stampColor = '#d97706';
+    else if (gradeLetter.includes('C')) stampColor = '#57534e';
+    else if (gradeLetter.includes('D') || gradeLetter.includes('F')) stampColor = '#be123c';
+
+    ctx.strokeStyle = stampColor;
+    ctx.lineWidth = 3;
+    ctx.strokeRect(-55, -24, 110, 48);
+    ctx.fillStyle = stampColor;
+    ctx.font = 'bold 28px -apple-system, BlinkMacSystemFont, sans-serif';
+    ctx.fillText(gradeLetter, 0, 9);
+    ctx.restore();
+
+    // Telemetry Footnote
+    ctx.fillStyle = '#57534e';
+    ctx.font = '11.5px -apple-system, BlinkMacSystemFont, sans-serif';
+    ctx.fillText(`Drag: Cd ${(result.drag_coefficient !== undefined ? Number(result.drag_coefficient) : 0.05).toFixed(2)}  •  Bonus: +${result.multi_angle_bonus || 0} pts`, 230, 684);
+
+    // 5. Right Column: Kinematic Criteria Breakdown & Chief Inspector Memo (x: 412, y: 248, w: 724, h: 450)
+    ctx.fillStyle = '#ffffff';
+    ctx.strokeStyle = '#e7e5e4';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.roundRect(412, 248, 724, 265, 14);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#1c1917';
+    ctx.font = 'bold 15px -apple-system, BlinkMacSystemFont, sans-serif';
+    ctx.fillText('Kinematic Posture Telemetry', 438, 278);
+
+    ctx.fillStyle = '#059669';
+    ctx.font = 'bold 10px -apple-system, sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText('FOUR-PLANE ORTHOGRAPHIC AUDIT', 1112, 278);
+    ctx.textAlign = 'left';
+
+    const pt = result.paw_tuck || {};
+    const tt = result.tail_tuck || {};
+    const ec = result.elbow_compactness || {};
+    const cs = result.crust_symmetry || {};
+
+    const criteriaList = [
+      { name: 'Paw Tuck & Undercarriage Stealth', score: pt.score !== undefined ? pt.score : 20, status: pt.status || 'Concealed' },
+      { name: 'Tail Aerodynamics & Flank Wrap', score: tt.score !== undefined ? tt.score : 20, status: tt.status || 'Tucked' },
+      { name: 'Flank Compression & Boule Compactness', score: ec.score !== undefined ? ec.score : 20, status: ec.status || 'Compact' },
+      { name: 'Dorsal Symmetry & Crust Distribution', score: cs.score !== undefined ? cs.score : 20, status: cs.status || 'Symmetric' }
+    ];
+
+    criteriaList.forEach((c, idx) => {
+      const rowY = 305 + idx * 50;
+
+      // Criterion Title
+      ctx.fillStyle = '#292524';
+      ctx.font = 'bold 13.5px -apple-system, BlinkMacSystemFont, sans-serif';
+      ctx.fillText(c.name, 438, rowY);
+
+      // Score Pill
+      ctx.textAlign = 'right';
+      ctx.fillStyle = '#7c2d12';
+      ctx.font = 'bold 13.5px -apple-system, BlinkMacSystemFont, sans-serif';
+      ctx.fillText(`${c.score} / 25`, 1112, rowY);
+      ctx.textAlign = 'left';
+
+      // Dual-tone Gradient Progress Bar
+      const barTrackW = 674;
+      const barH = 6;
+      ctx.fillStyle = '#f5ebe0';
+      ctx.beginPath();
+      ctx.roundRect(438, rowY + 6, barTrackW, barH, 3);
+      ctx.fill();
+
+      const pct = Math.min(100, Math.max(0, (c.score / 25) * 100));
+      const fillW = Math.max(8, (barTrackW * pct) / 100);
+      const barGrad = ctx.createLinearGradient(438, 0, 438 + fillW, 0);
+      barGrad.addColorStop(0, '#ea580c');
+      barGrad.addColorStop(1, '#f59e0b');
+      ctx.fillStyle = barGrad;
+      ctx.beginPath();
+      ctx.roundRect(438, rowY + 6, fillW, barH, 3);
+      ctx.fill();
+
+      // Status subtitle
+      ctx.fillStyle = '#78716c';
+      ctx.font = '11.5px -apple-system, BlinkMacSystemFont, sans-serif';
+      ctx.fillText((c.status || '').replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, ''), 438, rowY + 25);
+    });
+
+    // Chief Auditor Findings Memo Box (w: 724, h: 170)
+    ctx.fillStyle = '#fffaf5';
+    ctx.strokeStyle = '#fed7aa';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.roundRect(412, 528, 724, 170, 12);
+    ctx.fill();
+    ctx.stroke();
+
+    // Warm left accent bar
+    ctx.fillStyle = '#ea580c';
+    ctx.beginPath();
+    ctx.roundRect(412, 528, 4.5, 170, [12, 0, 0, 12]);
+    ctx.fill();
+
+    // Callout Label
+    ctx.fillStyle = '#c2410c';
+    ctx.font = 'bold 11px -apple-system, BlinkMacSystemFont, sans-serif';
+    ctx.fillText('CHIEF AUDITOR FIELD NOTES', 434, 550);
+
+    // Multi-line Adaptive Word-Wrapped Critique
+    ctx.fillStyle = '#292524';
+    const cleanCritique = (result.summary_critique || '').replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, '').trim();
+    drawFittedCritique(ctx, `"${cleanCritique}"`, 434, 574, 680, 110);
+
+    // 6. Footer: Inspector Signature, Seal & Official Certification Serial
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#78716c';
+    ctx.font = 'bold 11px -apple-system, sans-serif';
+    const dateStr = result.created_at ? new Date(result.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    const hashStr = Math.abs(((result.overall_score || 0) * 31) ^ (result.cat_name ? result.cat_name.length * 17 : 42)).toString(16).toUpperCase().padStart(4, '0');
+    ctx.fillText(`VERIFICATION ID: LF-2026-${result.grade_letter || 'A'}${hashStr}`, 68, 738);
+    ctx.fillStyle = '#a8a29e';
+    ctx.font = '10px -apple-system, sans-serif';
+    ctx.fillText(`Certified on ${dateStr}`, 68, 755);
+
+    // Center: Signature & Title
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#1c1917';
+    ctx.font = 'italic bold 19px Georgia, serif';
+    ctx.fillText('Dr. Oliver Pawsbury', 640, 738);
+    ctx.fillStyle = '#78716c';
+    ctx.font = 'bold 10px -apple-system, BlinkMacSystemFont, sans-serif';
+    ctx.letterSpacing = '1px';
+    ctx.fillText('CHIEF CRUST INSPECTOR', 640, 755);
+    ctx.letterSpacing = '0px';
+
+    // Right: Official Gold Embossed Seal
+    drawGoldEmbossedSeal(ctx, 1070, 736, 38);
+
+    function drawFittedCritique(context, text, startX, startY, maxWidth, maxHeight) {
+      const fontTiers = [
+        { size: 13.5, lineHeight: 19.5 },
+        { size: 12.5, lineHeight: 18 },
+        { size: 11.5, lineHeight: 16.5 },
+        { size: 10.5, lineHeight: 15 }
+      ];
+
+      const words = text.split(/\s+/).filter(Boolean);
+      let selectedTier = fontTiers[0];
+      let selectedLines = [];
+
+      for (const tier of fontTiers) {
+        context.font = `italic ${tier.size}px Georgia, serif`;
+        const lines = [];
+        let currentLine = '';
+
+        for (let i = 0; i < words.length; i++) {
+          const testLine = currentLine ? `${currentLine} ${words[i]}` : words[i];
+          if (context.measureText(testLine).width > maxWidth && currentLine) {
+            lines.push(currentLine);
+            currentLine = words[i];
+          } else {
+            currentLine = testLine;
+          }
+        }
+        if (currentLine) lines.push(currentLine);
+
+        selectedTier = tier;
+        selectedLines = lines;
+
+        if (lines.length * tier.lineHeight <= maxHeight) {
+          break;
+        }
+      }
+
+      context.font = `italic ${selectedTier.size}px Georgia, serif`;
+      const maxAllowedLines = Math.floor(maxHeight / selectedTier.lineHeight);
+      let currentY = startY;
+
+      for (let idx = 0; idx < Math.min(selectedLines.length, maxAllowedLines); idx++) {
+        let lineText = selectedLines[idx];
+        if (idx === maxAllowedLines - 1 && selectedLines.length > maxAllowedLines) {
+          while (lineText.length > 0 && context.measureText(lineText + '...').width > maxWidth) {
+            lineText = lineText.slice(0, -1);
+          }
+          lineText += '...';
+        }
+        context.fillText(lineText, startX, currentY);
+        currentY += selectedTier.lineHeight;
+      }
+    }
+
+    const dataUrl = canvas.toDataURL('image/png');
+    if (shouldDownload) {
+      const a = document.createElement('a');
+      a.href = dataUrl;
+      const safeName = (result.cat_name || 'subject').toLowerCase().replace(/[^a-z0-9]/g, '_');
+      a.download = `loaf_certificate_${safeName}.png`;
+      a.click();
+    }
+    return dataUrl;
+  }
+
   async function openLoafDetails(entryId) {
     if (!loafDetailsModal || !entryId) return;
 
@@ -732,6 +1237,81 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       if (loafDetailsPhotoContainer) {
         loafDetailsPhotoContainer.onclick = () => openLightbox(data.cat_name || 'Cat Loaf', photoUrl);
+      }
+
+      // Check owner status for certificate visibility
+      const isMyCat = Boolean(
+        (state.user && state.user.id && data.user_id && (data.user_id === state.user.id)) ||
+        state.period === 'mine' ||
+        isLocalOwner(entryId)
+      );
+
+      if (loafDetailsOwnerCertSection) {
+        if (isMyCat) {
+          loafDetailsOwnerCertSection.classList.remove('hidden');
+        } else {
+          loafDetailsOwnerCertSection.classList.add('hidden');
+        }
+      }
+
+      if (loafDetailsPublicVerificationNote) {
+        if (isMyCat) {
+          loafDetailsPublicVerificationNote.classList.add('hidden');
+        } else {
+          loafDetailsPublicVerificationNote.classList.remove('hidden');
+        }
+      }
+
+      // Multi-angle perspectives selector
+      const rawUrls = Array.isArray(data.photo_urls) && data.photo_urls.length > 0
+        ? data.photo_urls
+        : (data.thumbnail_url ? [data.thumbnail_url] : []);
+      const rawAngles = Array.isArray(data.angles) ? data.angles : [];
+
+      if (loafDetailsAnglesStrip && loafDetailsAnglesButtons) {
+        if (rawUrls.length > 1) {
+          loafDetailsAnglesStrip.classList.remove('hidden');
+          loafDetailsAnglesButtons.innerHTML = '';
+
+          rawUrls.forEach((url, idx) => {
+            const rawAngle = (rawAngles[idx] || '').toLowerCase();
+            let label = `Angle ${idx + 1}`;
+            let icon = 'camera';
+            if (rawAngle.includes('front')) {
+              label = 'Front View';
+              icon = 'eye';
+            } else if (rawAngle.includes('side')) {
+              label = 'Side Profile';
+              icon = 'move-horizontal';
+            } else if (rawAngle.includes('top') || rawAngle.includes('overhead')) {
+              label = 'Overhead (Top)';
+              icon = 'compass';
+            }
+
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = `px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5 shrink-0 transition-all cursor-pointer ${idx === 0 ? 'bg-orange-600 text-white shadow-2xs' : 'bg-white text-stone-700 border border-stone-200 hover:bg-orange-50'}`;
+            btn.innerHTML = `<i data-lucide="${icon}" class="w-3 h-3"></i><span>${label}</span>`;
+
+            btn.onclick = () => {
+              if (loafDetailsPhoto) {
+                loafDetailsPhoto.src = url;
+              }
+              if (loafDetailsPhotoContainer) {
+                loafDetailsPhotoContainer.onclick = () => openLightbox(`${data.cat_name || 'Cat'} (${label})`, url);
+              }
+              loafDetailsAnglesButtons.querySelectorAll('button').forEach(b => {
+                b.className = 'px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5 shrink-0 transition-all cursor-pointer bg-white text-stone-700 border border-stone-200 hover:bg-orange-50';
+              });
+              btn.className = 'px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5 shrink-0 transition-all cursor-pointer bg-orange-600 text-white shadow-2xs';
+              refreshIcons();
+            };
+
+            loafDetailsAnglesButtons.appendChild(btn);
+          });
+        } else {
+          loafDetailsAnglesStrip.classList.add('hidden');
+        }
       }
 
       if (loafDetailsRank) loafDetailsRank.textContent = data.loaf_rank || 'Certified Artisan Loaf';
@@ -886,6 +1466,34 @@ document.addEventListener('DOMContentLoaded', () => {
         activeLoafDetail.overall_score,
         activeLoafDetail.grade_letter
       );
+    });
+  }
+
+  if (loafDetailsDownloadCertBtn) {
+    loafDetailsDownloadCertBtn.addEventListener('click', async () => {
+      if (!activeLoafDetail) return;
+      try {
+        loafDetailsDownloadCertBtn.disabled = true;
+        loafDetailsDownloadCertBtn.innerHTML = `<i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i><span>Generating...</span>`;
+        refreshIcons();
+        await generateCertificate(activeLoafDetail, true);
+        showToast({
+          type: 'success',
+          title: 'Certificate Downloaded',
+          message: `Official certificate for ${activeLoafDetail.cat_name || 'your cat'} has been saved!`
+        });
+      } catch (err) {
+        console.error('Failed to generate certificate:', err);
+        showToast({
+          type: 'error',
+          title: 'Export Failed',
+          message: 'Unable to render the certificate image.'
+        });
+      } finally {
+        loafDetailsDownloadCertBtn.disabled = false;
+        loafDetailsDownloadCertBtn.innerHTML = `<i data-lucide="download" class="w-3.5 h-3.5"></i><span>Download Certificate</span>`;
+        refreshIcons();
+      }
     });
   }
 

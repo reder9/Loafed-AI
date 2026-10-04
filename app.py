@@ -495,7 +495,13 @@ def verify_cognito_token(auth_header: Optional[str]) -> dict:
         raise HTTPException(status_code=401, detail="Session expired or invalid authentication token.")
 
 
-def generate_grade_token(result_data: dict, image_hash: Optional[str] = None) -> str:
+def generate_grade_token(
+    result_data: dict,
+    image_hash: Optional[str] = None,
+    image_hashes: Optional[List[str]] = None,
+    best_thumbnail_index: Optional[int] = 0
+) -> str:
+    hashes_list = image_hashes or ([image_hash] if image_hash else [])
     payload = {
         "cat_name": result_data.get("cat_name", "Anonymous Loaf"),
         "overall_score": int(result_data.get("overall_score", 0)),
@@ -510,10 +516,13 @@ def generate_grade_token(result_data: dict, image_hash: Optional[str] = None) ->
         "drag_coefficient": float(result_data.get("drag_coefficient", 0.15)) if result_data.get("drag_coefficient") is not None else 0.15,
         "badges": result_data.get("badges", []),
         "fun_tips_for_cat": result_data.get("fun_tips_for_cat", []),
+        "angle_notes": result_data.get("angle_notes", {}),
         "oar_detected": bool(result_data.get("oar_detected", False)),
         "face_loaf": bool(result_data.get("face_loaf", False)),
         "multi_angle_bonus": int(result_data.get("multi_angle_bonus", 0)),
         "image_sha256": image_hash,
+        "image_hashes": hashes_list,
+        "best_thumbnail_index": int(best_thumbnail_index if best_thumbnail_index is not None else 0),
         "ts": int(time.time()),
         "salt": uuid.uuid4().hex[:12]
     }
@@ -594,6 +603,8 @@ class LoafAnalysisResult(BaseModel):
     badges: List[str] = Field(description="3-5 honor badges or demerits awarded to this cat. Never include emojis.")
     fun_tips_for_cat: List[str] = Field(description="2-3 tips for the cat to improve its loaf next time. Never include emojis.")
     angle_notes: AngleNotes = Field(description="Quick notes per submitted angle (front, side, top)")
+    best_thumbnail_index: Optional[int] = Field(default=0, description="0-based index of the best front or side photo for the primary leaderboard portrait. Avoid overhead/top-down views.")
+    angle_classifications: Optional[List[str]] = Field(default_factory=list, description="Classifications for each submitted photo index ('front', 'side', 'top', or 'other').")
 
 # Pre-baked analysis for sample preset cats
 PRESET_BUTTERCUP = {
@@ -665,7 +676,19 @@ PRESET_BUTTERCUP = {
         "front": "Pristine chest tuck; calm, unbothered facial expression.",
         "side": "Sleek aerodynamic silhouette; tail tightly wrapped along flank.",
         "top": "Near-perfect oval boule; impeccable bilateral spinal symmetry."
-    }
+    },
+    "best_thumbnail_index": 0,
+    "thumbnail_url": "/samples/buttercup_front.jpg",
+    "angles": [
+        {"label": "Front View", "url": "/samples/buttercup_front.jpg"},
+        {"label": "Side View", "url": "/samples/buttercup_side.jpg"},
+        {"label": "Overhead (Top) View", "url": "/samples/buttercup_top.jpg"}
+    ],
+    "photo_urls": [
+        "/samples/buttercup_front.jpg",
+        "/samples/buttercup_side.jpg",
+        "/samples/buttercup_top.jpg"
+    ]
 }
 
 PRESET_CHONKS = {
@@ -736,7 +759,19 @@ PRESET_CHONKS = {
     "angle_notes": {
         "front": "Alert, observant gaze; chest squarely aligned over perch bolster.",
         "side": "Continuous slate-grey parabolic topline with tight starboard tail tuck."
-    }
+    },
+    "best_thumbnail_index": 0,
+    "thumbnail_url": "/samples/chonks_front.jpg",
+    "angles": [
+        {"label": "Front View", "url": "/samples/chonks_front.jpg"},
+        {"label": "Side View", "url": "/samples/chonks_side.jpg"},
+        {"label": "Semi-Front View", "url": "/samples/chonks_semi_front.jpg"}
+    ],
+    "photo_urls": [
+        "/samples/chonks_front.jpg",
+        "/samples/chonks_side.jpg",
+        "/samples/chonks_semi_front.jpg"
+    ]
 }
 
 PRESET_FLASH = {
@@ -807,7 +842,17 @@ PRESET_FLASH = {
     "angle_notes": {
         "front": "Signature horizontal airplane ears deployed; minor right wrist breach.",
         "side": "Classic sourdough baton contour along cushion diagonal; tail tucked flush."
-    }
+    },
+    "best_thumbnail_index": 0,
+    "thumbnail_url": "/samples/flash_front.jpg",
+    "angles": [
+        {"label": "Front View", "url": "/samples/flash_front.jpg"},
+        {"label": "Side View", "url": "/samples/flash_side.jpg"}
+    ],
+    "photo_urls": [
+        "/samples/flash_front.jpg",
+        "/samples/flash_side.jpg"
+    ]
 }
 
 @app.get("/health")
@@ -969,6 +1014,13 @@ CAT NAME HANDLING:
 - If a Cat Name is provided, use that exact name in cat_name.
 - If the Cat Name is empty, unmentioned, or 'Anonymous Baker', generate a charming, humorous honorary bakery name for this subject (e.g. 'The Mysterious Loaf', 'Sir Doughington', 'Lady Brioche', 'Professor Crumb').
 
+BEST THUMBNAIL / HERO PORTRAIT SELECTION:
+- From all submitted inspection photos, choose the single most photogenic, representative picture to serve as the default Leaderboard Thumbnail.
+- Select the clearest, most charming FRONT view or SIDE profile of the cat where facial expression or loaf curvature is highlighted.
+- STRICT EXCLUSION: NEVER select a top-down, bird's-eye, or overhead perspective for the default thumbnail (overhead angles lack facial personality and do not make for appealing primary portraits).
+- Set best_thumbnail_index to the 0-based index of your selected front or side photo.
+- Set angle_classifications to an array of lowercase strings corresponding to each submitted image index ('front', 'side', 'top', or 'other').
+
 CRITICAL FORMATTING & TONE:
 - STRICT ZERO-EMOJI RULE: Never use emojis anywhere in your response. No emojis in titles, status text, critiques, observations, bread classifications, badges, or tips. Keep styling clean, dignified, witty, and editorial.
 - Tone: Michelin pastry inspector meets aerodynamic engineer. Be sharp, hilarious, discerning, and weave in clever cat puns and bakery references naturally ('baking right meow', 'purr-fection', 'cat-astrophic drag', 'knead for improvement', 'paws-itively suspicious fold'). Celebrate what makes the cat charming while staying true to official loaf certification standards!
@@ -1028,11 +1080,18 @@ async def grade_loaf(
         result = dict(PRESET_BUTTERCUP)
         if cat_name:
             result["cat_name"] = cat_name
-        demo_image_hash = hashlib.sha256(submitted_images[0][1]).hexdigest() if submitted_images else None
-        grade_token = generate_grade_token(result, image_hash=demo_image_hash)
+        demo_hashes = [hashlib.sha256(img[1]).hexdigest() for img in submitted_images]
+        demo_image_hash = demo_hashes[0] if demo_hashes else None
+        grade_token = generate_grade_token(
+            result,
+            image_hash=demo_image_hash,
+            image_hashes=demo_hashes,
+            best_thumbnail_index=0
+        )
         return JSONResponse(content={
             "result": result,
             "grade_token": grade_token,
+            "best_thumbnail_index": 0,
             "can_submit": True,
             "demo_mode": True,
             "message": "Graded using Demo Mode (Sample Preset). To grade your own cat photos in real-time with Gemini 3.8 Flash, enter your Gemini API key in the top right settings!"
@@ -1142,11 +1201,33 @@ async def grade_loaf(
                 "demo_mode": False
             })
 
-        primary_image_hash = hashlib.sha256(submitted_images[0][1]).hexdigest() if submitted_images else None
-        grade_token = generate_grade_token(analysis_data, image_hash=primary_image_hash)
+        all_image_hashes = [hashlib.sha256(img[1]).hexdigest() for img in submitted_images]
+        best_idx = analysis_data.get("best_thumbnail_index")
+        angle_classes = analysis_data.get("angle_classifications") or []
+        
+        # Verify best_idx is valid and not an overhead/top view
+        if best_idx is not None and 0 <= best_idx < len(submitted_images):
+            chosen_cls = angle_classes[best_idx].lower() if best_idx < len(angle_classes) else ""
+            if "top" in chosen_cls:
+                front_cand = next((i for i, c in enumerate(angle_classes) if "front" in c.lower()), None)
+                side_cand = next((i for i, c in enumerate(angle_classes) if "side" in c.lower()), None)
+                best_idx = front_cand if front_cand is not None else (side_cand if side_cand is not None else best_idx)
+        else:
+            front_cand = next((i for i, c in enumerate(angle_classes) if "front" in c.lower()), None)
+            side_cand = next((i for i, c in enumerate(angle_classes) if "side" in c.lower()), None)
+            best_idx = front_cand if front_cand is not None else (side_cand if side_cand is not None else 0)
+
+        primary_image_hash = all_image_hashes[best_idx] if (all_image_hashes and best_idx < len(all_image_hashes)) else (all_image_hashes[0] if all_image_hashes else None)
+        grade_token = generate_grade_token(
+            analysis_data,
+            image_hash=primary_image_hash,
+            image_hashes=all_image_hashes,
+            best_thumbnail_index=best_idx
+        )
         return JSONResponse(content={
             "result": analysis_data,
             "grade_token": grade_token,
+            "best_thumbnail_index": best_idx,
             "can_submit": True,
             "demo_mode": False
         })
@@ -1807,9 +1888,12 @@ async def submit_to_leaderboard(
     grade_token: str = Form(...),
     cat_name: Optional[str] = Form(None),
     display_name: Optional[str] = Form(None),
-    photo: UploadFile = File(...)
+    photo: Optional[UploadFile] = File(None),
+    photos: Optional[List[UploadFile]] = File(None),
+    photo_labels: Optional[str] = Form(None),
+    primary_photo_index: Optional[int] = Form(0)
 ):
-    """Submits a verified cat loaf evaluation to the public leaderboard."""
+    """Submits a verified cat loaf evaluation to the public leaderboard with all submitted inspection angles."""
     user_claims = verify_cognito_token(authorization)
     user_id = user_claims.get("sub")
     if not user_id:
@@ -1837,43 +1921,111 @@ async def submit_to_leaderboard(
         max_len=30
     )
 
-    # Validate uploaded photo
-    content, mime = await read_and_validate_image(photo)
-    if not content:
+    # Collect and validate uploaded photos (accepts multiple angle files or single legacy photo)
+    raw_uploads = []
+    if photos:
+        raw_uploads = [p for p in photos if p and p.filename]
+    if not raw_uploads and photo and photo.filename:
+        raw_uploads = [photo]
+
+    if not raw_uploads:
         raise HTTPException(status_code=400, detail="A valid photo is required for leaderboard submission.")
 
-    # Cryptographic Image Binding check: confirm uploaded photo matches audited photo
-    submitted_sha256 = hashlib.sha256(content).hexdigest()
-    expected_sha256 = score_data.get("image_sha256")
-    if expected_sha256 and submitted_sha256 != expected_sha256:
+    validated_images = []
+    for f in raw_uploads[:5]:
+        content, mime = await read_and_validate_image(f)
+        if content:
+            validated_images.append((content, mime))
+
+    if not validated_images:
+        raise HTTPException(status_code=400, detail="Could not process submitted photo files. Please ensure valid JPEG, PNG, or WebP.")
+
+    # Cryptographic Image Binding check: confirm uploaded photos match audited photo hashes
+    allowed_hashes = set()
+    if score_data.get("image_sha256"):
+        allowed_hashes.add(score_data["image_sha256"])
+    if score_data.get("image_hashes"):
+        allowed_hashes.update(score_data["image_hashes"])
+
+    uploaded_hashes = [hashlib.sha256(c).hexdigest() for c, _ in validated_images]
+    if allowed_hashes and not any(h in allowed_hashes for h in uploaded_hashes):
         logger.warning(
-            f"Image hash mismatch on leaderboard submission! Expected: {expected_sha256}, Got: {submitted_sha256}"
+            f"Image hash mismatch on leaderboard submission! Allowed: {allowed_hashes}, Uploaded: {uploaded_hashes}"
         )
         raise HTTPException(
             status_code=400,
             detail="The uploaded photo does not match the image certified during grading. Please submit the exact photo that was inspected."
         )
 
-    # Create optimized WebP thumbnail (strips EXIF, under 40 KB)
-    thumb_bytes = create_leaderboard_thumbnail(content)
+    # Parse angle labels
+    labels = []
+    if photo_labels:
+        try:
+            parsed = json.loads(photo_labels)
+            if isinstance(parsed, list):
+                labels = [str(lbl).strip() for lbl in parsed]
+        except Exception:
+            pass
+    while len(labels) < len(validated_images):
+        idx = len(labels)
+        labels.append("Front View" if idx == 0 else ("Side View" if idx == 1 else ("Overhead (Top) View" if idx == 2 else f"Angle {idx + 1}")))
+
+    # Select primary thumbnail index (Best front or side, NOT top)
+    chosen_idx = int(primary_photo_index) if (primary_photo_index is not None and 0 <= int(primary_photo_index) < len(validated_images)) else 0
+    chosen_lbl = labels[chosen_idx].lower()
+    if "top" in chosen_lbl or "overhead" in chosen_lbl or "dorsal" in chosen_lbl:
+        # Avoid top view for default thumbnail if a front or side view is present
+        best_alt = next((i for i, lbl in enumerate(labels) if "front" in lbl.lower()), None)
+        if best_alt is None:
+            best_alt = next((i for i, lbl in enumerate(labels) if "side" in lbl.lower()), None)
+        if best_alt is None:
+            best_alt = next((i for i, lbl in enumerate(labels) if "top" not in lbl.lower() and "overhead" not in lbl.lower()), None)
+        if best_alt is not None:
+            chosen_idx = best_alt
 
     entry_id = uuid.uuid4().hex[:12]
-    thumb_key = f"thumbnails/{entry_id}.webp"
-
     session = get_boto3_session()
     s3_client = session.client("s3")
+
+    # 1. Upload primary hero thumbnail (WebP, under 40 KB)
+    primary_content, _ = validated_images[chosen_idx]
+    primary_thumb_bytes = create_leaderboard_thumbnail(primary_content)
+    thumb_key = f"thumbnails/{entry_id}.webp"
     try:
         s3_client.put_object(
             Bucket=S3_BUCKET_NAME,
             Key=thumb_key,
-            Body=thumb_bytes,
+            Body=primary_thumb_bytes,
             ContentType="image/webp"
         )
     except Exception as e:
-        logger.error(f"S3 upload error: {e}", exc_info=True)
+        logger.error(f"S3 primary thumbnail upload error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to save cat loaf photo to cloud storage.")
 
     thumbnail_url = f"https://{S3_BUCKET_NAME}.s3.amazonaws.com/{thumb_key}"
+
+    # 2. Upload all individual angle photos
+    angles = []
+    for idx, (img_content, _) in enumerate(validated_images):
+        angle_key = f"thumbnails/{entry_id}_angle_{idx}.webp"
+        angle_bytes = create_leaderboard_thumbnail(img_content)
+        try:
+            s3_client.put_object(
+                Bucket=S3_BUCKET_NAME,
+                Key=angle_key,
+                Body=angle_bytes,
+                ContentType="image/webp"
+            )
+            angle_url = f"https://{S3_BUCKET_NAME}.s3.amazonaws.com/{angle_key}"
+        except Exception as e:
+            logger.warning(f"S3 angle upload error for {angle_key}: {e}")
+            angle_url = thumbnail_url
+        angles.append({
+            "label": labels[idx],
+            "url": angle_url
+        })
+
+    photo_urls = [a["url"] for a in angles]
 
     now = datetime.now(timezone.utc)
     now_iso = now.isoformat()
@@ -1886,14 +2038,12 @@ async def submit_to_leaderboard(
     ddb = session.resource("dynamodb")
     table = ddb.Table(DYNAMODB_TABLE_NAME)
 
-    # Safely convert drag_coefficient for DynamoDB TypeSerializer
     raw_drag = score_data.get("drag_coefficient")
     try:
         drag_coeff_val = Decimal(str(round(float(raw_drag if raw_drag is not None else 0.15), 3)))
     except Exception:
         drag_coeff_val = Decimal("0.15")
 
-    # Primary item in PERIOD#ALL with user_id for GSI UserIndex
     item_all = {
         "pk": "PERIOD#ALL",
         "sk": sk,
@@ -1907,6 +2057,9 @@ async def submit_to_leaderboard(
         "loaf_rank": score_data.get("loaf_rank", ""),
         "bread_classification": score_data.get("bread_classification", ""),
         "thumbnail_url": thumbnail_url,
+        "angles": angles,
+        "photo_urls": photo_urls,
+        "angle_notes": score_data.get("angle_notes", {}),
         "created_at": now_iso,
         "periods": ["ALL", month_str, week_str],
         "report_count": 0,
@@ -1924,7 +2077,6 @@ async def submit_to_leaderboard(
         "multi_angle_bonus": int(score_data.get("multi_angle_bonus", 0))
     }
 
-    # Partition items for Month and Week (without user_id to keep GSI clean)
     item_month = dict(item_all)
     item_month["pk"] = f"PERIOD#{month_str}"
     item_month.pop("user_id", None)
@@ -1933,7 +2085,6 @@ async def submit_to_leaderboard(
     item_week["pk"] = f"PERIOD#{week_str}"
     item_week.pop("user_id", None)
 
-    # Direct lookup item for fast O(1) retrieval by entry_id
     item_entry = dict(item_all)
     item_entry["pk"] = f"ENTRY#{entry_id}"
     item_entry["sk"] = "METADATA"
@@ -1952,6 +2103,7 @@ async def submit_to_leaderboard(
         "entry_id": entry_id,
         "score": score,
         "thumbnail_url": thumbnail_url,
+        "angles": angles,
         "cat_name": validated_cat_name,
         "display_name": validated_display_name,
         "message": f"Successfully added {validated_cat_name} to the Loafed Leaderboard!"
@@ -2140,8 +2292,23 @@ async def get_loaf_details(entry_id: str):
         "Practice daily dough rising on warm surfaces."
     ]
 
+    angles = item.get("angles")
+    if not angles:
+        if item.get("photo_urls"):
+            angles = [{"label": f"Perspective {i+1}", "url": u} for i, u in enumerate(item.get("photo_urls"))]
+        elif preset_data.get("angles"):
+            angles = preset_data.get("angles")
+        elif thumb:
+            angles = [{"label": "Front/Side Portrait", "url": thumb}]
+        else:
+            angles = []
+
+    photo_urls = item.get("photo_urls") or [a["url"] for a in angles]
+    user_id = item.get("user_id")
+
     return {
         "entry_id": entry_id,
+        "user_id": user_id,
         "cat_name": cat_name,
         "display_name": display_name,
         "overall_score": overall_score,
@@ -2149,6 +2316,9 @@ async def get_loaf_details(entry_id: str):
         "loaf_rank": loaf_rank,
         "bread_classification": bread_class,
         "thumbnail_url": thumb,
+        "angles": angles,
+        "photo_urls": photo_urls,
+        "angle_notes": item.get("angle_notes") or preset_data.get("angle_notes", {}),
         "created_at": created_at,
         "summary_critique": summary_critique,
         "paw_tuck": paw_tuck,
@@ -2289,7 +2459,9 @@ async def admin_remove_entry(req: AdminRemoveRequest):
         logger.warning(f"Admin delete entry lookup error ENTRY#{entry_id}: {e}")
 
     try:
-        s3_client.delete_object(Bucket=S3_BUCKET_NAME, Key=f"thumbnails/{entry_id}.webp")
+        s3_res = s3_client.list_objects_v2(Bucket=S3_BUCKET_NAME, Prefix=f"thumbnails/{entry_id}")
+        for s3_obj in s3_res.get("Contents", []):
+            s3_client.delete_object(Bucket=S3_BUCKET_NAME, Key=s3_obj["Key"])
     except Exception as e:
         logger.warning(f"Admin delete S3 thumbnail error for {entry_id}: {e}")
 
@@ -2374,9 +2546,11 @@ async def delete_leaderboard_entry(entry_id: str, authorization: Optional[str] =
         logger.warning(f"Error deleting entry lookup item ENTRY#{entry_id}: {e}")
 
     try:
-        s3_client.delete_object(Bucket=S3_BUCKET_NAME, Key=f"thumbnails/{entry_id}.webp")
+        s3_res = s3_client.list_objects_v2(Bucket=S3_BUCKET_NAME, Prefix=f"thumbnails/{entry_id}")
+        for s3_obj in s3_res.get("Contents", []):
+            s3_client.delete_object(Bucket=S3_BUCKET_NAME, Key=s3_obj["Key"])
     except Exception as e:
-        logger.warning(f"Error deleting S3 thumbnail for {entry_id}: {e}")
+        logger.warning(f"Error deleting S3 thumbnails for {entry_id}: {e}")
 
     return {"success": True, "deleted_id": entry_id, "message": "Leaderboard entry removed."}
 
