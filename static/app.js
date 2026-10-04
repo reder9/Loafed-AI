@@ -11,7 +11,6 @@ document.addEventListener('DOMContentLoaded', () => {
     catName: '',
     apiKey: localStorage.getItem('loafed_gemini_key') || '',
     model: localStorage.getItem('loafed_model') || 'gemini-3.8-flash',
-    soundEnabled: localStorage.getItem('loafed_sound') !== 'false',
     serverHasKey: false,
     currentResult: null,
     samplePresets: {}
@@ -41,8 +40,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const certificateCanvas = document.getElementById('certificateCanvas');
 
   // Header Elements
-  const soundToggleBtn = document.getElementById('soundToggleBtn');
-  const soundIcon = document.getElementById('soundIcon');
   const toastContainer = document.getElementById('toastContainer');
 
   // Modern Toast Notification System (Zero emojis, clean Lucide iconography)
@@ -117,41 +114,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Synthesized Web Audio
-  function playTone(type) {
-    if (!state.soundEnabled) return;
-    try {
-      const ctx = new (window.AudioContext || window.webkitAudioContext)();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-
-      if (type === 'click') {
-        osc.frequency.setValueAtTime(520, ctx.currentTime);
-        gain.gain.setValueAtTime(0.04, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.06);
-        osc.start();
-        osc.stop(ctx.currentTime + 0.06);
-      } else if (type === 'complete') {
-        const now = ctx.currentTime;
-        [523.25, 659.25].forEach((freq, i) => {
-          const o = ctx.createOscillator();
-          const g = ctx.createGain();
-          o.type = 'sine';
-          o.frequency.setValueAtTime(freq, now + i * 0.1);
-          g.gain.setValueAtTime(0.08, now + i * 0.1);
-          g.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.1 + 0.6);
-          o.connect(g);
-          g.connect(ctx.destination);
-          o.start(now + i * 0.1);
-          o.stop(now + i * 0.1 + 0.6);
-        });
-      }
-    } catch (e) {
-      console.warn('Audio not available', e);
-    }
-  }
 
   // Check Server Status
   async function checkServerStatus() {
@@ -164,12 +126,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  function updateSoundIcon() {
-    if (soundIcon) {
-      soundIcon.setAttribute('data-lucide', state.soundEnabled ? 'volume-2' : 'volume-x');
-      refreshIcons();
-    }
-  }
 
   // Slot Setup & Drag-and-Drop
   const slotIds = ['front', 'side', 'top'];
@@ -181,7 +137,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Click slot to browse
     slotEl.addEventListener('click', (e) => {
       if (e.target.closest('.remove-btn')) return;
-      playTone('click');
       inputEl.click();
     });
 
@@ -195,7 +150,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Remove button
     removeBtn.addEventListener('click', (e) => {
       e.stopPropagation();
-      playTone('click');
       clearSlot(slotKey);
     });
 
@@ -231,7 +185,6 @@ document.addEventListener('DOMContentLoaded', () => {
       if (item.type.startsWith('image/')) {
         const file = item.getAsFile();
         if (file) {
-          playTone('click');
           const emptySlot = slotIds.find(key => state.slots[key] === null) || 'front';
           setSlotFile(emptySlot, file);
           break;
@@ -243,7 +196,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // Multi-file input
   multiInput.addEventListener('change', (e) => {
     if (e.target.files && e.target.files.length > 0) {
-      playTone('click');
       const files = Array.from(e.target.files).slice(0, 3);
       files.forEach((file, index) => {
         const slotKey = slotIds[index];
@@ -361,7 +313,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Load Buttercup Preset
   loadButtercupBtn.addEventListener('click', async () => {
-    playTone('click');
     loadButtercupBtn.disabled = true;
     loadButtercupBtn.innerHTML = '<i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i><span>Loading Baseline Dataset...</span>';
     refreshIcons();
@@ -405,14 +356,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Loading Cycle Messages (Lighthearted & witty cat bakery references, zero emojis)
   const bakeryAuditSteps = [
-    { title: "Loading the oven & preheating pan...", detail: "Calibrating temperature to golden brioche" },
-    { title: "Kneading dough & making biscuits...", detail: "Rhythmic front-paw biscuit agitation detected" },
-    { title: "Proofing loaf on warm sunlit carpet...", detail: "Allowing dough to rise and maximize fluffiness" },
-    { title: "Scanning undercarriage for illicit peet peek...", detail: "Auditing all 4 paws for hidden toe beans" },
-    { title: "Monitoring radar for Loaf Boat hazards...", detail: "Checking for unauthorized oar deployments" },
+    { title: "Loading the oven right meow...", detail: "Calibrating temperature for golden brioche" },
+    { title: "Kneading dough and making biscuits...", detail: "Rhythmic front-paw biscuit agitation detected" },
+    { title: "Proofing loaf for maximum purr-fection...", detail: "Resting on warm sunlit carpet" },
+    { title: "Scanning undercarriage for paws-itively illicit peet peek...", detail: "Auditing all 4 paws for hidden toe beans" },
+    { title: "Monitoring radar for cat-astrophic Loaf Boat hazards...", detail: "Checking for unauthorized oar deployments" },
     { title: "Checking elbow fold against chicken-wing rules...", detail: "Verifying flank compression against ribcage" },
-    { title: "Measuring dorsal symmetry & crust toastiness...", detail: "Scoring tiger-stripe toast pigmentation" },
-    { title: "Consulting Chief Loaf Auditor for official rank...", detail: "Preparing official certification papers" }
+    { title: "Measuring dorsal symmetry for meow-velous crust toastiness...", detail: "Scoring tiger-stripe toast pigmentation" },
+    { title: "Consulting Chief Loaf Auditor to certify total purr-fection...", detail: "Preparing official certification papers" }
   ];
 
   let phraseInterval = null;
@@ -474,7 +425,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Submit & Grade
   gradeLoafBtn.addEventListener('click', async () => {
-    playTone('click');
     const activeSlots = Object.entries(state.slots).filter(([k, v]) => v !== null);
     if (activeSlots.length === 0) {
       showToast({
@@ -526,8 +476,6 @@ document.addEventListener('DOMContentLoaded', () => {
       state.currentResult = data.result;
       renderResults(data.result, data.demo_mode);
       saveLoafToHistory(data.result);
-      playTone('complete');
-
       if (data.demo_mode && data.message) {
         showToast({
           type: 'info',
@@ -731,7 +679,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Reset Button
   resetInspectorBtn.addEventListener('click', () => {
-    playTone('click');
     resultsSection.classList.add('hidden');
     inspectorBay.classList.remove('hidden');
     window.scrollTo({ top: 120, behavior: 'smooth' });
@@ -744,7 +691,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Copy Summary (Technical & Clean Plain Text, Zero Emojis)
   copySummaryBtn.addEventListener('click', () => {
-    playTone('click');
     if (!state.currentResult) return;
 
     const r = state.currentResult;
@@ -793,7 +739,6 @@ Certified by Loafed Inspection Engine`;
 
   // Certificate Download Generator (Canvas with clean professional styling, zero emojis)
   downloadCertificateBtn.addEventListener('click', () => {
-    playTone('click');
     if (!state.currentResult) return;
     generateCertificate(state.currentResult);
     showToast({
@@ -945,7 +890,7 @@ Certified by Loafed Inspection Engine`;
     // Callout Label
     ctx.fillStyle = '#c2410c';
     ctx.font = 'bold 11px -apple-system, BlinkMacSystemFont, sans-serif';
-    ctx.fillText('CHIEF AUDITOR FINDINGS & CULINARY SUMMARY', 495, 598);
+    ctx.fillText('CHIEF AUDITOR FINDINGS & PURR-FECTION SUMMARY', 495, 598);
 
     // Multi-line Word-Wrapped Critique
     ctx.fillStyle = '#292524';
@@ -1005,13 +950,6 @@ Certified by Loafed Inspection Engine`;
 
 
 
-  // Sound Toggle
-  soundToggleBtn.addEventListener('click', () => {
-    state.soundEnabled = !state.soundEnabled;
-    localStorage.setItem('loafed_sound', state.soundEnabled ? 'true' : 'false');
-    updateSoundIcon();
-    if (state.soundEnabled) playTone('click');
-  });
 
   // Capacity Alert Modal Controls
   const ovenAlertModal = document.getElementById('ovenAlertModal');
@@ -1027,14 +965,12 @@ Certified by Loafed Inspection Engine`;
 
   if (closeOvenAlertBtn) {
     closeOvenAlertBtn.addEventListener('click', () => {
-      playTone('click');
       ovenAlertModal.classList.add('hidden');
     });
   }
 
   if (ovenAlertPresetBtn) {
     ovenAlertPresetBtn.addEventListener('click', () => {
-      playTone('click');
       ovenAlertModal.classList.add('hidden');
       loadButtercupBtn.click();
     });
@@ -1144,7 +1080,6 @@ Certified by Loafed Inspection Engine`;
         const id = e.currentTarget.getAttribute('data-id');
         const entry = history.find(h => h.id === id);
         if (entry && entry.result) {
-          playTone('click');
           state.currentResult = entry.result;
           historyModal.classList.add('hidden');
           renderResults(entry.result, false);
@@ -1160,7 +1095,6 @@ Certified by Loafed Inspection Engine`;
     historyListContainer.querySelectorAll('.delete-history-entry-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
-        playTone('click');
         const id = e.currentTarget.getAttribute('data-id');
         const updated = history.filter(h => h.id !== id);
         localStorage.setItem('loafed_history', JSON.stringify(updated));
@@ -1172,7 +1106,6 @@ Certified by Loafed Inspection Engine`;
 
   if (openHistoryBtn) {
     openHistoryBtn.addEventListener('click', () => {
-      playTone('click');
       renderHistoryModal();
       historyModal.classList.remove('hidden');
       refreshIcons();
@@ -1181,21 +1114,18 @@ Certified by Loafed Inspection Engine`;
 
   if (closeHistoryBtn) {
     closeHistoryBtn.addEventListener('click', () => {
-      playTone('click');
       historyModal.classList.add('hidden');
     });
   }
 
   if (dismissHistoryBtn) {
     dismissHistoryBtn.addEventListener('click', () => {
-      playTone('click');
       historyModal.classList.add('hidden');
     });
   }
 
   if (clearAllHistoryBtn) {
     clearAllHistoryBtn.addEventListener('click', () => {
-      playTone('click');
       localStorage.removeItem('loafed_history');
       updateHistoryBadge();
       renderHistoryModal();
@@ -1276,14 +1206,12 @@ Certified by Loafed Inspection Engine`;
   }
 
   function openLegalModal(tab = 'privacy') {
-    playTone('click');
     setLegalTab(tab);
     legalModal.classList.remove('hidden');
     refreshIcons();
   }
 
   function closeLegalModal() {
-    playTone('click');
     legalModal.classList.add('hidden');
   }
 

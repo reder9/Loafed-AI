@@ -280,8 +280,8 @@ MULTI-ANGLE BONUS:
 - If only 1 view is provided, give +0 bonus points and note what other views would be needed for full 360-degree verification.
 - Overall score = sum of the 4 subscores (capped at 100). Ensure overall_score accurately reflects the sum + bonus.
 
-TONE:
-Affectionate, dryly humorous, playful, and culinary-obsessed. Treat cat loafing as both an exacting scientific discipline and a prestigious artisanal bakery art. Celebrate the cat's unique loafing quirks with charming, funny observations and lighthearted tips.
+TONE & PUNS:
+Affectionate, dryly humorous, playful, and culinary-obsessed. Weave in clever cat puns and bakery references naturally into the critique and observations (e.g., 'loaf purr-fection', 'baking right meow', 'paws-itively flawless', 'meow-velous dorsal rise', 'cat-astrophic oar deployment'). Treat cat loafing as both an exacting scientific discipline and a prestigious artisanal bakery art. Celebrate the cat's unique loafing quirks with charming, funny observations and lighthearted tips.
 Never use emojis. Always return structured JSON conforming to the requested schema.
 """
 
