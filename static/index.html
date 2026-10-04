@@ -976,15 +976,20 @@
       <div class="w-14 h-14 mx-auto rounded-2xl bg-orange-100/80 border border-orange-300 text-orange-700 flex items-center justify-center mb-3 shadow-xs">
         <i data-lucide="clock" class="w-7 h-7"></i>
       </div>
-      <h3 class="text-lg font-bold text-stone-900 mb-1" id="ovenAlertTitle">Evaluation Capacity Reached</h3>
+      <h3 class="text-lg font-bold text-stone-900 mb-1" id="ovenAlertTitle">Bakery Ovens at Daily Capacity</h3>
       <p class="text-xs text-stone-600 leading-relaxed mb-6" id="ovenAlertBody">
-        The public evaluation limit has been reached for today. Please wait for the daily quota reset or try again later.
+        Our public evaluation ovens have reached their daily limit for today! Fresh loaf inspection slots will open up tomorrow. In the meantime, you can inspect Buttercup's certified benchmark dataset below or explore today's champions on the Leaderboard.
       </p>
       <div class="flex flex-col gap-2">
-        <button id="ovenAlertPresetBtn" class="w-full py-2.5 rounded-xl bg-orange-50 hover:bg-orange-100 text-orange-950 font-bold text-xs border border-orange-200 transition-colors" aria-label="View Buttercup Baseline Dataset">
-          View Buttercup Baseline Dataset
+        <button id="ovenAlertPresetBtn" class="w-full py-2.5 rounded-xl bg-orange-50 hover:bg-orange-100 text-orange-950 font-bold text-xs border border-orange-200 transition-colors flex items-center justify-center gap-1.5 cursor-pointer" aria-label="Inspect Buttercup Benchmark">
+          <i data-lucide="sparkles" class="w-3.5 h-3.5 text-orange-700"></i>
+          <span>Inspect Buttercup Benchmark (Demo)</span>
         </button>
-        <button id="closeOvenAlertBtn" class="w-full py-2.5 rounded-xl bg-gradient-to-r from-orange-600 via-amber-600 to-orange-700 hover:from-orange-700 hover:to-amber-700 text-white font-bold text-xs transition-colors shadow-sm" aria-label="Dismiss capacity notice">
+        <a href="/leaderboard" class="w-full py-2.5 rounded-xl bg-stone-50 hover:bg-stone-100 text-stone-700 font-bold text-xs border border-stone-200 transition-colors flex items-center justify-center gap-1.5" aria-label="Browse Leaderboard">
+          <i data-lucide="trophy" class="w-3.5 h-3.5 text-amber-600"></i>
+          <span>Browse Leaderboard Champions</span>
+        </a>
+        <button id="closeOvenAlertBtn" class="w-full py-2.5 rounded-xl bg-gradient-to-r from-orange-600 via-amber-600 to-orange-700 hover:from-orange-700 hover:to-amber-700 text-white font-bold text-xs transition-colors shadow-sm cursor-pointer" aria-label="Dismiss capacity notice">
           Dismiss
         </button>
       </div>

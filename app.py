@@ -118,7 +118,7 @@ def check_free_tier_limits(client_ip: str, is_server_key: bool):
 
     # Check global daily free-tier cap
     if daily_counter["count"] >= DAILY_MAX_LOAVES:
-        return False, "The evaluation service is currently at capacity. Today's public quota has been reached. Please check back later, or configure your personal API key in Settings."
+        return False, "The bakery ovens are currently at maximum capacity for today. Daily public evaluation slots have been filled. Please check back tomorrow when fresh slots open up, or explore Buttercup's baseline dataset below!"
 
     # Record loaf inspection
     daily_counter["count"] += 1
@@ -1113,7 +1113,7 @@ async def grade_loaf(
             "best_thumbnail_index": 0,
             "can_submit": True,
             "demo_mode": True,
-            "message": "Graded using Demo Mode (Sample Preset). To grade your own cat photos in real-time with Gemini 3.8 Flash, enter your Gemini API key in the top right settings!"
+            "message": "Graded using Demo Calibration Mode. Sample loaf benchmarks are pre-inspected to demonstrate our aerodynamic loaf scoring engine."
         })
 
     is_server_key = not bool(api_key or x_gemini_api_key)
@@ -1261,13 +1261,13 @@ async def grade_loaf(
             )
         elif "API_KEY_INVALID" in err_str or "403" in err_str or "unregistered" in err_str:
             raise HTTPException(
-                status_code=401,
-                detail="Invalid API key. Please verify your Google Gemini API key in Configuration."
+                status_code=503,
+                detail="The evaluation service is temporarily unavailable due to scheduled maintenance. Please check back shortly."
             )
         elif "RESOURCE_EXHAUSTED" in err_str or "429" in err_str or "quota" in err_str.lower():
             raise HTTPException(
                 status_code=429,
-                detail="Evaluation capacity reached. The public quota has been reached for today. Please try again later or add your personal API key in Configuration."
+                detail="The bakery ovens are currently at maximum capacity for today. Daily public evaluation slots have been filled. Please check back tomorrow when fresh slots open up, or explore Buttercup's baseline dataset below!"
             )
         elif "503" in err_str or "UNAVAILABLE" in err_str or "high demand" in err_str.lower():
             raise HTTPException(

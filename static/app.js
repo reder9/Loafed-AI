@@ -2896,7 +2896,13 @@ Certified by Loafed Inspection Engine`;
   const ovenAlertPresetBtn = document.getElementById('ovenAlertPresetBtn');
 
   function showOvenAlert(msg) {
-    if (ovenAlertBody) ovenAlertBody.textContent = msg;
+    if (ovenAlertBody) {
+      if (msg && !msg.toLowerCase().includes('configuration') && !msg.toLowerCase().includes('settings')) {
+        ovenAlertBody.textContent = msg;
+      } else {
+        ovenAlertBody.textContent = "Our public evaluation ovens have reached their daily limit for today! Fresh loaf inspection slots will open up tomorrow. In the meantime, you can inspect Buttercup's certified benchmark dataset below or explore today's champions on the Leaderboard.";
+      }
+    }
     if (ovenAlertModal) ovenAlertModal.classList.remove('hidden');
     refreshIcons();
   }
