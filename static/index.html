@@ -454,21 +454,47 @@
 
     <!-- Inspecting Loading State -->
     <div id="loadingState" class="hidden bakery-card p-6 sm:p-10 text-center max-w-xl mx-auto my-12 border border-orange-200/90 shadow-lg shadow-orange-500/5">
-      <!-- Animated Oven / Whisk Icon -->
-      <div class="relative w-16 h-16 mx-auto mb-5">
-        <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-orange-100 to-amber-100 border border-orange-300 text-orange-700 flex items-center justify-center animate-pulse-gentle shadow-md shadow-orange-500/10">
-          <i data-lucide="sparkles" class="w-8 h-8 text-orange-600"></i>
+      <!-- Animated Cartoon Bakery Oven -->
+      <div class="oven-animation-container">
+        <!-- Ambient Oven Glow Halo -->
+        <div class="oven-glow-halo" aria-hidden="true"></div>
+        
+        <!-- Animated Steam Puffs -->
+        <div class="steam-cloud" aria-hidden="true">
+          <div class="steam-puff steam-puff-1"></div>
+          <div class="steam-puff steam-puff-2"></div>
+          <div class="steam-puff steam-puff-3"></div>
         </div>
-        <div class="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-white border border-orange-300 flex items-center justify-center shadow-xs">
-          <i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin text-orange-600"></i>
+
+        <!-- Cartoon Oven Illustration with Squash & Stretch -->
+        <img 
+          src="/static/cartoon_oven.webp" 
+          alt="Cozy cartoon bakery oven baking a cat loaf" 
+          width="200" 
+          height="200" 
+          class="cartoon-oven-img relative z-10"
+          loading="eager"
+        >
+
+        <!-- Cute Floating Sparkles -->
+        <div class="sparkle-float -top-1 -right-2 text-amber-500" aria-hidden="true">
+          <i data-lucide="sparkles" class="w-5 h-5"></i>
         </div>
+        <div class="sparkle-float bottom-4 -left-2 text-orange-400" aria-hidden="true" style="animation-delay: 1.1s;">
+          <i data-lucide="sparkle" class="w-4 h-4"></i>
+        </div>
+      </div>
+
+      <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-100/90 text-orange-950 text-xs font-bold mb-2.5 border border-orange-300 shadow-2xs">
+        <i data-lucide="flame" class="w-3.5 h-3.5 text-orange-600 animate-pulse"></i>
+        <span>Baking in Progress &bull; 375&deg;F Hearth Heat</span>
       </div>
 
       <h3 class="text-xl font-black text-stone-900 mb-1">Baking Right Meow...</h3>
       <p id="loadingPhrase" class="text-orange-800 font-bold text-sm h-6 transition-all duration-300">Loading the oven right meow...</p>
       
       <!-- Progress Bar with Molten Shimmer -->
-      <div class="w-full bg-orange-100/70 h-3 rounded-full overflow-hidden mt-5 max-w-sm mx-auto border border-orange-200">
+      <div class="w-full bg-orange-100/70 h-3 rounded-full overflow-hidden mt-4 max-w-sm mx-auto border border-orange-200">
         <div id="loadingProgressBar" class="h-full bg-gradient-to-r from-orange-500 to-amber-500 transition-all duration-300 rounded-full shadow-xs" style="width: 0%;"></div>
       </div>
 
