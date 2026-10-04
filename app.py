@@ -1254,37 +1254,94 @@ def send_google_signin_notification(id_token: str):
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <title>{subject}</title>
+  <!--[if mso]>
+  <style type="text/css">
+    body, table, td {{ font-family: Arial, Helvetica, sans-serif !important; }}
+  </style>
+  <![endif]-->
+  <style type="text/css">
+    @media only screen and (max-width: 520px) {{
+      .outer-wrapper {{
+        padding: 16px 8px 32px 8px !important;
+      }}
+      .main-card {{
+        border-radius: 16px !important;
+      }}
+      .card-content {{
+        padding: 22px 18px 20px 18px !important;
+      }}
+      .header-table {{
+        margin-bottom: 20px !important;
+        padding-bottom: 16px !important;
+      }}
+      .header-left-col {{
+        display: block !important;
+        width: 100% !important;
+      }}
+      .header-badge-col {{
+        display: block !important;
+        width: 100% !important;
+        text-align: left !important;
+        padding-top: 10px !important;
+      }}
+      .brand-title {{
+        font-size: 20px !important;
+      }}
+      .brand-sub {{
+        font-size: 10.5px !important;
+        line-height: 1.35 !important;
+      }}
+      .heading-title {{
+        font-size: 20px !important;
+      }}
+      .session-table {{
+        font-size: 12px !important;
+      }}
+      .session-label {{
+        width: 40% !important;
+      }}
+      .footer-td {{
+        padding: 18px 16px !important;
+      }}
+    }}
+  </style>
 </head>
 <body style="margin: 0; padding: 0; background-color: #fffaf4; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; color: #292524; -webkit-font-smoothing: antialiased;">
   <div style="display: none; font-size: 1px; color: #fffaf4; line-height: 1px; max-height: 0px; max-width: 0px; opacity: 0; overflow: hidden;">
     Heads up: Your Loafed AI account was just accessed with Google Sign-In on {formatted_time}.
   </div>
 
-  <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #fffaf4; padding: 36px 16px 48px 16px;">
+  <table width="100%" border="0" cellspacing="0" cellpadding="0" class="outer-wrapper" style="background-color: #fffaf4; padding: 36px 16px 48px 16px;">
     <tr>
       <td align="center">
-        <table width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 580px; background-color: #ffffff; border: 1px solid #fed7aa; border-radius: 20px; box-shadow: 0 10px 30px -10px rgba(234, 88, 12, 0.12); overflow: hidden;">
+        <table width="100%" border="0" cellspacing="0" cellpadding="0" class="main-card" style="max-width: 580px; background-color: #ffffff; border: 1px solid #fed7aa; border-radius: 20px; box-shadow: 0 10px 30px -10px rgba(234, 88, 12, 0.12); overflow: hidden;">
           <tr>
             <td height="5" style="background: linear-gradient(90deg, #ea580c 0%, #f97316 50%, #d97706 100%);"></td>
           </tr>
           <tr>
-            <td style="padding: 36px 32px 28px 32px;">
-              <table width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 28px; border-bottom: 1px solid #ffedd5; padding-bottom: 22px;">
+            <td class="card-content" style="padding: 36px 32px 28px 32px;">
+              <table width="100%" border="0" cellspacing="0" cellpadding="0" class="header-table" style="margin-bottom: 28px; border-bottom: 1px solid #ffedd5; padding-bottom: 22px;">
                 <tr>
-                  <td width="64" valign="middle" style="padding-right: 14px;">
-                    <a href="{website_url}" target="_blank" style="text-decoration: none; display: block;">
-                      <img src="{logo_url}" alt="Loafed AI Mascot" width="56" height="56" style="display: block; width: 56px; height: 56px; border-radius: 14px; border: 1.5px solid #fed7aa; background-color: #fff7ed; object-fit: contain;" />
-                    </a>
+                  <td valign="middle" class="header-left-col">
+                    <table border="0" cellspacing="0" cellpadding="0">
+                      <tr>
+                        <td width="52" valign="middle" style="padding-right: 12px;">
+                          <a href="{website_url}" target="_blank" style="text-decoration: none; display: block;">
+                            <img src="{logo_url}" alt="Loafed AI Mascot" width="48" height="48" class="logo-img" style="display: block; width: 48px; height: 48px; border-radius: 12px; border: 1.5px solid #fed7aa; background-color: #fff7ed; object-fit: contain;" />
+                          </a>
+                        </td>
+                        <td valign="middle">
+                          <div class="brand-title" style="font-size: 22px; font-weight: 900; letter-spacing: -0.5px; color: #1c1917; line-height: 1.2;">
+                            Loafed<span style="color: #ea580c;">AI</span>
+                          </div>
+                          <div class="brand-sub" style="font-size: 11px; color: #9a3412; letter-spacing: 0.5px; font-weight: 700; margin-top: 3px; line-height: 1.3;">
+                            Feline Posture &amp; Silhouette Certification Bureau
+                          </div>
+                        </td>
+                      </tr>
+                    </table>
                   </td>
-                  <td valign="middle">
-                    <div style="font-size: 22px; font-weight: 900; letter-spacing: -0.5px; color: #1c1917; line-height: 1.2;">
-                      Loafed<span style="color: #ea580c;">AI</span>
-                    </div>
-                    <div style="font-size: 11px; color: #9a3412; letter-spacing: 0.5px; font-weight: 700; margin-top: 3px;">
-                      Feline Posture &amp; Silhouette Certification Bureau
-                    </div>
-                  </td>
-                  <td align="right" valign="middle">
+                  <td align="right" valign="middle" class="header-badge-col">
                     <span style="display: inline-block; padding: 5px 12px; background-color: #ffedd5; border: 1px solid #fed7aa; border-radius: 999px; font-size: 10px; font-weight: 800; color: #9a3412; letter-spacing: 0.8px; text-transform: uppercase; white-space: nowrap;">
                       SECURITY NOTICE
                     </span>
@@ -1292,7 +1349,7 @@ def send_google_signin_notification(id_token: str):
                 </tr>
               </table>
 
-              <h1 style="color: #1c1917; font-size: 22px; font-weight: 900; margin: 0 0 12px 0; line-height: 1.3; letter-spacing: -0.3px;">
+              <h1 class="heading-title" style="color: #1c1917; font-size: 22px; font-weight: 900; margin: 0 0 12px 0; line-height: 1.3; letter-spacing: -0.3px;">
                 Google Sign-In Detected
               </h1>
               <p style="color: #57534e; font-size: 14px; line-height: 1.6; margin: 0 0 20px 0;">
@@ -1308,21 +1365,21 @@ def send_google_signin_notification(id_token: str):
                     <div style="font-size: 11px; font-weight: 800; letter-spacing: 1.5px; color: #9a3412; text-transform: uppercase; margin-bottom: 12px;">
                       SESSION DETAILS
                     </div>
-                    <table width="100%" border="0" cellspacing="0" cellpadding="0" style="font-size: 13px;">
+                    <table width="100%" border="0" cellspacing="0" cellpadding="0" class="session-table" style="font-size: 13px;">
                       <tr>
-                        <td style="color: #78716c; padding-bottom: 8px; width: 35%;">Account:</td>
-                        <td style="color: #1c1917; font-weight: 700; padding-bottom: 8px;">{email}</td>
+                        <td class="session-label" style="color: #78716c; padding-bottom: 8px; width: 35%;">Account:</td>
+                        <td style="color: #1c1917; font-weight: 700; padding-bottom: 8px; word-break: break-all;">{email}</td>
                       </tr>
                       <tr>
-                        <td style="color: #78716c; padding-bottom: 8px;">Auth Provider:</td>
+                        <td class="session-label" style="color: #78716c; padding-bottom: 8px; width: 35%;">Auth Provider:</td>
                         <td style="color: #1c1917; font-weight: 700; padding-bottom: 8px;">Google Single Sign-On</td>
                       </tr>
                       <tr>
-                        <td style="color: #78716c; padding-bottom: 8px;">Date &amp; Time:</td>
+                        <td class="session-label" style="color: #78716c; padding-bottom: 8px; width: 35%;">Date &amp; Time:</td>
                         <td style="color: #1c1917; font-weight: 700; padding-bottom: 8px;">{formatted_time}</td>
                       </tr>
                       <tr>
-                        <td style="color: #78716c;">Status:</td>
+                        <td class="session-label" style="color: #78716c;">Status:</td>
                         <td style="color: #15803d; font-weight: 800;">Authenticated Successfully</td>
                       </tr>
                     </table>
@@ -1353,7 +1410,7 @@ def send_google_signin_notification(id_token: str):
           </tr>
 
           <tr>
-            <td style="background-color: #fafaf9; border-top: 1px solid #f5f5f4; padding: 22px 32px; text-align: center;">
+            <td class="footer-td" style="background-color: #fafaf9; border-top: 1px solid #f5f5f4; padding: 22px 32px; text-align: center;">
               <p style="font-size: 11px; color: #78716c; line-height: 1.6; margin: 0 0 8px 0;">
                 <strong>Loafed AI</strong> &bull; An open feline posture appreciation project by <a href="https://redersoft.com" target="_blank" style="color: #ea580c; text-decoration: none; font-weight: 700;">RederSoft</a>
               </p>

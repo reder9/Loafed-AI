@@ -52,6 +52,54 @@ exports.handler = async (event) => {
     body, table, td { font-family: Arial, Helvetica, sans-serif !important; }
   </style>
   <![endif]-->
+  <style type="text/css">
+    @media only screen and (max-width: 520px) {
+      .outer-wrapper {
+        padding: 16px 8px 32px 8px !important;
+      }
+      .main-card {
+        border-radius: 16px !important;
+      }
+      .card-content {
+        padding: 22px 18px 20px 18px !important;
+      }
+      .header-table {
+        margin-bottom: 20px !important;
+        padding-bottom: 16px !important;
+      }
+      .header-left-col {
+        display: block !important;
+        width: 100% !important;
+      }
+      .header-badge-col {
+        display: block !important;
+        width: 100% !important;
+        text-align: left !important;
+        padding-top: 10px !important;
+      }
+      .brand-title {
+        font-size: 20px !important;
+      }
+      .brand-sub {
+        font-size: 10.5px !important;
+        line-height: 1.35 !important;
+      }
+      .heading-title {
+        font-size: 20px !important;
+      }
+      .code-box-td {
+        padding: 20px 12px !important;
+      }
+      .code-number {
+        font-size: 32px !important;
+        letter-spacing: 6px !important;
+        padding-left: 6px !important;
+      }
+      .footer-td {
+        padding: 18px 16px !important;
+      }
+    }
+  </style>
 </head>
 <body style="margin: 0; padding: 0; background-color: #fffaf4; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; color: #292524; -webkit-font-smoothing: antialiased;">
   <!-- Pre-header text (hidden preview in inbox) -->
@@ -59,11 +107,11 @@ exports.handler = async (event) => {
     Your Loafed AI verification code is ${code}. Enter this code to verify your Baker account.
   </div>
 
-  <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #fffaf4; padding: 36px 16px 48px 16px;">
+  <table width="100%" border="0" cellspacing="0" cellpadding="0" class="outer-wrapper" style="background-color: #fffaf4; padding: 36px 16px 48px 16px;">
     <tr>
       <td align="center">
         <!-- Main Container Card -->
-        <table width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 580px; background-color: #ffffff; border: 1px solid #fed7aa; border-radius: 20px; box-shadow: 0 10px 30px -10px rgba(234, 88, 12, 0.12); overflow: hidden;">
+        <table width="100%" border="0" cellspacing="0" cellpadding="0" class="main-card" style="max-width: 580px; background-color: #ffffff; border: 1px solid #fed7aa; border-radius: 20px; box-shadow: 0 10px 30px -10px rgba(234, 88, 12, 0.12); overflow: hidden;">
           
           <!-- Top Orange/Amber Accent Line -->
           <tr>
@@ -72,25 +120,31 @@ exports.handler = async (event) => {
           
           <!-- Content Padding -->
           <tr>
-            <td style="padding: 36px 32px 28px 32px;">
+            <td class="card-content" style="padding: 36px 32px 28px 32px;">
               
               <!-- Brand Header -->
-              <table width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 28px; border-bottom: 1px solid #ffedd5; padding-bottom: 22px;">
+              <table width="100%" border="0" cellspacing="0" cellpadding="0" class="header-table" style="margin-bottom: 28px; border-bottom: 1px solid #ffedd5; padding-bottom: 22px;">
                 <tr>
-                  <td width="64" valign="middle" style="padding-right: 14px;">
-                    <a href="${websiteUrl}" target="_blank" style="text-decoration: none; display: block;">
-                      <img src="${logoUrl}" alt="Loafed AI Mascot" width="56" height="56" style="display: block; width: 56px; height: 56px; border-radius: 14px; border: 1.5px solid #fed7aa; background-color: #fff7ed; object-fit: contain;" />
-                    </a>
+                  <td valign="middle" class="header-left-col">
+                    <table border="0" cellspacing="0" cellpadding="0">
+                      <tr>
+                        <td width="52" valign="middle" style="padding-right: 12px;">
+                          <a href="${websiteUrl}" target="_blank" style="text-decoration: none; display: block;">
+                            <img src="${logoUrl}" alt="Loafed AI Mascot" width="48" height="48" class="logo-img" style="display: block; width: 48px; height: 48px; border-radius: 12px; border: 1.5px solid #fed7aa; background-color: #fff7ed; object-fit: contain;" />
+                          </a>
+                        </td>
+                        <td valign="middle">
+                          <div class="brand-title" style="font-size: 22px; font-weight: 900; letter-spacing: -0.5px; color: #1c1917; line-height: 1.2;">
+                            Loafed<span style="color: #ea580c;">AI</span>
+                          </div>
+                          <div class="brand-sub" style="font-size: 11px; color: #9a3412; letter-spacing: 0.5px; font-weight: 700; margin-top: 3px; line-height: 1.3;">
+                            Feline Posture &amp; Silhouette Certification Bureau
+                          </div>
+                        </td>
+                      </tr>
+                    </table>
                   </td>
-                  <td valign="middle">
-                    <div style="font-size: 22px; font-weight: 900; letter-spacing: -0.5px; color: #1c1917; line-height: 1.2;">
-                      Loafed<span style="color: #ea580c;">AI</span>
-                    </div>
-                    <div style="font-size: 11px; color: #9a3412; letter-spacing: 0.5px; font-weight: 700; margin-top: 3px;">
-                      Feline Posture &amp; Silhouette Certification Bureau
-                    </div>
-                  </td>
-                  <td align="right" valign="middle">
+                  <td align="right" valign="middle" class="header-badge-col">
                     <span style="display: inline-block; padding: 5px 12px; background-color: #ffedd5; border: 1px solid #fed7aa; border-radius: 999px; font-size: 10px; font-weight: 800; color: #9a3412; letter-spacing: 0.8px; text-transform: uppercase; white-space: nowrap;">
                       ${badgeText}
                     </span>
@@ -99,7 +153,7 @@ exports.handler = async (event) => {
               </table>
 
               <!-- Main Greeting & Description -->
-              <h1 style="color: #1c1917; font-size: 22px; font-weight: 900; margin: 0 0 12px 0; line-height: 1.3; letter-spacing: -0.3px;">
+              <h1 class="heading-title" style="color: #1c1917; font-size: 22px; font-weight: 900; margin: 0 0 12px 0; line-height: 1.3; letter-spacing: -0.3px;">
                 ${title}
               </h1>
               <p style="color: #57534e; font-size: 14px; line-height: 1.6; margin: 0 0 24px 0;">
@@ -109,11 +163,11 @@ exports.handler = async (event) => {
               <!-- Stylized Code Box -->
               <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #fff7ed; border: 2px dashed #f97316; border-radius: 16px; margin: 24px 0;">
                 <tr>
-                  <td align="center" style="padding: 24px 20px;">
+                  <td align="center" class="code-box-td" style="padding: 24px 20px;">
                     <div style="font-size: 11px; font-weight: 800; letter-spacing: 2px; color: #9a3412; text-transform: uppercase; margin-bottom: 8px;">
                       ${codeLabel}
                     </div>
-                    <div style="font-size: 42px; font-weight: 900; letter-spacing: 12px; color: #c2410c; font-family: 'SF Mono', Consolas, 'Liberation Mono', Menlo, Courier, monospace; line-height: 1.2; padding-left: 12px;">
+                    <div class="code-number" style="font-size: 42px; font-weight: 900; letter-spacing: 12px; color: #c2410c; font-family: 'SF Mono', Consolas, 'Liberation Mono', Menlo, Courier, monospace; line-height: 1.2; padding-left: 12px;">
                       ${code}
                     </div>
                     <div style="font-size: 12px; font-weight: 600; color: #78716c; margin-top: 10px;">
@@ -152,7 +206,7 @@ exports.handler = async (event) => {
 
           <!-- Footer Area -->
           <tr>
-            <td style="background-color: #fafaf9; border-top: 1px solid #f5f5f4; padding: 22px 32px; text-align: center;">
+            <td class="footer-td" style="background-color: #fafaf9; border-top: 1px solid #f5f5f4; padding: 22px 32px; text-align: center;">
               <p style="font-size: 11px; color: #78716c; line-height: 1.6; margin: 0 0 8px 0;">
                 <strong>Loafed AI</strong> &bull; An open feline posture appreciation project by <a href="https://redersoft.com" target="_blank" style="color: #ea580c; text-decoration: none; font-weight: 700;">RederSoft</a>
               </p>
