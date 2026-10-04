@@ -712,46 +712,61 @@ body {
    Modal UX Enhancements (Header Icon, Close Button, Forms)
    ========================================================================== */
 .modal-icon-badge {
-  width: 48px !important;
-  height: 48px !important;
-  min-width: 48px !important;
-  min-height: 48px !important;
-  max-width: 48px !important;
-  max-height: 48px !important;
-  border-radius: 1rem !important;
-  background-color: #ffedd5 !important;
-  border: 1px solid #fdba74 !important;
+  width: 52px !important;
+  height: 52px !important;
+  min-width: 52px !important;
+  min-height: 52px !important;
+  max-width: 52px !important;
+  max-height: 52px !important;
+  border-radius: 1.125rem !important;
+  background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 50%, #fed7aa 100%) !important;
+  border: 1.5px solid rgba(251, 146, 60, 0.45) !important;
   color: #ea580c !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  margin: 0 auto 0.75rem auto !important;
-  box-shadow: 0 2px 8px rgba(234, 88, 12, 0.15) !important;
+  margin: 0 auto 0.875rem auto !important;
+  box-shadow: 0 4px 14px -2px rgba(234, 88, 12, 0.22), inset 0 1px 1px rgba(255, 255, 255, 0.9) !important;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease !important;
+}
+
+.modal-icon-badge:hover {
+  transform: scale(1.06) translateY(-1px);
+  box-shadow: 0 6px 18px -2px rgba(234, 88, 12, 0.30), inset 0 1px 1px rgba(255, 255, 255, 0.9) !important;
 }
 
 .modal-close-btn {
   position: absolute !important;
   top: 1rem !important;
   right: 1rem !important;
-  width: 32px !important;
-  height: 32px !important;
-  border-radius: 0.5rem !important;
-  background-color: #f5f5f4 !important;
+  width: 34px !important;
+  height: 34px !important;
+  min-width: 34px !important;
+  min-height: 34px !important;
+  border-radius: 9999px !important;
+  background-color: #fafaf9 !important;
   border: 1px solid #e7e5e4 !important;
   color: #78716c !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
   cursor: pointer !important;
-  transition: all 0.15s ease !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
   z-index: 20 !important;
+  padding: 0 !important;
 }
 
 .modal-close-btn:hover {
   background-color: #fee2e2 !important;
   border-color: #fca5a5 !important;
-  color: #b91c1c !important;
-  transform: scale(1.05);
+  color: #dc2626 !important;
+  transform: rotate(90deg) scale(1.08);
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.15) !important;
+}
+
+.modal-close-btn:active {
+  transform: rotate(90deg) scale(0.96);
 }
 
 .btn-google-signin {
@@ -759,7 +774,7 @@ body {
   min-height: 48px !important;
   padding: 0.75rem 1rem !important;
   border-radius: 0.75rem !important;
-  border: 1px solid #d6d3d1 !important;
+  border: 1.5px solid #e7e5e4 !important;
   background-color: #ffffff !important;
   color: #292524 !important;
   font-size: 0.875rem !important;
@@ -768,7 +783,7 @@ body {
   align-items: center !important;
   justify-content: center !important;
   gap: 0.75rem !important;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05) !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04) !important;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
   cursor: pointer !important;
 }
@@ -776,7 +791,7 @@ body {
 .btn-google-signin:hover {
   background-color: #fafaf9 !important;
   border-color: #ea580c !important;
-  box-shadow: 0 4px 12px rgba(234, 88, 12, 0.15) !important;
+  box-shadow: 0 4px 14px rgba(234, 88, 12, 0.15) !important;
   transform: translateY(-1px);
 }
 
@@ -806,7 +821,7 @@ body {
 }
 
 /* ==========================================================================
-   RederSoft In-Modal Auth Experience
+   RederSoft In-Modal Auth Experience & Input Icons
    ========================================================================== */
 .auth-tab-btn {
   padding: 0.5rem 0.75rem !important;
@@ -816,18 +831,20 @@ body {
   transition: all 0.15s ease !important;
   cursor: pointer !important;
   text-align: center !important;
+  border: none !important;
 }
 .auth-tab-btn.active {
   background-color: #ffffff !important;
   color: #1c1917 !important;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08) !important;
 }
 .auth-tab-btn:not(.active) {
   background-color: transparent !important;
   color: #78716c !important;
 }
 .auth-tab-btn:not(.active):hover {
-  color: #292524 !important;
+  color: #ea580c !important;
+  background-color: rgba(255, 237, 213, 0.3) !important;
 }
 
 .auth-notice-error {
@@ -842,24 +859,94 @@ body {
   color: #15803d !important;
 }
 
+/* Dedicated Input with Icon Container */
+.input-with-icon-wrapper {
+  position: relative !important;
+  display: flex !important;
+  align-items: center !important;
+  width: 100% !important;
+}
+
+.input-icon-left {
+  position: absolute !important;
+  left: 0.875rem !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  width: 1.125rem !important;
+  height: 1.125rem !important;
+  color: #a8a29e !important;
+  pointer-events: none !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 10 !important;
+  flex-shrink: 0 !important;
+  transition: color 0.18s ease, transform 0.18s ease !important;
+}
+
+.input-with-icon-wrapper:focus-within .input-icon-left {
+  color: #ea580c !important;
+  transform: translateY(-50%) scale(1.08) !important;
+}
+
+.password-toggle-btn {
+  position: absolute !important;
+  right: 0.625rem !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  width: 2rem !important;
+  height: 2rem !important;
+  border-radius: 0.5rem !important;
+  background: transparent !important;
+  border: none !important;
+  color: #a8a29e !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: color 0.15s ease, background-color 0.15s ease, transform 0.15s ease !important;
+  z-index: 10 !important;
+  padding: 0 !important;
+}
+
+.password-toggle-btn:hover {
+  color: #292524 !important;
+  background-color: #f5f5f4 !important;
+}
+
+.password-toggle-btn:active {
+  transform: translateY(-50%) scale(0.94) !important;
+}
+
 .auth-input {
   width: 100% !important;
-  padding-left: 2.5rem !important;
+  padding-left: 2.625rem !important;
   padding-right: 0.875rem !important;
-  padding-top: 0.625rem !important;
-  padding-bottom: 0.625rem !important;
+  padding-top: 0.6875rem !important;
+  padding-bottom: 0.6875rem !important;
   font-size: 0.875rem !important;
+  line-height: 1.25rem !important;
   border-radius: 0.75rem !important;
-  border: 1px solid #e7e5e4 !important;
-  background-color: rgba(250, 250, 249, 0.6) !important;
+  border: 1.5px solid #e7e5e4 !important;
+  background-color: #ffffff !important;
   color: #1c1917 !important;
-  transition: all 0.15s ease !important;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease !important;
   outline: none !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03) !important;
 }
+
+.auth-input.has-toggle {
+  padding-right: 2.75rem !important;
+}
+
+.auth-input:hover {
+  border-color: #d6d3d1 !important;
+}
+
 .auth-input:focus {
   background-color: #ffffff !important;
   border-color: #ea580c !important;
-  box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.15) !important;
+  box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.18) !important;
 }
 
 .btn-action-primary {

@@ -2603,6 +2603,23 @@ Certified by Loafed Inspection Engine`;
   if (headerSignInBtn) headerSignInBtn.addEventListener('click', () => openAuthModal('signin'));
   if (closeAuthModalBtn) closeAuthModalBtn.addEventListener('click', closeAuthModal);
 
+  // Password Visibility Toggles
+  document.querySelectorAll('.password-toggle-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const targetId = btn.getAttribute('data-target');
+      const input = targetId ? document.getElementById(targetId) : null;
+      if (!input) return;
+      const isPassword = input.type === 'password';
+      input.type = isPassword ? 'text' : 'password';
+      btn.setAttribute('aria-label', isPassword ? 'Hide password' : 'Show password');
+      btn.innerHTML = isPassword 
+        ? '<i data-lucide="eye-off" class="w-4 h-4"></i>' 
+        : '<i data-lucide="eye" class="w-4 h-4"></i>';
+      refreshIcons();
+    });
+  });
+
   // 1-Click Google Sign-In (Direct to Google, skips Cognito Hosted UI)
   if (signInGoogleBtn) {
     signInGoogleBtn.addEventListener('click', () => {

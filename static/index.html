@@ -766,12 +766,12 @@
   <!-- Past Loaves / Local History Modal -->
   <div id="historyModal" class="hidden fixed inset-0 z-50 bg-stone-950/60 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="bakery-card max-w-lg w-full p-6 sm:p-7 relative bg-white border border-orange-200/90 shadow-2xl max-h-[85vh] flex flex-col">
-      <button id="closeHistoryBtn" class="absolute right-4 top-4 text-stone-400 hover:text-stone-700 p-1 rounded-lg hover:bg-orange-50 transition-colors" aria-label="Close saved loaves modal">
+      <button id="closeHistoryBtn" class="modal-close-btn" aria-label="Close saved loaves modal">
         <i data-lucide="x" class="w-4 h-4"></i>
       </button>
 
       <div class="flex items-center gap-3 mb-4">
-        <div class="w-10 h-10 rounded-xl bg-orange-100/80 border border-orange-300 text-orange-700 flex items-center justify-center shrink-0 shadow-xs">
+        <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-50 to-orange-100 border border-orange-200/90 text-orange-700 flex items-center justify-center shrink-0 shadow-xs">
           <i data-lucide="history" class="w-5 h-5"></i>
         </div>
         <div>
@@ -799,12 +799,12 @@
   <!-- Legal / Privacy & Terms Modal -->
   <div id="legalModal" class="hidden fixed inset-0 z-50 bg-stone-950/60 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="bakery-card max-w-xl w-full p-6 sm:p-7 relative bg-white border border-orange-200/90 shadow-2xl max-h-[85vh] flex flex-col">
-      <button id="closeLegalBtn" class="absolute right-4 top-4 text-stone-400 hover:text-stone-700 p-1 rounded-lg hover:bg-orange-50 transition-colors" aria-label="Close legal modal">
+      <button id="closeLegalBtn" class="modal-close-btn" aria-label="Close legal modal">
         <i data-lucide="x" class="w-4 h-4"></i>
       </button>
 
       <div class="flex items-center gap-3 mb-4">
-        <div class="w-10 h-10 rounded-xl bg-orange-100/80 border border-orange-300 text-orange-700 flex items-center justify-center shrink-0 shadow-xs">
+        <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-50 to-orange-100 border border-orange-200/90 text-orange-700 flex items-center justify-center shrink-0 shadow-xs">
           <i data-lucide="shield-check" class="w-5 h-5"></i>
         </div>
         <div>
@@ -884,7 +884,7 @@
       </button>
 
       <div class="flex items-center gap-3 mb-4 pr-8">
-        <div class="w-10 h-10 rounded-xl bg-amber-100 border border-amber-300 text-amber-700 flex items-center justify-center shadow-xs shrink-0">
+        <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-50 to-orange-100 border border-orange-300 text-orange-700 flex items-center justify-center shadow-xs shrink-0">
           <i data-lucide="award" class="w-5 h-5"></i>
         </div>
         <div>
@@ -913,7 +913,10 @@
           <label for="submitCatNameInput" class="block text-xs font-bold text-stone-700 mb-1">
             Cat's Name <span class="text-orange-600">*</span>
           </label>
-          <input type="text" id="submitCatNameInput" required maxlength="40" placeholder="e.g. Buttercup, Professor Whiskers, Milo" class="w-full px-3.5 py-2.5 rounded-xl border border-orange-200 text-xs sm:text-sm text-stone-800 bg-orange-50/30 focus:bg-white focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all">
+          <div class="input-with-icon-wrapper">
+            <i data-lucide="tag" class="input-icon-left"></i>
+            <input type="text" id="submitCatNameInput" required maxlength="40" placeholder="e.g. Buttercup, Professor Whiskers, Milo" class="auth-input">
+          </div>
           <p class="text-[10px] text-stone-500 mt-1">Every loaf on the public leaderboard requires an official cat name.</p>
         </div>
 
@@ -922,7 +925,10 @@
           <label for="submitDisplayNameInput" class="block text-xs font-bold text-stone-700 mb-1">
             Public Baker Display Name <span class="text-orange-600">*</span>
           </label>
-          <input type="text" id="submitDisplayNameInput" required maxlength="30" placeholder="e.g. Baker Sarah or The Cat Whisperer" class="w-full px-3.5 py-2.5 rounded-xl border border-orange-200 text-xs sm:text-sm text-stone-800 bg-orange-50/30 focus:bg-white focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all">
+          <div class="input-with-icon-wrapper">
+            <i data-lucide="user" class="input-icon-left"></i>
+            <input type="text" id="submitDisplayNameInput" required maxlength="30" placeholder="e.g. Baker Sarah or The Cat Whisperer" class="auth-input">
+          </div>
           <p class="text-[10px] text-stone-500 mt-1">Your baker title displayed alongside your cat on the leaderboard.</p>
         </div>
       </div>
@@ -1006,8 +1012,8 @@
           <!-- Sign Up Only: Baker Display Name -->
           <div id="authNameField" class="hidden space-y-1">
             <label class="text-[11px] font-bold uppercase tracking-wider text-stone-600 block">Baker Handle / Display Name</label>
-            <div class="relative">
-              <i data-lucide="user" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400"></i>
+            <div class="input-with-icon-wrapper">
+              <i data-lucide="user" class="input-icon-left"></i>
               <input type="text" id="authNameInput" placeholder="e.g. MasterBakerSam" class="auth-input">
             </div>
           </div>
@@ -1015,8 +1021,8 @@
           <!-- Email -->
           <div class="space-y-1">
             <label class="text-[11px] font-bold uppercase tracking-wider text-stone-600 block">Email Address</label>
-            <div class="relative">
-              <i data-lucide="mail" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400"></i>
+            <div class="input-with-icon-wrapper">
+              <i data-lucide="mail" class="input-icon-left"></i>
               <input type="email" id="authEmailInput" required placeholder="baker@example.com" class="auth-input">
             </div>
           </div>
@@ -1027,9 +1033,12 @@
               <label class="text-[11px] font-bold uppercase tracking-wider text-stone-600">Password</label>
               <button type="button" id="authForgotPassLink" class="text-[11px] text-orange-700 hover:text-orange-900 font-semibold transition-colors">Forgot password?</button>
             </div>
-            <div class="relative">
-              <i data-lucide="lock" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400"></i>
-              <input type="password" id="authPasswordInput" required minlength="8" placeholder="At least 8 characters" class="auth-input">
+            <div class="input-with-icon-wrapper">
+              <i data-lucide="lock" class="input-icon-left"></i>
+              <input type="password" id="authPasswordInput" required minlength="8" placeholder="At least 8 characters" class="auth-input has-toggle">
+              <button type="button" class="password-toggle-btn" data-target="authPasswordInput" aria-label="Toggle password visibility" tabindex="-1">
+                <i data-lucide="eye" class="w-4 h-4"></i>
+              </button>
             </div>
           </div>
 
@@ -1060,8 +1069,8 @@
         <form id="authVerifyForm" class="space-y-3">
           <div class="space-y-1">
             <label class="text-[11px] font-bold uppercase tracking-wider text-stone-600 block text-center">Confirmation Code</label>
-            <div class="relative">
-              <i data-lucide="key-round" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400"></i>
+            <div class="input-with-icon-wrapper">
+              <i data-lucide="key-round" class="input-icon-left"></i>
               <input type="text" id="authVerifyCodeInput" required maxlength="8" placeholder="123456" class="auth-input text-center tracking-widest font-mono text-base font-bold">
             </div>
           </div>
@@ -1095,8 +1104,8 @@
         <form id="authForgotForm" class="space-y-3">
           <div class="space-y-1">
             <label class="text-[11px] font-bold uppercase tracking-wider text-stone-600 block">Email Address</label>
-            <div class="relative">
-              <i data-lucide="mail" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400"></i>
+            <div class="input-with-icon-wrapper">
+              <i data-lucide="mail" class="input-icon-left"></i>
               <input type="email" id="authForgotEmailInput" required placeholder="baker@example.com" class="auth-input">
             </div>
           </div>
@@ -1104,17 +1113,20 @@
           <div id="authForgotStep2" class="hidden space-y-3">
             <div class="space-y-1">
               <label class="text-[11px] font-bold uppercase tracking-wider text-stone-600 block">Reset Code</label>
-              <div class="relative">
-                <i data-lucide="key-round" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400"></i>
+              <div class="input-with-icon-wrapper">
+                <i data-lucide="key-round" class="input-icon-left"></i>
                 <input type="text" id="authForgotCodeInput" maxlength="8" placeholder="123456" class="auth-input text-center tracking-widest font-mono">
               </div>
             </div>
 
             <div class="space-y-1">
               <label class="text-[11px] font-bold uppercase tracking-wider text-stone-600 block">New Password</label>
-              <div class="relative">
-                <i data-lucide="lock" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400"></i>
-                <input type="password" id="authForgotNewPassInput" minlength="8" placeholder="At least 8 characters" class="auth-input">
+              <div class="input-with-icon-wrapper">
+                <i data-lucide="lock" class="input-icon-left"></i>
+                <input type="password" id="authForgotNewPassInput" minlength="8" placeholder="At least 8 characters" class="auth-input has-toggle">
+                <button type="button" class="password-toggle-btn" data-target="authForgotNewPassInput" aria-label="Toggle password visibility" tabindex="-1">
+                  <i data-lucide="eye" class="w-4 h-4"></i>
+                </button>
               </div>
             </div>
           </div>
@@ -1142,7 +1154,7 @@
   <div id="deleteAccountModal" class="hidden fixed inset-0 z-50 bg-stone-950/70 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="bakery-card max-w-sm w-full p-6 relative bg-white border border-red-200 shadow-2xl">
       <div class="flex items-center gap-3 mb-3 text-red-600">
-        <div class="w-10 h-10 rounded-xl bg-red-100 border border-red-200 flex items-center justify-center shrink-0">
+        <div class="w-11 h-11 rounded-2xl bg-red-100 border border-red-200 flex items-center justify-center shrink-0 shadow-xs">
           <i data-lucide="alert-triangle" class="w-5 h-5 text-red-600"></i>
         </div>
         <h3 class="text-base font-black text-stone-900">Delete Account & Loaves?</h3>
