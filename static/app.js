@@ -305,7 +305,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
   // Image Optimization (Resize large images with high-quality smoothing and fidelity)
-  async function optimizeImage(file, maxDimension = 1600, quality = 0.92) {
+  async function optimizeImage(file, maxDimension = 1400, quality = 0.84) {
     if (!file || !file.type.startsWith('image/')) return file;
     return new Promise((resolve) => {
       const img = new Image();
@@ -313,7 +313,7 @@ document.addEventListener('DOMContentLoaded', () => {
       img.onload = () => {
         URL.revokeObjectURL(url);
         let { width, height } = img;
-        if (width <= maxDimension && height <= maxDimension && file.size < 1200 * 1024) {
+        if (width <= maxDimension && height <= maxDimension && file.size < 400 * 1024) {
           return resolve(file);
         }
         if (width > height) {
@@ -336,6 +336,23 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.drawImage(img, 0, 0, width, height);
         canvas.toBlob((blob) => {
           if (!blob) return resolve(file);
+          // If still over 650KB, perform a quick second pass to guarantee payload stays compact
+          if (blob.size > 650 * 1024) {
+            const c2 = document.createElement('canvas');
+            const scale = 0.82;
+            c2.width = Math.round(width * scale);
+            c2.height = Math.round(height * scale);
+            const ctx2 = c2.getContext('2d');
+            ctx2.imageSmoothingEnabled = true;
+            ctx2.imageSmoothingQuality = 'high';
+            ctx2.drawImage(canvas, 0, 0, c2.width, c2.height);
+            c2.toBlob((blob2) => {
+              const finalBlob = blob2 || blob;
+              const optimizedFile = new File([finalBlob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' });
+              resolve(optimizedFile);
+            }, 'image/jpeg', 0.78);
+            return;
+          }
           const optimizedFile = new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' });
           resolve(optimizedFile);
         }, 'image/jpeg', quality);
@@ -1367,13 +1384,13 @@ document.addEventListener('DOMContentLoaded', () => {
       formData.append('api_key', state.apiKey);
     }
 
-    // Append all staged photos (1 to 5) with angle hints
-    state.photos.forEach((photo, idx) => {
+    // Append all staged photos (1 to 5) with angle hints without file duplication
+    const angleTypes = [];
+    state.photos.forEach((photo) => {
       formData.append('images', photo.file);
-      if (photo.angleType === 'front') formData.append('front', photo.file);
-      else if (photo.angleType === 'side') formData.append('side', photo.file);
-      else if (photo.angleType === 'top') formData.append('top', photo.file);
+      angleTypes.push(photo.angleType || 'other');
     });
+    formData.append('angle_types', JSON.stringify(angleTypes));
 
     try {
       const headers = {};
@@ -1387,9 +1404,22 @@ document.addEventListener('DOMContentLoaded', () => {
         body: formData
       });
 
-      const data = await res.json();
+      let data;
+      try {
+        data = await res.json();
+      } catch (jsonErr) {
+        if (res.status === 413) {
+          throw new Error('Total upload payload exceeded size limits. Please try with fewer photos or smaller image files.');
+        }
+        throw new Error(`Inspection failed (Server HTTP ${res.status}).`);
+      }
+
       if (!res.ok) {
-        throw new Error(data.detail || 'Inspection failed');
+        const errorDetail = data && (data.detail || data.message);
+        if (res.status === 413) {
+          throw new Error(errorDetail || 'Upload payload exceeded size limits. Please try with fewer photos.');
+        }
+        throw new Error(errorDetail || 'Inspection failed');
       }
 
       stopLoadingAnimation(() => {
@@ -4019,7 +4049,6 @@ Certified by Loafed Inspection Engine`;
         submitForm.append('grade_token', gradeToken);
         submitForm.append('cat_name', validation.catName);
         submitForm.append('display_name', validation.displayName);
-        submitForm.append('photo', photoFile);
         submitForm.append('primary_photo_index', pIdx);
 
         if (state.photos && state.photos.length > 0) {
@@ -4033,6 +4062,8 @@ Certified by Loafed Inspection Engine`;
             return p.name || 'Perspective Angle';
           });
           submitForm.append('photo_labels', JSON.stringify(labels));
+        } else if (photoFile) {
+          submitForm.append('photo', photoFile);
         }
 
         const subRes = await fetch('/api/leaderboard/submit', {
@@ -4043,9 +4074,16 @@ Certified by Loafed Inspection Engine`;
           body: submitForm
         });
 
-        const subData = await subRes.json();
+        let subData;
+        try {
+          subData = await subRes.json();
+        } catch (_) {
+          const errMsg = subRes.status === 413 ? 'Photos payload exceeded submission size limit.' : `Leaderboard submission failed (HTTP ${subRes.status}).`;
+          showSubmitNotice(errMsg);
+          throw new Error(errMsg);
+        }
         if (!subRes.ok) {
-          const errMsg = subData.detail || 'Leaderboard submission failed.';
+          const errMsg = (subData && (subData.detail || subData.message)) || (subRes.status === 413 ? 'Photos payload exceeded size limit.' : 'Leaderboard submission failed.');
           showSubmitNotice(errMsg);
           throw new Error(errMsg);
         }

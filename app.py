@@ -1035,6 +1035,7 @@ async def grade_loaf(
     side: Optional[UploadFile] = File(None),
     top: Optional[UploadFile] = File(None),
     images: Optional[List[UploadFile]] = File(None),
+    angle_types: Optional[str] = Form(None),
     api_key: Optional[str] = Form(None),
     x_gemini_api_key: Optional[str] = Header(None),
     website_url_check: Optional[str] = Form(None)
@@ -1058,17 +1059,35 @@ async def grade_loaf(
         if content:
             submitted_images.append((label, content, mime))
 
-    if images:
-        for img in images:
-            await add_upload(img, f"Inspection Photo {len(submitted_images) + 1}")
+    parsed_angles = []
+    if angle_types:
+        try:
+            parsed = json.loads(angle_types)
+            if isinstance(parsed, list):
+                parsed_angles = [str(a).strip().lower() for a in parsed]
+        except Exception:
+            pass
 
-    # Also check individual named slots if images list was empty or has room (e.g. presets)
-    if front and not any(l == "Front View" for l, _, _ in submitted_images):
-        await add_upload(front, "Front View")
-    if side and not any(l == "Side View" for l, _, _ in submitted_images):
-        await add_upload(side, "Side View")
-    if top and not any(l == "Top (Bird's Eye) View" for l, _, _ in submitted_images):
-        await add_upload(top, "Top (Bird's Eye) View")
+    if images:
+        for idx, img in enumerate(images):
+            ang = parsed_angles[idx] if idx < len(parsed_angles) else "other"
+            if ang == "front":
+                lbl = "Front View"
+            elif ang == "side":
+                lbl = "Side View"
+            elif ang == "top":
+                lbl = "Top (Bird's Eye) View"
+            else:
+                lbl = f"Inspection Photo {len(submitted_images) + 1}"
+            await add_upload(img, lbl)
+    else:
+        # Fallback for individual named slots if images list was not provided (e.g. presets or legacy)
+        if front:
+            await add_upload(front, "Front View")
+        if side:
+            await add_upload(side, "Side View")
+        if top:
+            await add_upload(top, "Top (Bird's Eye) View")
 
     if not submitted_images:
         raise HTTPException(status_code=400, detail="Please upload between 1 and 5 cat photos.")
