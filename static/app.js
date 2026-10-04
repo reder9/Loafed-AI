@@ -539,9 +539,9 @@ document.addEventListener('DOMContentLoaded', () => {
       subtitle: "Golden Brioche",
       badge: "3 Angles",
       images: [
-        { url: '/static/samples/buttercup_front.jpg', filename: 'buttercup_front.jpg' },
-        { url: '/static/samples/buttercup_side.jpg', filename: 'buttercup_side.jpg' },
-        { url: '/static/samples/buttercup_top.jpg', filename: 'buttercup_top.jpg' }
+        { url: '/samples/buttercup_front.jpg', filename: 'buttercup_front.jpg' },
+        { url: '/samples/buttercup_side.jpg', filename: 'buttercup_side.jpg' },
+        { url: '/samples/buttercup_top.jpg', filename: 'buttercup_top.jpg' }
       ],
       result: {
         cat_name: "Buttercup",
@@ -618,8 +618,8 @@ document.addEventListener('DOMContentLoaded', () => {
       subtitle: "Dark Rye Pumpernickel",
       badge: "2 Angles",
       images: [
-        { url: '/static/samples/chonks_side.jpg', filename: 'chonks_side.jpg' },
-        { url: '/static/samples/chonks_front.jpg', filename: 'chonks_front.jpg' }
+        { url: '/samples/chonks_side.jpg', filename: 'chonks_side.jpg' },
+        { url: '/samples/chonks_front.jpg', filename: 'chonks_front.jpg' }
       ],
       result: {
         cat_name: "Chonks",
@@ -695,8 +695,8 @@ document.addEventListener('DOMContentLoaded', () => {
       subtitle: "Marbled Sourdough",
       badge: "2 Angles",
       images: [
-        { url: '/static/samples/flash_front.jpg', filename: 'flash_front.jpg' },
-        { url: '/static/samples/flash_side.jpg', filename: 'flash_side.jpg' }
+        { url: '/samples/flash_front.jpg', filename: 'flash_front.jpg' },
+        { url: '/samples/flash_side.jpg', filename: 'flash_side.jpg' }
       ],
       result: {
         cat_name: "Flash",
@@ -2478,7 +2478,7 @@ Certified by Loafed Inspection Engine`;
         }
 
         if (!photoFile) {
-          const sampleImgSrc = submitModalThumbnail.src || '/static/samples/buttercup_front.jpg';
+          const sampleImgSrc = submitModalThumbnail.src || '/samples/buttercup_front.jpg';
           const imgResp = await fetch(sampleImgSrc);
           const blob = await imgResp.blob();
           photoFile = new File([blob], 'loaf.jpg', { type: blob.type || 'image/jpeg' });

@@ -1696,8 +1696,9 @@ async def delete_user_account(authorization: Optional[str] = Header(None)):
     }
 
 
-# Mount static files
+# Mount static files and sample assets
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+app.mount("/samples", StaticFiles(directory=str(SAMPLES_DIR)), name="samples")
 
 @app.get("/")
 async def serve_index():
