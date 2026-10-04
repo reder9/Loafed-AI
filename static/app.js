@@ -836,7 +836,8 @@ document.addEventListener('DOMContentLoaded', () => {
     { title: "Consulting Chief Loaf Auditor to certify total purr-fection...", detail: "Preparing official certification papers" }
   ];
 
-  let phraseInterval = null;
+  let progressInterval = null;
+  let isGradingActive = false;
   const loadingStepLog = document.getElementById('loadingStepLog');
 
   function renderStepLog(activeIdx) {
@@ -847,11 +848,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const startIdx = Math.max(0, activeIdx - 2);
     for (let i = startIdx; i <= activeIdx && i < bakeryAuditSteps.length; i++) {
       const step = bakeryAuditSteps[i];
-      const isCurrent = i === activeIdx;
+      const isCurrent = (i === activeIdx && activeIdx < bakeryAuditSteps.length - 1);
       const el = document.createElement('div');
       el.className = isCurrent 
         ? 'flex items-center gap-2 text-orange-950 font-semibold bg-orange-50/90 px-2.5 py-1 rounded-lg border border-orange-200/70 transition-all duration-300'
-        : 'flex items-center gap-2 text-stone-500 px-2.5 py-0.5 transition-all duration-300';
+        : 'flex items-center gap-2 text-stone-600 font-medium px-2.5 py-0.5 transition-all duration-300';
       
       const iconName = isCurrent ? 'loader-2' : 'check-circle-2';
       const iconClass = isCurrent ? 'w-3.5 h-3.5 text-orange-600 animate-spin shrink-0' : 'w-3.5 h-3.5 text-emerald-600 shrink-0';
@@ -877,35 +878,71 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function startLoadingAnimation() {
+    if (progressInterval) clearInterval(progressInterval);
+
     loadingState.classList.remove('hidden');
     inspectorBay.classList.add('hidden');
     resultsSection.classList.add('hidden');
     scrollToSection(loadingState);
 
-    let index = 0;
+    const startTime = Date.now();
+    let currentStep = 0;
+
+    // Initial state
     loadingPhrase.textContent = bakeryAuditSteps[0].title;
-    loadingProgressBar.style.width = '18%';
+    loadingProgressBar.style.width = '12%';
     renderStepLog(0);
 
-    phraseInterval = setInterval(() => {
-      index = (index + 1) % bakeryAuditSteps.length;
-      loadingPhrase.textContent = bakeryAuditSteps[index].title;
-      const pct = Math.min(20 + index * 11, 95);
-      loadingProgressBar.style.width = `${pct}%`;
-      renderStepLog(index);
-    }, 1000);
+    // Smooth monotonic asymptotic progress - NEVER jumps backward or loops
+    progressInterval = setInterval(() => {
+      const elapsed = (Date.now() - startTime) / 1000;
+
+      // Realistic progressive pacing:
+      // 0-2s: 12% to 34% (Image upload & preprocessing)
+      // 2-6s: 34% to 65% (Dough fold & paw concealment inspection)
+      // 6-12s: 65% to 88% (Gemini multimodal geometry evaluation)
+      // >12s: Asymptotic creep toward 94% (never exceeds 94% while waiting)
+      let pct = 12;
+      if (elapsed <= 2) {
+        pct = 12 + elapsed * 11;
+      } else if (elapsed <= 6) {
+        pct = 34 + (elapsed - 2) * 7.75;
+      } else if (elapsed <= 12) {
+        pct = 65 + (elapsed - 6) * 3.83;
+      } else {
+        const extra = elapsed - 12;
+        pct = 88 + 6 * (1 - Math.exp(-extra / 8));
+      }
+
+      pct = Math.min(Math.max(pct, 12), 94);
+      loadingProgressBar.style.width = `${pct.toFixed(1)}%`;
+
+      // Advance audit steps forward without modulo wrapping (clamp to final step)
+      const stepIdx = Math.min(Math.floor(elapsed / 1.5), bakeryAuditSteps.length - 1);
+      if (stepIdx !== currentStep) {
+        currentStep = stepIdx;
+        loadingPhrase.textContent = bakeryAuditSteps[currentStep].title;
+        renderStepLog(currentStep);
+      }
+    }, 200);
   }
 
   function stopLoadingAnimation() {
-    clearInterval(phraseInterval);
+    if (progressInterval) clearInterval(progressInterval);
+    progressInterval = null;
+
     loadingProgressBar.style.width = '100%';
+    loadingPhrase.textContent = 'Inspection complete! Finalizing scorecard...';
+    renderStepLog(bakeryAuditSteps.length - 1);
+
     setTimeout(() => {
       loadingState.classList.add('hidden');
-    }, 350);
+    }, 380);
   }
 
   // Submit & Grade
   gradeLoafBtn.addEventListener('click', async () => {
+    if (isGradingActive) return;
     if (state.photos.length === 0) {
       showToast({
         type: 'warning',
@@ -915,6 +952,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
+    isGradingActive = true;
     startLoadingAnimation();
 
     const formData = new FormData();
@@ -993,6 +1031,8 @@ document.addEventListener('DOMContentLoaded', () => {
           message: err.message
         });
       }
+    } finally {
+      isGradingActive = false;
     }
   });
 
