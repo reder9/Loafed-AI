@@ -355,7 +355,10 @@
         <!-- Unified Dropzone (Shown when 0 photos uploaded) -->
         <div 
           id="mainDropzone" 
-          class="upload-slot p-6 sm:p-12 flex flex-col items-center justify-center text-center cursor-pointer transition-all border-2 border-dashed border-orange-300 hover:border-orange-500 rounded-2xl group shadow-xs"
+          tabindex="0"
+          role="button"
+          aria-label="Upload 1 to 5 cat photos. Press Enter or Space to browse files, or drag and drop."
+          class="upload-slot p-6 sm:p-12 flex flex-col items-center justify-center text-center cursor-pointer transition-all border-2 border-dashed border-orange-300 hover:border-orange-500 rounded-2xl group shadow-xs focus:ring-2 focus:ring-orange-500 focus:outline-none"
         >
           <input type="file" id="photosInput" accept="image/*" multiple class="hidden" aria-label="Upload cat photos">
           <div class="w-16 h-16 rounded-2xl bg-gradient-to-b from-orange-100 to-white text-orange-600 border border-orange-300/90 flex items-center justify-center mb-3.5 shadow-sm group-hover:scale-105 transition-transform">
@@ -527,6 +530,9 @@
       </div>
     </div>
 
+    <!-- Screen reader accessible live region for audit announcements -->
+    <div id="a11yStatusRegion" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+
     <!-- Results Display -->
     <div id="resultsSection" class="hidden space-y-6">
       
@@ -599,79 +605,120 @@
       </div>
 
       <!-- Top Score Hero Card -->
-      <div id="scoreHeroCard" class="bakery-card p-4 sm:p-10 relative overflow-hidden bg-gradient-to-br from-white via-orange-50/40 to-amber-50/50 border border-orange-200/90 shadow-lg shadow-orange-500/5">
+      <div id="scoreHeroCard" class="bakery-card p-5 sm:p-10 relative overflow-hidden bg-gradient-to-br from-white via-orange-50/50 to-amber-50/60 border-2 border-orange-200/90 shadow-xl shadow-orange-500/10">
         
+        <!-- Subtle Ambient Background Glow -->
+        <div class="absolute -top-24 -left-24 w-72 h-72 bg-gradient-to-br from-orange-400/15 via-amber-300/10 to-transparent rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute -bottom-24 -right-24 w-72 h-72 bg-gradient-to-tl from-amber-400/15 via-orange-300/10 to-transparent rounded-full blur-3xl pointer-events-none"></div>
+
         <!-- Close / Return to Upload Button -->
         <button 
           type="button" 
           id="closeResultsSectionBtn" 
-          class="absolute top-3.5 right-3.5 sm:top-5 sm:right-5 w-9 h-9 rounded-xl bg-white/90 hover:bg-orange-100 text-stone-500 hover:text-stone-900 border border-orange-200/80 hover:border-orange-300 flex items-center justify-center transition-all shadow-2xs z-10 active:scale-95 btn-tactile" 
+          class="absolute top-3.5 right-3.5 sm:top-5 sm:right-5 w-9 h-9 rounded-xl bg-white/95 hover:bg-orange-100 text-stone-500 hover:text-stone-900 border border-orange-200/80 hover:border-orange-300 flex items-center justify-center transition-all shadow-2xs z-10 active:scale-95 btn-tactile" 
           title="Return to upload bay" 
           aria-label="Return to upload bay"
         >
           <i data-lucide="x" class="w-4 h-4"></i>
         </button>
 
-        <div class="flex flex-col lg:flex-row items-center justify-between gap-8">
+        <!-- Top Header Ribbon -->
+        <div class="flex items-center justify-between gap-3 mb-6 pb-4 border-b border-orange-200/70 flex-wrap relative z-1">
+          <div class="flex items-center gap-2.5">
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-stone-900 text-amber-300 font-extrabold text-[11px] uppercase tracking-wider shadow-xs">
+              <i data-lucide="shield-check" class="w-3.5 h-3.5 text-amber-400"></i>
+              <span>Official Feline Telemetry Dossier</span>
+            </span>
+            <span class="text-xs font-mono font-bold text-stone-500" id="reportRefTag">DOSSIER #LF-2026-CERT</span>
+          </div>
+          <div class="flex items-center gap-2 text-stone-500 text-xs font-semibold">
+            <i data-lucide="award" class="w-4 h-4 text-orange-600"></i>
+            <span>Accredited Machine Vision Audit</span>
+          </div>
+        </div>
+
+        <div class="flex flex-col lg:flex-row items-center justify-between gap-8 relative z-1">
           
           <!-- Score Dial + Stamp -->
           <div class="flex flex-col sm:flex-row items-center gap-6 sm:gap-8 text-center sm:text-left">
-            <div class="relative w-44 h-44 flex-shrink-0 flex items-center justify-center">
+            <div class="relative w-48 h-48 sm:w-52 sm:h-52 flex-shrink-0 flex items-center justify-center p-3 rounded-full bg-gradient-to-br from-white via-orange-100/50 to-amber-100/30 border-2 border-orange-200 shadow-inner">
               <svg class="score-circle-svg w-full h-full" viewBox="0 0 200 200">
-                <circle cx="100" cy="100" r="90" class="stroke-orange-100" stroke-width="14" fill="transparent" />
+                <circle cx="100" cy="100" r="90" class="stroke-orange-100/80" stroke-width="14" fill="transparent" />
                 <circle id="scoreMeterCircle" cx="100" cy="100" r="90" class="score-circle-meter stroke-orange-500" stroke-width="14" stroke-linecap="round" fill="transparent" />
               </svg>
               <div class="absolute flex flex-col items-center justify-center">
-                <span id="scoreNumber" class="text-5xl font-black tracking-tight text-stone-900">0</span>
-                <span class="text-xs uppercase tracking-widest font-extrabold text-orange-900/60 mt-0.5">/ 100</span>
+                <span id="scoreNumber" class="text-5xl sm:text-6xl font-black tracking-tight text-stone-900 font-sans">0</span>
+                <span class="text-xs uppercase tracking-widest font-extrabold text-orange-950/70 mt-0.5">/ 100</span>
               </div>
             </div>
 
-            <div>
-              <div class="flex items-center gap-3 mb-2 justify-center sm:justify-start flex-wrap">
+            <div class="max-w-md">
+              <div class="flex items-center gap-2.5 mb-2.5 justify-center sm:justify-start flex-wrap">
                 <span id="gradeStamp" class="stamp text-orange-800 border-orange-800 text-lg opacity-0">A+</span>
-                <span id="multiAngleBadge" class="hidden text-xs font-bold bg-orange-100 text-orange-950 px-2.5 py-1 rounded-md border border-orange-300 flex items-center gap-1.5 shadow-2xs">
+                <span id="multiAngleBadge" class="hidden text-xs font-extrabold bg-gradient-to-r from-orange-100 to-amber-100 text-orange-950 px-3 py-1 rounded-lg border border-orange-300 flex items-center gap-1.5 shadow-2xs">
                   <i data-lucide="shield-check" class="w-3.5 h-3.5 text-orange-700"></i>
                   <span>+5 Multi-Angle Bonus</span>
                 </span>
-                <span id="oarBadge" class="hidden text-xs font-bold bg-red-50 text-red-800 px-2.5 py-1 rounded-md border border-red-200 flex items-center gap-1.5">
-                  <i data-lucide="alert-triangle" class="w-3.5 h-3.5 text-red-600"></i>
+                <span id="oarBadge" class="hidden text-xs font-bold bg-rose-50 text-rose-800 px-2.5 py-1 rounded-lg border border-rose-200 flex items-center gap-1.5 shadow-2xs">
+                  <i data-lucide="alert-triangle" class="w-3.5 h-3.5 text-rose-600"></i>
                   <span>Asymmetrical Limb Flare (Oar Detected)</span>
                 </span>
               </div>
 
-              <h2 id="resultCatName" class="text-2xl sm:text-3xl font-black text-stone-900 tracking-tight">
+              <h2 id="resultCatName" class="text-3xl sm:text-4xl font-black text-stone-900 tracking-tight leading-none mb-1">
                 Buttercup
               </h2>
-              <div class="text-orange-800 font-extrabold text-lg mt-0.5" id="resultHonoraryRank">
-                Grandmaster Artisan Loaf
+              <div class="text-orange-800 font-extrabold text-lg sm:text-xl mt-1 flex items-center gap-1.5 justify-center sm:justify-start">
+                <i data-lucide="medal" class="w-5 h-5 text-amber-600 shrink-0"></i>
+                <span id="resultHonoraryRank">Grandmaster Artisan Loaf</span>
               </div>
-              <div class="inline-flex items-center gap-1.5 text-orange-950 text-sm mt-1 bg-orange-100/90 border border-orange-300/80 px-3 py-1 rounded-lg font-semibold shadow-2xs">
+              
+              <div class="inline-flex items-center gap-1.5 text-orange-950 text-xs sm:text-sm mt-2 bg-gradient-to-r from-orange-100/90 to-amber-100/80 border border-orange-300/80 px-3 py-1.5 rounded-xl font-bold shadow-2xs">
                 <i data-lucide="tag" class="w-3.5 h-3.5 text-orange-700"></i>
                 <span id="resultBreadClass">Toasted Golden Brioche</span>
+              </div>
+
+              <!-- Sleek Telemetry HUD Row -->
+              <div class="flex items-center gap-2 mt-3.5 flex-wrap justify-center sm:justify-start text-xs font-semibold">
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/95 border border-orange-200/90 text-stone-700 shadow-2xs">
+                  <i data-lucide="wind" class="w-3.5 h-3.5 text-orange-600"></i>
+                  <span>Drag: <strong id="hudDragCoeff" class="text-stone-900 font-extrabold">0.03 Cd</strong></span>
+                </span>
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/95 border border-orange-200/90 text-stone-700 shadow-2xs">
+                  <i data-lucide="eye-off" class="w-3.5 h-3.5 text-emerald-600"></i>
+                  <span id="hudPawSummary">100% Peet Stealth</span>
+                </span>
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/95 border border-orange-200/90 text-stone-700 shadow-2xs">
+                  <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-600"></i>
+                  <span id="hudSymmetrySummary">Bilateral Boule</span>
+                </span>
               </div>
             </div>
           </div>
 
-          <!-- Quick Action Buttons -->
-          <div class="flex flex-col sm:flex-row lg:flex-col gap-2.5 w-full lg:w-auto">
-            <button id="submitLeaderboardBtn" class="btn-submit-leaderboard shimmer-btn btn-tactile" aria-label="Submit to Official Leaderboard">
+          <!-- Quick Action Buttons Command Station -->
+          <div class="flex flex-col sm:flex-row lg:flex-col gap-2.5 w-full lg:w-72 shrink-0">
+            <button id="downloadCertificateBtn" class="btn-download-cert shimmer-btn btn-tactile w-full min-h-[48px] px-5 py-3 rounded-xl flex items-center justify-center gap-2 text-xs sm:text-sm font-bold shadow-md cursor-pointer" aria-label="Export Official Diploma PNG">
+              <i data-lucide="file-badge" class="w-4 h-4 text-amber-200"></i>
+              <span>Export Official Diploma (PNG)</span>
+            </button>
+            <button id="submitLeaderboardBtn" class="btn-submit-leaderboard shimmer-btn btn-tactile w-full" aria-label="Submit to Official Leaderboard">
               <i data-lucide="trophy" class="w-4 h-4 text-amber-200"></i>
               <span>Submit to Leaderboard</span>
+            </button>
+            <button id="shareScorecardBtn" class="min-h-[48px] px-5 py-3 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-600 hover:to-orange-600 text-white rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 shadow-sm active:scale-95 shimmer-btn btn-tactile cursor-pointer" aria-label="Share Scorecard">
+              <i data-lucide="share-2" class="w-4 h-4 text-amber-100"></i>
+              <span>Share Scorecard</span>
             </button>
             <button id="uploadOwnLoafBtn" class="min-h-[48px] px-5 py-3 bg-gradient-to-r from-orange-600 via-amber-600 to-orange-700 hover:from-orange-700 hover:to-amber-700 text-white rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 shadow-sm active:scale-95 shimmer-btn btn-tactile" aria-label="Upload Your Own Cat">
               <i data-lucide="upload" class="w-4 h-4"></i>
               <span id="uploadOwnLoafBtnText">Grade Your Own Cat</span>
             </button>
-            <button id="downloadCertificateBtn" class="btn-download-cert shimmer-btn btn-tactile" aria-label="Export Certificate PNG">
-              <i data-lucide="download" class="w-4 h-4"></i>
-              <span>Export Certificate (PNG)</span>
-            </button>
-            <button id="copySummaryBtn" class="min-h-[48px] px-5 py-3 bg-white hover:bg-orange-50/70 border border-orange-200 text-stone-800 hover:text-orange-950 rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 hover:border-orange-400 shadow-2xs active:scale-95 btn-tactile" aria-label="Copy Technical Summary">
+            <button id="copySummaryBtn" class="min-h-[48px] px-5 py-3 bg-white hover:bg-orange-50/70 border border-orange-200 text-stone-800 hover:text-orange-950 rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 hover:border-orange-400 shadow-2xs active:scale-95 btn-tactile cursor-pointer" aria-label="Copy Technical Summary">
               <i data-lucide="copy" class="w-4 h-4 text-orange-700" id="copyIcon"></i>
               <span id="copyBtnText">Copy Technical Summary</span>
             </button>
-            <button id="resetInspectorBtn" class="min-h-[48px] px-5 py-3 bg-orange-50 hover:bg-orange-100/80 border border-orange-200 text-orange-950 rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 shadow-2xs active:scale-95 btn-tactile" aria-label="Start New Inspection">
+            <button id="resetInspectorBtn" class="min-h-[48px] px-5 py-3 bg-orange-50 hover:bg-orange-100/80 border border-orange-200 text-orange-950 rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 shadow-2xs active:scale-95 btn-tactile cursor-pointer" aria-label="Start New Inspection">
               <i data-lucide="rotate-ccw" class="w-4 h-4 text-orange-700"></i>
               <span>New Inspection</span>
             </button>
@@ -679,15 +726,21 @@
 
         </div>
 
-        <!-- Auditor's Summary Box -->
-        <div class="mt-8 p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-orange-50 via-amber-50/80 to-orange-50 border border-orange-200/90 relative shadow-2xs">
-          <div class="flex items-start gap-3">
-            <div class="p-2.5 rounded-xl bg-orange-100/90 border border-orange-200 text-orange-800 shrink-0">
-              <i data-lucide="clipboard-check" class="w-4 h-4"></i>
+        <!-- Auditor's Summary Memo Box -->
+        <div class="mt-8 p-5 sm:p-6 rounded-3xl bg-gradient-to-r from-orange-50/90 via-amber-50/70 to-orange-50/90 border-2 border-orange-200/90 relative shadow-sm overflow-hidden">
+          <div class="absolute -right-4 -bottom-4 w-28 h-28 bg-orange-400/5 rounded-full blur-xl pointer-events-none"></div>
+          <div class="flex items-start gap-4">
+            <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-500 to-amber-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+              <i data-lucide="clipboard-check" class="w-5 h-5"></i>
             </div>
-            <div>
-              <h3 class="text-xs font-extrabold uppercase tracking-wider text-orange-900 mb-1">Chief Auditor's Findings</h3>
-              <p id="resultSummaryCritique" class="text-stone-800 text-sm leading-relaxed font-serif italic">
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center justify-between gap-2 flex-wrap mb-1.5">
+                <span class="text-xs font-black uppercase tracking-wider text-orange-950 flex items-center gap-1.5">
+                  <span>Chief Auditor's Findings & Field Notes</span>
+                </span>
+                <span class="text-[10px] font-bold text-orange-900 bg-orange-200/70 px-2.5 py-0.5 rounded-full border border-orange-300">Certified Inspection Finding</span>
+              </div>
+              <p id="resultSummaryCritique" class="text-stone-800 text-sm sm:text-base leading-relaxed font-serif italic pr-2">
                 "A masterclass in feline bakery arts. Buttercup demonstrates peerless geometry with zero paw visibility across all three inspected planes..."
               </p>
             </div>

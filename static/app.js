@@ -528,6 +528,13 @@ document.addEventListener('DOMContentLoaded', () => {
       photosInput.click();
     });
 
+    mainDropzone.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        photosInput.click();
+      }
+    });
+
     photosInput.addEventListener('change', (e) => {
       if (e.target.files && e.target.files.length > 0) {
         addFiles(e.target.files);
@@ -1023,6 +1030,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
 
+      // Respect Reduced Motion Preferences (Vestibular disorders / motion sensitivity)
+      const prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (prefersReducedMotion) {
+        window.scrollTo({ top: targetY, behavior: 'auto' });
+        finish();
+        return;
+      }
+
       // If already within 15px of target, finish immediately with settling buffer
       if (Math.abs(window.scrollY - targetY) <= 15) {
         finish();
@@ -1412,8 +1427,28 @@ document.addEventListener('DOMContentLoaded', () => {
     renderSubScore('elbow', result.elbow_compactness);
     renderSubScore('crust', result.crust_symmetry);
 
-    // Drag coefficient
-    document.getElementById('dragCoeffNum').textContent = (result.drag_coefficient || 0.05).toFixed(2);
+    // Drag coefficient & Telemetry HUD Row
+    const dragNum = (result.drag_coefficient || 0.05).toFixed(2);
+    const dragEl = document.getElementById('dragCoeffNum');
+    if (dragEl) dragEl.textContent = dragNum;
+    const hudDrag = document.getElementById('hudDragCoeff');
+    if (hudDrag) hudDrag.textContent = `${dragNum} Cd`;
+
+    const reportRefTag = document.getElementById('reportRefTag');
+    if (reportRefTag) {
+      const hashStr = Math.abs((result.overall_score * 31) ^ (result.cat_name ? result.cat_name.length * 17 : 42)).toString(16).toUpperCase().padStart(4, '0');
+      reportRefTag.textContent = `DOSSIER #LF-2026-${result.grade_letter || 'A'}${hashStr}`;
+    }
+
+    const hudPaw = document.getElementById('hudPawSummary');
+    if (hudPaw) {
+      hudPaw.textContent = (result.paw_tuck && result.paw_tuck.status) ? result.paw_tuck.status.replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, '').trim() : '100% Peet Stealth';
+    }
+
+    const hudSym = document.getElementById('hudSymmetrySummary');
+    if (hudSym) {
+      hudSym.textContent = (result.crust_symmetry && result.crust_symmetry.status) ? result.crust_symmetry.status.replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, '').trim() : 'Bilateral Boule';
+    }
 
     // Render Submitted Angles Strip
     renderAngleReview(result);
@@ -1442,6 +1477,16 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     refreshIcons();
+
+    // Screen reader accessible announcement
+    const a11yEl = document.getElementById('a11yStatusRegion');
+    if (a11yEl) {
+      if (result.is_cat === false) {
+        a11yEl.textContent = `Inspection completed. Subject was disqualified: ${result.rejection_reason || 'Non-feline subject detected'}.`;
+      } else {
+        a11yEl.textContent = `Inspection completed! ${result.cat_name || 'Subject'} scored ${result.overall_score} out of 100, Grade ${result.grade_letter}, classified as ${result.loaf_rank}.`;
+      }
+    }
 
     // Smooth scroll to the score summary card (or disqualification banner) first,
     // ensure the user has physically arrived and settled, then roll score & slam stamp!
@@ -1600,6 +1645,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!target || target <= 0) {
       if (numEl) numEl.textContent = '0';
+      if (typeof onComplete === 'function') onComplete();
+      return;
+    }
+
+    // Respect Reduced Motion Preferences
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      if (numEl) numEl.textContent = target;
+      if (circleEl) {
+        const offset = circumference - (circumference * (target / 100));
+        circleEl.style.strokeDashoffset = offset;
+      }
       if (typeof onComplete === 'function') onComplete();
       return;
     }
@@ -1766,9 +1822,194 @@ Certified by Loafed Inspection Engine`;
     });
   });
 
+  const shareScorecardBtn = document.getElementById('shareScorecardBtn');
+  if (shareScorecardBtn) {
+    shareScorecardBtn.addEventListener('click', async () => {
+      const r = state.currentResult;
+      if (!r) return;
+      const shareData = {
+        title: `${r.cat_name || 'My Cat'} — Official Loaf Score`,
+        text: `My cat ${r.cat_name || 'loaf'} scored ${r.overall_score}/100 (${r.grade_letter} — ${r.loaf_rank}) on Loafed AI! Can your cat beat this loaf?`,
+        url: window.location.origin
+      };
+      if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+        try {
+          await navigator.share(shareData);
+          return;
+        } catch (_) {}
+      }
+      try {
+        await navigator.clipboard.writeText(`${shareData.text} ${shareData.url}`);
+        showToast({
+          type: 'success',
+          title: 'Scorecard Link Copied',
+          message: 'Loaf scorecard text and link copied to clipboard!'
+        });
+      } catch (_) {
+        showToast({
+          type: 'info',
+          title: 'Loafed AI',
+          message: `${window.location.origin}`
+        });
+      }
+    });
+  }
+
   // Preload Mascot Emblem for Certificate
   const mascotLogoImg = new Image();
   mascotLogoImg.src = '/static/logo.png';
+
+  // Helper to resolve active cat photo URL
+  function getActiveLoafImageUrl(result) {
+    if (state.photos && state.photos.length > 0 && state.photos[0].previewUrl) {
+      return state.photos[0].previewUrl;
+    }
+    if (state.activePresetKey && BENCHMARK_PRESETS[state.activePresetKey]) {
+      const preset = BENCHMARK_PRESETS[state.activePresetKey];
+      if (preset.images && preset.images.length > 0) return preset.images[0].url;
+    }
+    if (result && result.cat_name) {
+      const nameLow = result.cat_name.toLowerCase();
+      if (nameLow.includes('buttercup')) return '/samples/buttercup_front.jpg';
+      if (nameLow.includes('chonk')) return '/samples/chonks_front.jpg';
+      if (nameLow.includes('flash')) return '/samples/flash_front.jpg';
+    }
+    const firstGridImg = document.querySelector('#angleReviewGrid img');
+    if (firstGridImg && firstGridImg.src) return firstGridImg.src;
+    return '/samples/buttercup_front.jpg';
+  }
+
+  function loadImage(src) {
+    return new Promise((resolve) => {
+      if (!src) { resolve(null); return; }
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => resolve(img);
+      img.onerror = () => resolve(null);
+      img.src = src;
+    });
+  }
+
+  function drawCoverImage(ctx, img, x, y, w, h, radius = 8) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.roundRect(x, y, w, h, radius);
+    ctx.clip();
+    
+    const imgRatio = (img.naturalWidth || img.width) / (img.naturalHeight || img.height);
+    const targetRatio = w / h;
+    let renderW, renderH, offsetX, offsetY;
+    
+    if (imgRatio > targetRatio) {
+      renderH = h;
+      renderW = h * imgRatio;
+      offsetX = x - (renderW - w) / 2;
+      offsetY = y;
+    } else {
+      renderW = w;
+      renderH = w / imgRatio;
+      offsetX = x;
+      offsetY = y - (renderH - h) / 2;
+    }
+    
+    ctx.drawImage(img, offsetX, offsetY, renderW, renderH);
+    ctx.restore();
+  }
+
+  // Draw Ornate Corner Bracket at (cx, cy)
+  function drawCornerFlourish(ctx, cx, cy, dirX, dirY) {
+    ctx.save();
+    ctx.strokeStyle = '#c27803';
+    ctx.fillStyle = '#b45309';
+    ctx.lineWidth = 2;
+
+    const arm = 24;
+    ctx.beginPath();
+    ctx.moveTo(cx + dirX * arm, cy);
+    ctx.lineTo(cx, cy);
+    ctx.lineTo(cx, cy + dirY * arm);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(cx + dirX * 6, cy + dirY * 6, 2.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  // Draw Official Gold Foil Embossed Seal
+  function drawGoldEmbossedSeal(ctx, cx, cy, radius = 42) {
+    ctx.save();
+    
+    // Ribbon Tails hanging down
+    ctx.fillStyle = '#b45309';
+    ctx.beginPath();
+    ctx.moveTo(cx - 16, cy + 28);
+    ctx.lineTo(cx - 28, cy + 62);
+    ctx.lineTo(cx - 16, cy + 54);
+    ctx.lineTo(cx - 4, cy + 62);
+    ctx.lineTo(cx - 8, cy + 28);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = '#9a3412';
+    ctx.beginPath();
+    ctx.moveTo(cx + 8, cy + 28);
+    ctx.lineTo(cx + 4, cy + 62);
+    ctx.lineTo(cx + 16, cy + 54);
+    ctx.lineTo(cx + 28, cy + 62);
+    ctx.lineTo(cx + 16, cy + 28);
+    ctx.closePath();
+    ctx.fill();
+
+    // 24-point Scalloped Starburst Seal
+    const pts = 24;
+    const innerR = radius - 4;
+    const outerR = radius;
+    const sealGrad = ctx.createRadialGradient(cx - 10, cy - 10, 5, cx, cy, radius);
+    sealGrad.addColorStop(0, '#fde68a');
+    sealGrad.addColorStop(0.35, '#f59e0b');
+    sealGrad.addColorStop(0.85, '#d97706');
+    sealGrad.addColorStop(1, '#92400e');
+
+    ctx.fillStyle = sealGrad;
+    ctx.beginPath();
+    for (let i = 0; i < pts * 2; i++) {
+      const r = i % 2 === 0 ? outerR : innerR;
+      const angle = (i * Math.PI) / pts;
+      const x = cx + Math.cos(angle) * r;
+      const y = cy + Math.sin(angle) * r;
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.fill();
+
+    // Concentric Inset Gold Rings
+    ctx.strokeStyle = '#fef3c7';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius - 8, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.strokeStyle = '#78350f';
+    ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius - 11, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Center Seal Emblem
+    ctx.fillStyle = '#78350f';
+    ctx.font = 'bold 8px -apple-system, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('OFFICIAL', cx, cy - 8);
+    ctx.font = '900 10px -apple-system, sans-serif';
+    ctx.fillText('100% ARTISAN', cx, cy + 4);
+    ctx.font = 'bold 7px -apple-system, sans-serif';
+    ctx.fillText('ACCREDITED', cx, cy + 14);
+
+    ctx.restore();
+  }
 
   // Certificate Download & Preview Generator (Canvas with clean professional styling, zero emojis)
   downloadCertificateBtn.addEventListener('click', () => {
@@ -1776,82 +2017,164 @@ Certified by Loafed Inspection Engine`;
     openCertificateModal(state.currentResult);
   });
 
-  function generateCertificate(result, shouldDownload = true) {
+  async function generateCertificate(result, shouldDownload = true, prefetchedImg = null) {
     const canvas = certificateCanvas;
     const ctx = canvas.getContext('2d');
     const w = canvas.width;
     const h = canvas.height;
 
-    // Background Pure Clean Parchment
-    ctx.fillStyle = '#faf8f5';
+    // Load active cat photo
+    let catImg = prefetchedImg;
+    if (!catImg) {
+      const imgUrl = getActiveLoafImageUrl(result);
+      if (imgUrl) {
+        catImg = await loadImage(imgUrl);
+      }
+    }
+
+    // 1. Background Antique Archival Parchment
+    const bgGrad = ctx.createRadialGradient(w / 2, h / 2, 80, w / 2, h / 2, 720);
+    bgGrad.addColorStop(0, '#fffefc');
+    bgGrad.addColorStop(0.65, '#fbf7ef');
+    bgGrad.addColorStop(1, '#f4ede0');
+    ctx.fillStyle = bgGrad;
     ctx.fillRect(0, 0, w, h);
 
-    // Architectural Double Border
-    ctx.strokeStyle = '#292524';
-    ctx.lineWidth = 3;
+    // Archival Guilloche Security Micro-Lines
+    ctx.save();
+    ctx.strokeStyle = 'rgba(180, 140, 90, 0.035)';
+    ctx.lineWidth = 1;
+    for (let x = -800; x < w + 800; x += 36) {
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x + h, h);
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    // 2. Triple Architectural Borders
+    ctx.strokeStyle = '#1c1917';
+    ctx.lineWidth = 4;
+    ctx.strokeRect(32, 32, w - 64, h - 64);
+
+    ctx.strokeStyle = '#c27803';
+    ctx.lineWidth = 1.5;
     ctx.strokeRect(40, 40, w - 80, h - 80);
 
     ctx.strokeStyle = '#d6cebe';
-    ctx.lineWidth = 1;
-    ctx.strokeRect(48, 48, w - 96, h - 96);
+    ctx.lineWidth = 0.8;
+    ctx.strokeRect(46, 46, w - 92, h - 92);
 
-    // Official Bureau Mascot Emblems in Header
+    // 4 Corner Flourishes
+    drawCornerFlourish(ctx, 42, 42, 1, 1);
+    drawCornerFlourish(ctx, w - 42, 42, -1, 1);
+    drawCornerFlourish(ctx, 42, h - 42, 1, -1);
+    drawCornerFlourish(ctx, w - 42, h - 42, -1, -1);
+
+    // 3. Official Bureau Mascot Emblems in Header
     if (mascotLogoImg.complete && mascotLogoImg.naturalWidth > 0) {
       try {
-        ctx.drawImage(mascotLogoImg, 70, 70, 75, 65);
-        ctx.drawImage(mascotLogoImg, w - 145, 70, 75, 65);
+        ctx.drawImage(mascotLogoImg, 65, 58, 68, 58);
+        ctx.drawImage(mascotLogoImg, w - 133, 58, 68, 58);
       } catch (e) {
         // Skip silently if tainted canvas
       }
     }
 
-    // Header Label
-    ctx.fillStyle = '#78716c';
-    ctx.font = 'bold 13px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+    // Top Bureau Header
+    ctx.fillStyle = '#57534e';
+    ctx.font = 'bold 11px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
     ctx.textAlign = 'center';
-    ctx.letterSpacing = '3px';
-    ctx.fillText('FELINE POSTURE & KINEMATICS CERTIFICATION BUREAU', w / 2, 95);
+    ctx.letterSpacing = '3.5px';
+    ctx.fillText('INTERNATIONAL BUREAU OF FELINE POSTURE & KINEMATICS', w / 2, 80);
 
-    // Title
+    // Main Diploma Title
     ctx.fillStyle = '#1c1917';
-    ctx.font = 'bold 36px Georgia, serif';
-    ctx.fillText('Official Certificate of Loaf Inspection', w / 2, 145);
+    ctx.font = 'bold 34px Georgia, serif';
+    ctx.fillText('Official Diploma of Loaf Accreditation', w / 2, 122);
+
+    // Subtitle
+    ctx.fillStyle = '#78716c';
+    ctx.font = 'italic 13.5px Georgia, serif';
+    ctx.fillText('This hereby certifies that the domestic feline subject identified as', w / 2, 150);
 
     // Cat Name
-    ctx.fillStyle = '#b45309';
-    ctx.font = 'bold 40px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-    ctx.fillText(result.cat_name || 'Anonymous Subject', w / 2, 215);
+    ctx.fillStyle = '#7c2d12';
+    ctx.font = 'bold 38px Georgia, serif';
+    ctx.fillText(result.cat_name || 'Anonymous Subject', w / 2, 192);
 
-    // Rank & Morphology
-    ctx.fillStyle = '#44403c';
-    ctx.font = 'bold 18px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-    ctx.fillText(`${result.loaf_rank}  —  ${result.bread_classification}`, w / 2, 250);
+    // Rank & Bread Classification Ribbon Banner
+    const rankText = `${result.loaf_rank}   •   ${result.bread_classification}`;
+    ctx.font = 'bold 13.5px -apple-system, BlinkMacSystemFont, sans-serif';
+    const rankWidth = ctx.measureText(rankText).width + 36;
+    
+    ctx.fillStyle = '#fef3c7';
+    ctx.strokeStyle = '#d97706';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.roundRect((w - rankWidth) / 2, 206, rankWidth, 26, 13);
+    ctx.fill();
+    ctx.stroke();
 
-    // Left Box: Score & Photo
+    ctx.fillStyle = '#78350f';
+    ctx.fillText(rankText, w / 2, 224);
+
+    // 4. Left Column: Inspected Subject Portrait & Score Dial (x: 65, y: 248, w: 330, h: 450)
     ctx.fillStyle = '#ffffff';
     ctx.strokeStyle = '#e7e5e4';
     ctx.lineWidth = 1.5;
     ctx.beginPath();
-    ctx.roundRect(80, 290, 340, 420, 12);
+    ctx.roundRect(65, 248, 330, 450, 14);
     ctx.fill();
     ctx.stroke();
 
-    ctx.fillStyle = '#78716c';
-    ctx.font = 'bold 12px -apple-system, BlinkMacSystemFont, sans-serif';
-    ctx.fillText('COMPOSITE SCORE', 250, 330);
+    // Cat's Actual Photograph Frame
+    ctx.fillStyle = '#faf8f5';
+    ctx.strokeStyle = '#fed7aa';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.roundRect(80, 262, 300, 215, 10);
+    ctx.fill();
+    ctx.stroke();
 
-    ctx.fillStyle = '#b45309';
-    ctx.font = 'bold 76px -apple-system, BlinkMacSystemFont, sans-serif';
-    ctx.fillText(result.overall_score.toString(), 250, 410);
+    if (catImg) {
+      drawCoverImage(ctx, catImg, 82, 264, 296, 211, 8);
+    } else {
+      ctx.fillStyle = '#fef3c7';
+      ctx.fillRect(82, 264, 296, 211);
+      ctx.fillStyle = '#b45309';
+      ctx.font = 'bold 15px -apple-system, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('Audited Feline Specimen', 230, 375);
+    }
+
+    // Photo Exhibit Plaque
+    ctx.fillStyle = '#1c1917';
+    ctx.beginPath();
+    ctx.roundRect(145, 458, 170, 20, 10);
+    ctx.fill();
+    ctx.fillStyle = '#fbbf24';
+    ctx.font = 'bold 9px -apple-system, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('EXHIBIT A: AUDITED SPECIMEN', 230, 471);
+
+    // Composite Score Dial & Number
+    ctx.fillStyle = '#78716c';
+    ctx.font = 'bold 11px -apple-system, BlinkMacSystemFont, sans-serif';
+    ctx.fillText('COMPOSITE SCORE', 230, 508);
+
+    ctx.fillStyle = '#7c2d12';
+    ctx.font = 'bold 64px -apple-system, BlinkMacSystemFont, sans-serif';
+    ctx.fillText(result.overall_score.toString(), 230, 568);
 
     ctx.fillStyle = '#a8a29e';
-    ctx.font = 'bold 16px -apple-system, BlinkMacSystemFont, sans-serif';
-    ctx.fillText('/ 100', 250, 442);
+    ctx.font = 'bold 15px -apple-system, BlinkMacSystemFont, sans-serif';
+    ctx.fillText('/ 100', 230, 592);
 
-    // Stamp
+    // Physical Rubber Stamp
     ctx.save();
-    ctx.translate(250, 520);
-    ctx.rotate(-0.06);
+    ctx.translate(230, 642);
+    ctx.rotate(-0.1);
     let stampColor = '#c2410c'; // A
     if (result.grade_letter.includes('B')) stampColor = '#d97706';
     else if (result.grade_letter.includes('C')) stampColor = '#57534e';
@@ -1859,89 +2182,144 @@ Certified by Loafed Inspection Engine`;
 
     ctx.strokeStyle = stampColor;
     ctx.lineWidth = 3;
-    ctx.strokeRect(-60, -28, 120, 56);
+    ctx.strokeRect(-55, -24, 110, 48);
     ctx.fillStyle = stampColor;
-    ctx.font = 'bold 30px -apple-system, BlinkMacSystemFont, sans-serif';
-    ctx.fillText(result.grade_letter, 0, 10);
+    ctx.font = 'bold 28px -apple-system, BlinkMacSystemFont, sans-serif';
+    ctx.fillText(result.grade_letter, 0, 9);
     ctx.restore();
 
+    // Telemetry Footnote
     ctx.fillStyle = '#57534e';
-    ctx.font = '13px -apple-system, BlinkMacSystemFont, sans-serif';
-    ctx.fillText(`Drag Coeff: ${result.drag_coefficient.toFixed(2)}  |  Bonus: +${result.multi_angle_bonus} pts`, 250, 615);
+    ctx.font = '11.5px -apple-system, BlinkMacSystemFont, sans-serif';
+    ctx.fillText(`Drag: Cd ${(result.drag_coefficient || 0.05).toFixed(2)}  •  Bonus: +${result.multi_angle_bonus || 0} pts`, 230, 684);
 
-    // Right Box: Criteria Breakdown
+    // 5. Right Column: Kinematic Criteria Breakdown & Chief Inspector Memo (x: 412, y: 248, w: 724, h: 450)
+    // Criteria Module (w: 724, h: 265)
     ctx.fillStyle = '#ffffff';
+    ctx.strokeStyle = '#e7e5e4';
+    ctx.lineWidth = 1.5;
     ctx.beginPath();
-    ctx.roundRect(450, 290, 670, 420, 12);
+    ctx.roundRect(412, 248, 724, 265, 14);
     ctx.fill();
     ctx.stroke();
 
     ctx.textAlign = 'left';
     ctx.fillStyle = '#1c1917';
-    ctx.font = 'bold 18px -apple-system, BlinkMacSystemFont, sans-serif';
-    ctx.fillText('Planar Criteria Evaluation', 480, 330);
+    ctx.font = 'bold 15px -apple-system, BlinkMacSystemFont, sans-serif';
+    ctx.fillText('Kinematic Posture Telemetry', 438, 278);
 
-    const criteria = [
-      { name: 'Paw Tuck & Undercarriage', score: `${result.paw_tuck.score}/25`, status: result.paw_tuck.status },
-      { name: 'Tail Aerodynamics & Drag', score: `${result.tail_tuck.score}/25`, status: result.tail_tuck.status },
-      { name: 'Flank Compression & Form', score: `${result.elbow_compactness.score}/25`, status: result.elbow_compactness.status },
-      { name: 'Dorsal Symmetry & Crust', score: `${result.crust_symmetry.score}/25`, status: result.crust_symmetry.status }
+    ctx.fillStyle = '#059669';
+    ctx.font = 'bold 10px -apple-system, sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText('FOUR-PLANE ORTHOGRAPHIC AUDIT', 1112, 278);
+    ctx.textAlign = 'left';
+
+    const criteriaList = [
+      { name: 'Paw Tuck & Undercarriage Stealth', score: result.paw_tuck.score, status: result.paw_tuck.status },
+      { name: 'Tail Aerodynamics & Flank Wrap', score: result.tail_tuck.score, status: result.tail_tuck.status },
+      { name: 'Flank Compression & Boule Compactness', score: result.elbow_compactness.score, status: result.elbow_compactness.status },
+      { name: 'Dorsal Symmetry & Crust Distribution', score: result.crust_symmetry.score, status: result.crust_symmetry.status }
     ];
 
-    criteria.forEach((c, idx) => {
-      const y = 362 + idx * 47;
-      ctx.fillStyle = '#292524';
-      ctx.font = 'bold 15px -apple-system, BlinkMacSystemFont, sans-serif';
-      ctx.fillText(c.name, 480, y);
+    criteriaList.forEach((c, idx) => {
+      const rowY = 305 + idx * 50;
 
-      ctx.fillStyle = '#b45309';
-      ctx.font = 'bold 15px -apple-system, BlinkMacSystemFont, sans-serif';
+      // Criterion Title
+      ctx.fillStyle = '#292524';
+      ctx.font = 'bold 13.5px -apple-system, BlinkMacSystemFont, sans-serif';
+      ctx.fillText(c.name, 438, rowY);
+
+      // Score Pill
       ctx.textAlign = 'right';
-      ctx.fillText(c.score, 1080, y);
+      ctx.fillStyle = '#7c2d12';
+      ctx.font = 'bold 13.5px -apple-system, BlinkMacSystemFont, sans-serif';
+      ctx.fillText(`${c.score} / 25`, 1112, rowY);
       ctx.textAlign = 'left';
 
+      // Dual-tone Gradient Progress Bar
+      const barTrackW = 674;
+      const barH = 6;
+      ctx.fillStyle = '#f5ebe0';
+      ctx.beginPath();
+      ctx.roundRect(438, rowY + 6, barTrackW, barH, 3);
+      ctx.fill();
+
+      const pct = Math.min(100, Math.max(0, (c.score / 25) * 100));
+      const fillW = Math.max(8, (barTrackW * pct) / 100);
+      const barGrad = ctx.createLinearGradient(438, 0, 438 + fillW, 0);
+      barGrad.addColorStop(0, '#ea580c');
+      barGrad.addColorStop(1, '#f59e0b');
+      ctx.fillStyle = barGrad;
+      ctx.beginPath();
+      ctx.roundRect(438, rowY + 6, fillW, barH, 3);
+      ctx.fill();
+
+      // Status subtitle
       ctx.fillStyle = '#78716c';
-      ctx.font = '13px -apple-system, BlinkMacSystemFont, sans-serif';
-      ctx.fillText((c.status || '').replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, ''), 480, y + 17);
+      ctx.font = '11.5px -apple-system, BlinkMacSystemFont, sans-serif';
+      ctx.fillText((c.status || '').replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, ''), 438, rowY + 25);
     });
 
-    // Auditor Findings Callout Card (Spacious card with adaptive multi-line word wrap, zero overflow)
+    // Chief Auditor Findings Memo Box (w: 724, h: 170)
     ctx.fillStyle = '#fffaf5';
     ctx.strokeStyle = '#fed7aa';
-    ctx.lineWidth = 1;
+    ctx.lineWidth = 1.5;
     ctx.beginPath();
-    ctx.roundRect(468, 540, 634, 155, 10);
+    ctx.roundRect(412, 528, 724, 170, 12);
     ctx.fill();
     ctx.stroke();
 
     // Warm left accent bar
     ctx.fillStyle = '#ea580c';
     ctx.beginPath();
-    ctx.roundRect(468, 540, 4, 155, [10, 0, 0, 10]);
+    ctx.roundRect(412, 528, 4.5, 170, [12, 0, 0, 12]);
     ctx.fill();
 
     // Callout Label
     ctx.fillStyle = '#c2410c';
     ctx.font = 'bold 11px -apple-system, BlinkMacSystemFont, sans-serif';
-    ctx.fillText('CHIEF AUDITOR FINDINGS & PURR-FECTION SUMMARY', 488, 561);
+    ctx.fillText('CHIEF AUDITOR FINDINGS & PURR-FECTION SUMMARY', 434, 550);
 
-    // Multi-line Adaptive Word-Wrapped Critique (dynamically chooses font tier to render full text)
+    // Multi-line Adaptive Word-Wrapped Critique
     ctx.fillStyle = '#292524';
     const cleanCritique = (result.summary_critique || '').replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, '').trim();
-    drawFittedCritique(ctx, `"${cleanCritique}"`, 488, 582, 600, 104);
+    drawFittedCritique(ctx, `"${cleanCritique}"`, 434, 574, 680, 110);
 
-    // Footer
-    ctx.fillStyle = '#a8a29e';
-    ctx.font = '12px -apple-system, BlinkMacSystemFont, sans-serif';
-    ctx.textAlign = 'center';
+    // 6. Footer: Authentication Seal, Cursive Signature & Security Hash (y: 710 to 765)
+    // Left: Serial & Date
+    ctx.fillStyle = '#78716c';
+    ctx.font = 'bold 10px -apple-system, sans-serif';
+    ctx.textAlign = 'left';
     const dateStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-    ctx.fillText(`Evaluation Date: ${dateStr}  |  Certified by Loafed Machine Vision Engine`, w / 2, 745);
+    const hashStr = Math.abs((result.overall_score * 31) ^ (result.cat_name ? result.cat_name.length * 17 : 42)).toString(16).toUpperCase().padStart(4, '0');
+    ctx.fillText(`VERIFICATION ID: LF-2026-${result.grade_letter || 'A'}${hashStr}   •   CERTIFIED: ${dateStr}`, 68, 742);
+    ctx.fillStyle = '#a8a29e';
+    ctx.font = '10px -apple-system, sans-serif';
+    ctx.fillText('POWERED BY LOAFED MACHINE VISION KINEMATICS ENGINE', 68, 758);
+
+    // Center: Attestation & Signature
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#78716c';
+    ctx.font = 'bold 9.5px -apple-system, sans-serif';
+    ctx.fillText('ATTESTED & CERTIFIED BY:', 640, 726);
+
+    ctx.fillStyle = '#1c1917';
+    ctx.font = 'italic bold 17px Georgia, serif';
+    ctx.fillText('Dr. Oliver Pawsbury, Chief Crust Inspector', 640, 746);
+
+    ctx.fillStyle = '#a8a29e';
+    ctx.font = '9px -apple-system, sans-serif';
+    ctx.fillText('Director of Feline Kinematics • Official Bureau of Standards', 640, 759);
+
+    // Right: Gold Embossed Seal
+    drawGoldEmbossedSeal(ctx, 1070, 736, 38);
 
     function drawFittedCritique(context, text, startX, startY, maxWidth, maxHeight) {
       const fontTiers = [
-        { size: 13, lineHeight: 19 },
-        { size: 12, lineHeight: 17.5 },
-        { size: 11, lineHeight: 16 }
+        { size: 13.5, lineHeight: 19.5 },
+        { size: 12.5, lineHeight: 18 },
+        { size: 11.5, lineHeight: 16.5 },
+        { size: 10.5, lineHeight: 15 }
       ];
 
       const words = text.split(/\s+/).filter(Boolean);
@@ -1967,13 +2345,11 @@ Certified by Loafed Inspection Engine`;
         selectedTier = tier;
         selectedLines = lines;
 
-        // If all lines comfortably fit within maxHeight, select this tier
         if (lines.length * tier.lineHeight <= maxHeight) {
           break;
         }
       }
 
-      // Render lines using the chosen tier
       context.font = `italic ${selectedTier.size}px Georgia, serif`;
       const maxAllowedLines = Math.floor(maxHeight / selectedTier.lineHeight);
       let currentY = startY;
@@ -1996,7 +2372,7 @@ Certified by Loafed Inspection Engine`;
       const a = document.createElement('a');
       a.href = dataUrl;
       const safeName = (result.cat_name || 'subject').toLowerCase().replace(/[^a-z0-9]/g, '_');
-      a.download = `loaf_certificate_${safeName}.png`;
+      a.download = `loaf_diploma_${safeName}.png`;
       a.click();
     }
     return dataUrl;
@@ -2012,13 +2388,13 @@ Certified by Loafed Inspection Engine`;
   const modalDownloadCertBtn = document.getElementById('modalDownloadCertBtn');
   const viewSampleCertBtn = document.getElementById('viewSampleCertBtn');
 
-  function openCertificateModal(result) {
+  async function openCertificateModal(result) {
     if (!result) return;
     activeModalCertResult = result;
-    const dataUrl = generateCertificate(result, false);
+    const dataUrl = await generateCertificate(result, false);
     if (certModalImage) certModalImage.src = dataUrl;
     if (certModalTitle) {
-      certModalTitle.textContent = `${result.cat_name || 'Feline'} — Official Loaf Certificate`;
+      certModalTitle.textContent = `${result.cat_name || 'Feline'} — Official Loaf Diploma`;
     }
     if (certificateModal) {
       certificateModal.classList.remove('hidden');
@@ -2041,13 +2417,13 @@ Certified by Loafed Inspection Engine`;
   }
 
   if (modalDownloadCertBtn) {
-    modalDownloadCertBtn.addEventListener('click', () => {
+    modalDownloadCertBtn.addEventListener('click', async () => {
       if (activeModalCertResult) {
-        generateCertificate(activeModalCertResult, true);
+        await generateCertificate(activeModalCertResult, true);
         showToast({
           type: 'success',
-          title: 'Certificate Downloaded',
-          message: `Exported 1200x800 HD certificate for ${activeModalCertResult.cat_name}.`
+          title: 'Diploma Downloaded',
+          message: `Exported 1200x800 HD diploma for ${activeModalCertResult.cat_name}.`
         });
       }
     });

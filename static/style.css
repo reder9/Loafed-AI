@@ -240,6 +240,19 @@ body {
   outline-offset: 2px !important;
 }
 
+/* Accessibility: Screen Reader Only Utility */
+.sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border-width: 0 !important;
+}
+
 /* Accessibility: Respect Reduced Motion Preferences */
 @media (prefers-reduced-motion: reduce) {
   *, ::before, ::after {
@@ -733,11 +746,11 @@ body.user-logged-in #headerSignInBtn {
 }
 
 .btn-download-cert {
-  background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%) !important;
+  background: linear-gradient(135deg, #c2410c 0%, #b45309 50%, #9a3412 100%) !important;
   color: #ffffff !important;
-  border: 1px solid #9a3412 !important;
-  box-shadow: 0 4px 14px rgba(234, 88, 12, 0.3) !important;
-  font-weight: 700 !important;
+  border: 1px solid #78350f !important;
+  box-shadow: 0 4px 16px rgba(180, 83, 9, 0.35) !important;
+  font-weight: 800 !important;
   font-size: 0.875rem !important;
   min-height: 48px !important;
   padding: 0.75rem 1.25rem !important;
@@ -753,8 +766,8 @@ body.user-logged-in #headerSignInBtn {
 }
 
 .btn-download-cert:hover {
-  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%) !important;
-  box-shadow: 0 6px 18px rgba(234, 88, 12, 0.4) !important;
+  background: linear-gradient(135deg, #ea580c 0%, #d97706 50%, #c2410c 100%) !important;
+  box-shadow: 0 6px 20px rgba(180, 83, 9, 0.45) !important;
   transform: translateY(-1px);
 }
 

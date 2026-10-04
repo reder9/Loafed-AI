@@ -482,6 +482,10 @@ def verify_cognito_token(auth_header: Optional[str]) -> dict:
         if not user_id:
             raise HTTPException(status_code=401, detail="Missing user identifier in token claims.")
 
+        token_client_id = claims.get("aud") or claims.get("client_id")
+        if COGNITO_CLIENT_ID and token_client_id and token_client_id != COGNITO_CLIENT_ID:
+            raise HTTPException(status_code=401, detail="Token not issued for Loafed application client.")
+
         return claims
     except HTTPException:
         raise
