@@ -197,6 +197,12 @@ PRESET_BUTTERCUP = {
     }
 }
 
+@app.get("/health")
+@app.get("/api/health")
+async def health_check():
+    """Lightweight health check for monitoring and routing."""
+    return {"status": "ok"}
+
 @app.get("/api/status")
 async def get_status():
     """Returns server and API key status."""
