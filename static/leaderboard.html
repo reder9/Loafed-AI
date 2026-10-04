@@ -501,21 +501,23 @@
       </div>
 
       <!-- Section 3: Danger Zone (Delete Account & Data) -->
-      <div class="p-4.5 rounded-2xl bg-rose-50/60 border border-rose-200 text-xs">
-        <div class="flex items-center gap-1.5 font-bold text-rose-900 mb-1">
-          <i data-lucide="alert-triangle" class="w-4 h-4 text-rose-600"></i>
-          <span>Danger Zone</span>
+      <div class="p-5 rounded-2xl bg-rose-50/70 border border-rose-200 text-xs">
+        <div class="flex items-center gap-2.5 font-bold text-rose-900 mb-2">
+          <div class="w-6 h-6 rounded-lg bg-rose-100 border border-rose-200 flex items-center justify-center shrink-0 shadow-2xs">
+            <i data-lucide="alert-triangle" class="w-3.5 h-3.5 text-rose-600"></i>
+          </div>
+          <span class="text-xs uppercase tracking-wider font-black text-rose-950">Danger Zone</span>
         </div>
-        <p class="text-stone-600 mb-3.5 leading-relaxed">
+        <p class="text-stone-600 mb-4 leading-relaxed">
           Permanently delete your Baker account, all submitted cat loaves, and remove your scores from the public leaderboard.
         </p>
         <button 
           type="button" 
           id="profileDeleteAccountBtn" 
-          class="min-h-[44px] px-4 py-2 rounded-xl bg-white hover:bg-rose-600 text-rose-700 hover:text-white border border-rose-300 font-bold text-xs transition-colors flex items-center gap-1.5 shadow-2xs active:scale-95"
+          class="min-h-[44px] px-4 py-2.5 rounded-xl bg-white hover:bg-rose-600 text-rose-700 hover:text-white border border-rose-300 font-bold text-xs transition-colors flex items-center gap-2 shadow-2xs active:scale-95"
           aria-label="Open delete account confirmation modal"
         >
-          <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+          <i data-lucide="trash-2" class="w-4 h-4"></i>
           <span>Delete Account &amp; Data...</span>
         </button>
       </div>

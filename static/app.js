@@ -801,13 +801,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Benchmark button UI helpers
   function resetBenchmarkButtons() {
+    document.querySelectorAll('.benchmark-card').forEach(card => {
+      card.classList.remove('ring-2', 'ring-orange-500', 'border-orange-500', 'bg-orange-50/30', 'shadow-md');
+      card.classList.add('border-orange-200/90', 'bg-white/95');
+      const badge = card.querySelector('.benchmark-active-badge');
+      if (badge) badge.classList.add('hidden');
+    });
+
     document.querySelectorAll('.load-benchmark-btn').forEach(btn => {
       btn.innerHTML = `
-        <i data-lucide="sparkles" class="w-3.5 h-3.5 text-orange-700"></i>
-        <span>Inspect Loaf</span>
+        <i data-lucide="sparkles" class="w-3.5 h-3.5 text-orange-700 shrink-0"></i>
+        <span>Inspect</span>
       `;
-      btn.classList.remove('bg-orange-200', 'border-orange-400', 'shadow-sm');
-      btn.classList.add('bg-orange-50', 'border-orange-200');
+      btn.className = 'load-benchmark-btn flex-1 min-h-[44px] py-2 px-3 rounded-xl bg-orange-50 hover:bg-orange-100 text-orange-950 text-xs font-bold border border-orange-200 transition-all flex items-center justify-center gap-1.5 shadow-2xs active:scale-95 whitespace-nowrap';
     });
     refreshIcons();
   }
@@ -815,20 +821,34 @@ document.addEventListener('DOMContentLoaded', () => {
   function setActiveBenchmarkButton(catKey) {
     document.querySelectorAll('.load-benchmark-btn').forEach(btn => {
       const cat = btn.getAttribute('data-cat');
+      const card = btn.closest('.benchmark-card');
+
       if (cat === catKey) {
         btn.innerHTML = `
-          <i data-lucide="chevron-up" class="w-3.5 h-3.5 text-orange-800"></i>
-          <span>Collapse Preview</span>
+          <i data-lucide="chevron-up" class="w-3.5 h-3.5 text-white shrink-0"></i>
+          <span>Collapse</span>
         `;
-        btn.classList.remove('bg-orange-50', 'border-orange-200');
-        btn.classList.add('bg-orange-200', 'border-orange-400', 'shadow-sm');
+        btn.className = 'load-benchmark-btn flex-1 min-h-[44px] py-2 px-3 rounded-xl bg-gradient-to-r from-orange-600 via-amber-600 to-orange-700 hover:from-orange-700 hover:to-amber-700 text-white text-xs font-black border border-transparent transition-all flex items-center justify-center gap-1.5 shadow-sm active:scale-95 whitespace-nowrap';
+
+        if (card) {
+          card.classList.remove('border-orange-200/90', 'bg-white/95');
+          card.classList.add('ring-2', 'ring-orange-500', 'border-orange-500', 'bg-orange-50/30', 'shadow-md');
+          const badge = card.querySelector('.benchmark-active-badge');
+          if (badge) badge.classList.remove('hidden');
+        }
       } else {
         btn.innerHTML = `
-          <i data-lucide="sparkles" class="w-3.5 h-3.5 text-orange-700"></i>
-          <span>Inspect Loaf</span>
+          <i data-lucide="sparkles" class="w-3.5 h-3.5 text-orange-700 shrink-0"></i>
+          <span>Inspect</span>
         `;
-        btn.classList.remove('bg-orange-200', 'border-orange-400', 'shadow-sm');
-        btn.classList.add('bg-orange-50', 'border-orange-200');
+        btn.className = 'load-benchmark-btn flex-1 min-h-[44px] py-2 px-3 rounded-xl bg-orange-50 hover:bg-orange-100 text-orange-950 text-xs font-bold border border-orange-200 transition-all flex items-center justify-center gap-1.5 shadow-2xs active:scale-95 whitespace-nowrap';
+
+        if (card) {
+          card.classList.remove('ring-2', 'ring-orange-500', 'border-orange-500', 'bg-orange-50/30', 'shadow-md');
+          card.classList.add('border-orange-200/90', 'bg-white/95');
+          const badge = card.querySelector('.benchmark-active-badge');
+          if (badge) badge.classList.add('hidden');
+        }
       }
     });
     refreshIcons();
