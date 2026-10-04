@@ -865,15 +865,15 @@ Certified by Loafed Inspection Engine`;
 
     ctx.fillStyle = '#78716c';
     ctx.font = 'bold 12px -apple-system, BlinkMacSystemFont, sans-serif';
-    ctx.fillText('COMPOSITE SCORE', 250, 325);
+    ctx.fillText('COMPOSITE SCORE', 250, 330);
 
     ctx.fillStyle = '#b45309';
-    ctx.font = 'black 76px -apple-system, BlinkMacSystemFont, sans-serif';
+    ctx.font = 'bold 76px -apple-system, BlinkMacSystemFont, sans-serif';
     ctx.fillText(result.overall_score.toString(), 250, 410);
 
     ctx.fillStyle = '#a8a29e';
     ctx.font = 'bold 16px -apple-system, BlinkMacSystemFont, sans-serif';
-    ctx.fillText('/ 100', 250, 440);
+    ctx.fillText('/ 100', 250, 442);
 
     // Stamp
     ctx.save();
@@ -901,7 +901,7 @@ Certified by Loafed Inspection Engine`;
     ctx.textAlign = 'left';
     ctx.fillStyle = '#1c1917';
     ctx.font = 'bold 18px -apple-system, BlinkMacSystemFont, sans-serif';
-    ctx.fillText('Planar Criteria Evaluation', 480, 335);
+    ctx.fillText('Planar Criteria Evaluation', 480, 330);
 
     const criteria = [
       { name: 'Paw Tuck & Undercarriage', score: `${result.paw_tuck.score}/25`, status: result.paw_tuck.status },
@@ -911,7 +911,7 @@ Certified by Loafed Inspection Engine`;
     ];
 
     criteria.forEach((c, idx) => {
-      const y = 385 + idx * 56;
+      const y = 368 + idx * 49;
       ctx.fillStyle = '#292524';
       ctx.font = 'bold 15px -apple-system, BlinkMacSystemFont, sans-serif';
       ctx.fillText(c.name, 480, y);
@@ -924,15 +924,34 @@ Certified by Loafed Inspection Engine`;
 
       ctx.fillStyle = '#78716c';
       ctx.font = '13px -apple-system, BlinkMacSystemFont, sans-serif';
-      ctx.fillText((c.status || '').replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, ''), 480, y + 20);
+      ctx.fillText((c.status || '').replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, ''), 480, y + 18);
     });
 
-    // Auditor Quote
-    ctx.fillStyle = '#44403c';
-    ctx.font = 'italic 14px Georgia, serif';
-    const cleanCritique = (result.summary_critique || '').replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, '');
-    const wrappedCritique = `"${cleanCritique.slice(0, 115)}..."`;
-    ctx.fillText(wrappedCritique, 480, 645);
+    // Auditor Findings Callout Card (Multi-line word wrap, zero overflow)
+    ctx.fillStyle = '#fffaf5';
+    ctx.strokeStyle = '#fed7aa';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.roundRect(475, 575, 620, 115, 10);
+    ctx.fill();
+    ctx.stroke();
+
+    // Warm left accent bar
+    ctx.fillStyle = '#ea580c';
+    ctx.beginPath();
+    ctx.roundRect(475, 575, 4, 115, [10, 0, 0, 10]);
+    ctx.fill();
+
+    // Callout Label
+    ctx.fillStyle = '#c2410c';
+    ctx.font = 'bold 11px -apple-system, BlinkMacSystemFont, sans-serif';
+    ctx.fillText('CHIEF AUDITOR FINDINGS & CULINARY SUMMARY', 495, 598);
+
+    // Multi-line Word-Wrapped Critique
+    ctx.fillStyle = '#292524';
+    ctx.font = 'italic 13.5px Georgia, serif';
+    const cleanCritique = (result.summary_critique || '').replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, '').trim();
+    drawWrappedText(ctx, `"${cleanCritique}"`, 495, 622, 580, 21, 3);
 
     // Footer
     ctx.fillStyle = '#a8a29e';
@@ -940,6 +959,37 @@ Certified by Loafed Inspection Engine`;
     ctx.textAlign = 'center';
     const dateStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
     ctx.fillText(`Evaluation Date: ${dateStr}  |  Certified by Loafed Machine Vision Engine`, w / 2, 745);
+
+    function drawWrappedText(context, text, startX, startY, maxWidth, lineHeight, maxLines = 3) {
+      const words = text.split(' ');
+      let currentLine = '';
+      let currentY = startY;
+      let linesDrawn = 0;
+
+      for (let n = 0; n < words.length; n++) {
+        const testLine = currentLine + (currentLine ? ' ' : '') + words[n];
+        const metrics = context.measureText(testLine);
+        if (metrics.width > maxWidth && currentLine !== '') {
+          linesDrawn++;
+          if (linesDrawn === maxLines) {
+            let lineWithEllipsis = currentLine;
+            while (lineWithEllipsis.length > 0 && context.measureText(lineWithEllipsis + '...').width > maxWidth) {
+              lineWithEllipsis = lineWithEllipsis.slice(0, -1);
+            }
+            context.fillText(lineWithEllipsis + '...', startX, currentY);
+            return;
+          }
+          context.fillText(currentLine, startX, currentY);
+          currentLine = words[n];
+          currentY += lineHeight;
+        } else {
+          currentLine = testLine;
+        }
+      }
+      if (currentLine && linesDrawn < maxLines) {
+        context.fillText(currentLine, startX, currentY);
+      }
+    }
 
     function triggerDownload() {
       const dataUrl = canvas.toDataURL('image/png');
