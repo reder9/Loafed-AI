@@ -438,7 +438,10 @@ document.addEventListener('DOMContentLoaded', () => {
     startLoadingAnimation();
 
     const formData = new FormData();
-    formData.append('cat_name', catNameInput.value.trim() || 'Anonymous Subject');
+    const trimmedCatName = catNameInput ? catNameInput.value.trim() : '';
+    if (trimmedCatName) {
+      formData.append('cat_name', trimmedCatName);
+    }
     formData.append('model', state.model);
     
     // Anti-bot honeypot check
@@ -512,7 +515,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.scrollTo({ top: 180, behavior: 'smooth' });
 
     // Header info
-    document.getElementById('resultCatName').textContent = result.cat_name || 'Anonymous Subject';
+    document.getElementById('resultCatName').textContent = result.cat_name || 'The Mysterious Loaf';
     document.getElementById('resultHonoraryRank').textContent = result.loaf_rank;
     document.getElementById('resultBreadClass').textContent = result.bread_classification;
     document.getElementById('resultSummaryCritique').textContent = `"${result.summary_critique}"`;
@@ -523,11 +526,13 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Stamp colors
     if (result.grade_letter.includes('A')) {
-      gradeStamp.className = 'stamp text-amber-800 border-amber-800 text-lg';
+      gradeStamp.className = 'stamp text-orange-700 border-orange-700 text-lg font-black';
     } else if (result.grade_letter.includes('B')) {
-      gradeStamp.className = 'stamp text-stone-800 border-stone-800 text-lg';
+      gradeStamp.className = 'stamp text-amber-700 border-amber-700 text-lg font-black';
+    } else if (result.grade_letter.includes('C')) {
+      gradeStamp.className = 'stamp text-stone-700 border-stone-700 text-lg font-black';
     } else {
-      gradeStamp.className = 'stamp text-stone-600 border-stone-600 text-lg';
+      gradeStamp.className = 'stamp text-rose-700 border-rose-700 text-lg font-black';
     }
 
     // Multi-angle badge
@@ -824,10 +829,15 @@ Certified by Loafed Inspection Engine`;
     ctx.save();
     ctx.translate(250, 520);
     ctx.rotate(-0.06);
-    ctx.strokeStyle = '#b45309';
+    let stampColor = '#c2410c'; // A
+    if (result.grade_letter.includes('B')) stampColor = '#d97706';
+    else if (result.grade_letter.includes('C')) stampColor = '#57534e';
+    else if (result.grade_letter.includes('D') || result.grade_letter.includes('F')) stampColor = '#be123c';
+
+    ctx.strokeStyle = stampColor;
     ctx.lineWidth = 3;
     ctx.strokeRect(-60, -28, 120, 56);
-    ctx.fillStyle = '#b45309';
+    ctx.fillStyle = stampColor;
     ctx.font = 'bold 30px -apple-system, BlinkMacSystemFont, sans-serif';
     ctx.fillText(result.grade_letter, 0, 10);
     ctx.restore();
