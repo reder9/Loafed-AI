@@ -135,6 +135,17 @@ document.addEventListener('DOMContentLoaded', () => {
   const rollSubmitBakerTagBtn = document.getElementById('rollSubmitBakerTagBtn');
   const submitModalNotice = document.getElementById('submitModalNotice');
   const submitConsentCheckbox = document.getElementById('submitConsentCheckbox');
+  const submitModalFormView = document.getElementById('submitModalFormView');
+  const submitSuccessView = document.getElementById('submitSuccessView');
+  const submitSuccessMessage = document.getElementById('submitSuccessMessage');
+  const submitSuccessThumb = document.getElementById('submitSuccessThumb');
+  const submitSuccessCatName = document.getElementById('submitSuccessCatName');
+  const submitSuccessScoreBadge = document.getElementById('submitSuccessScoreBadge');
+  const submitSuccessRank = document.getElementById('submitSuccessRank');
+  const submitSuccessShareUrl = document.getElementById('submitSuccessShareUrl');
+  const copySubmitSuccessUrlBtn = document.getElementById('copySubmitSuccessUrlBtn');
+  const shareSuccessNativeBtn = document.getElementById('shareSuccessNativeBtn');
+  const submitSuccessViewLeaderboardBtn = document.getElementById('submitSuccessViewLeaderboardBtn');
 
   const authModal = document.getElementById('authModal');
   const closeAuthModalBtn = document.getElementById('closeAuthModalBtn');
@@ -1831,10 +1842,13 @@ Certified by Loafed Inspection Engine`;
     shareScorecardBtn.addEventListener('click', async () => {
       const r = state.currentResult;
       if (!r) return;
+      const shareUrl = state.submittedEntryId
+        ? `${window.location.origin}/leaderboard?loaf=${encodeURIComponent(state.submittedEntryId)}`
+        : window.location.origin;
       const shareData = {
         title: `${r.cat_name || 'My Cat'} — Official Loaf Score`,
         text: `My cat ${r.cat_name || 'loaf'} scored ${r.overall_score}/100 (${r.grade_letter} — ${r.loaf_rank}) on Loafed AI! Can your cat beat this loaf?`,
-        url: window.location.origin
+        url: shareUrl
       };
       if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
         try {
@@ -1847,13 +1861,15 @@ Certified by Loafed Inspection Engine`;
         showToast({
           type: 'success',
           title: 'Scorecard Link Copied',
-          message: 'Loaf scorecard text and link copied to clipboard!'
+          message: state.submittedEntryId 
+            ? 'Official loaf link and summary copied to clipboard!' 
+            : 'Loaf scorecard text and link copied to clipboard!'
         });
       } catch (_) {
         showToast({
           type: 'info',
           title: 'Loafed AI',
-          message: `${window.location.origin}`
+          message: shareUrl
         });
       }
     });
@@ -3736,6 +3752,21 @@ Certified by Loafed Inspection Engine`;
 
   function openSubmitModal() {
     if (!state.currentResult || !submitModal) return;
+
+    if (state.submittedEntryId) {
+      const shareUrl = `${window.location.origin}/leaderboard?loaf=${encodeURIComponent(state.submittedEntryId)}`;
+      if (submitSuccessShareUrl) submitSuccessShareUrl.value = shareUrl;
+      if (submitSuccessViewLeaderboardBtn) submitSuccessViewLeaderboardBtn.href = `/leaderboard?loaf=${encodeURIComponent(state.submittedEntryId)}`;
+      if (submitModalFormView) submitModalFormView.classList.add('hidden');
+      if (submitSuccessView) submitSuccessView.classList.remove('hidden');
+      submitModal.classList.remove('hidden');
+      refreshIcons();
+      return;
+    }
+
+    if (submitModalFormView) submitModalFormView.classList.remove('hidden');
+    if (submitSuccessView) submitSuccessView.classList.add('hidden');
+
     const initialCatName = (state.currentResult.cat_name && state.currentResult.cat_name !== 'Anonymous Loaf') 
       ? state.currentResult.cat_name 
       : '';
@@ -3874,16 +3905,33 @@ Certified by Loafed Inspection Engine`;
           throw new Error(errMsg);
         }
 
-        closeSubmitModal();
+        state.submittedEntryId = subData.entry_id;
+
+        // Populate success view
+        const shareUrl = `${window.location.origin}/leaderboard?loaf=${encodeURIComponent(subData.entry_id)}`;
+        if (submitSuccessCatName) submitSuccessCatName.textContent = subData.cat_name || 'Your Cat';
+        if (submitSuccessThumb) submitSuccessThumb.src = subData.thumbnail_url || (submitModalThumbnail ? submitModalThumbnail.src : '/static/logo.png');
+        if (submitSuccessScoreBadge) submitSuccessScoreBadge.textContent = `${subData.score} ${state.currentResult ? state.currentResult.grade_letter : ''}`;
+        if (submitSuccessRank) submitSuccessRank.textContent = state.currentResult ? state.currentResult.loaf_rank : 'Artisan Loaf';
+        if (submitSuccessShareUrl) submitSuccessShareUrl.value = shareUrl;
+        if (submitSuccessViewLeaderboardBtn) submitSuccessViewLeaderboardBtn.href = `/leaderboard?loaf=${encodeURIComponent(subData.entry_id)}`;
+        if (submitSuccessMessage) submitSuccessMessage.textContent = `${subData.cat_name || 'Your cat'} has been officially published to the Leaderboard. Share your certified scorecard with friends!`;
+
+        // Switch to success view inside modal
+        if (submitModalFormView) submitModalFormView.classList.add('hidden');
+        if (submitSuccessView) submitSuccessView.classList.remove('hidden');
+
+        // Update submit button on scorecard
+        if (submitLeaderboardBtn) {
+          submitLeaderboardBtn.innerHTML = '<i data-lucide="share-2" class="w-4 h-4 text-amber-200"></i><span>Share Loaf Link</span>';
+        }
+
         showToast({
           type: 'success',
           title: 'Published to Leaderboard!',
-          message: subData.message || 'Your cat loaf is now live on the Leaderboard!'
+          message: `${subData.cat_name || 'Your cat'} is now live on the Leaderboard! Click below to share the link.`
         });
-
-        setTimeout(() => {
-          window.location.href = '/leaderboard';
-        }, 1000);
+        refreshIcons();
       } catch (err) {
         console.error('Submission error:', err);
         showToast({ type: 'error', title: 'Submission Failed', message: err.message || 'Failed to submit loaf.' });
@@ -3894,6 +3942,60 @@ Certified by Loafed Inspection Engine`;
         refreshIcons();
       }
     });
+
+    if (copySubmitSuccessUrlBtn && submitSuccessShareUrl) {
+      copySubmitSuccessUrlBtn.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(submitSuccessShareUrl.value);
+          showToast({
+            type: 'success',
+            title: 'Link Copied',
+            message: 'Shareable loaf link copied to clipboard!'
+          });
+        } catch (_) {
+          submitSuccessShareUrl.select();
+          document.execCommand('copy');
+          showToast({
+            type: 'success',
+            title: 'Link Copied',
+            message: 'Shareable loaf link copied to clipboard!'
+          });
+        }
+      });
+    }
+
+    if (shareSuccessNativeBtn) {
+      shareSuccessNativeBtn.addEventListener('click', async () => {
+        if (!state.submittedEntryId) return;
+        const shareUrl = `${window.location.origin}/leaderboard?loaf=${encodeURIComponent(state.submittedEntryId)}`;
+        const cat = (state.currentResult && state.currentResult.cat_name) || 'My Cat';
+        const score = (state.currentResult && state.currentResult.overall_score) || '';
+        const grade = (state.currentResult && state.currentResult.grade_letter) || '';
+        const shareData = {
+          title: `${cat} — Official Loaf Score`,
+          text: `Check out ${cat}'s certified loaf score (${score} ${grade}) on Loafed AI!`,
+          url: shareUrl
+        };
+
+        if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+          try {
+            await navigator.share(shareData);
+            return;
+          } catch (_) {}
+        }
+
+        try {
+          await navigator.clipboard.writeText(shareUrl);
+          showToast({
+            type: 'success',
+            title: 'Link Copied',
+            message: 'Shareable loaf link copied to clipboard!'
+          });
+        } catch (_) {
+          prompt('Copy loaf link:', shareUrl);
+        }
+      });
+    }
   }
 
   // Event Listeners for Leaderboard & Auth
@@ -4497,6 +4599,13 @@ Certified by Loafed Inspection Engine`;
   parseUserFromToken();
   updateAuthUI();
   handleAuthRedirectCallback();
+  // Check for shared loaf query param
+  const urlLoaf = new URLSearchParams(window.location.search).get('loaf');
+  if (urlLoaf) {
+    window.location.replace(`/leaderboard?loaf=${encodeURIComponent(urlLoaf)}`);
+    return;
+  }
+
   // Check for legal modal query param
   const urlLegal = new URLSearchParams(window.location.search).get('legal');
   if (urlLegal === 'privacy' || urlLegal === 'terms') {

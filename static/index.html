@@ -1167,90 +1167,141 @@
         <i data-lucide="x" class="w-4 h-4"></i>
       </button>
 
-      <div class="flex items-center gap-3 mb-4 pr-8">
-        <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-50 to-orange-100 border border-orange-300 text-orange-700 flex items-center justify-center shadow-xs shrink-0">
-          <i data-lucide="award" class="w-5 h-5"></i>
-        </div>
-        <div>
-          <h3 class="text-base font-extrabold text-stone-900">Publish to Leaderboard</h3>
-          <p class="text-xs text-stone-500">Showcase your cat's certified loaf to the world</p>
-        </div>
-      </div>
-
-      <!-- Preview Summary Box -->
-      <div class="p-3.5 bg-orange-50/70 rounded-xl border border-orange-200/80 mb-4 flex items-center gap-3.5">
-        <img id="submitModalThumbnail" src="/static/logo.png" alt="Loaf Thumbnail" class="modal-thumb bg-white">
-        <div class="flex-1 min-w-0">
-          <div class="flex items-center justify-between">
-            <h4 id="submitModalCatName" class="font-extrabold text-sm text-stone-900 truncate">Cat Name</h4>
-            <span id="submitModalScoreBadge" class="stamp text-xs font-black text-orange-700 bg-white">98 A+</span>
+      <!-- Form View -->
+      <div id="submitModalFormView">
+        <div class="flex items-center gap-3 mb-4 pr-8">
+          <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-50 to-orange-100 border border-orange-300 text-orange-700 flex items-center justify-center shadow-xs shrink-0">
+            <i data-lucide="award" class="w-5 h-5"></i>
           </div>
-          <p id="submitModalRank" class="text-xs text-orange-800 font-bold mt-0.5 truncate">Grandmaster Artisan Loaf</p>
-          <p id="submitModalBread" class="text-[11px] text-stone-500 truncate">Golden Brioche</p>
-        </div>
-      </div>
-
-      <!-- Required Names Section -->
-      <div class="space-y-3 mb-4">
-        <!-- Cat Name Input (Required) -->
-        <div>
-          <label for="submitCatNameInput" class="block text-xs font-bold text-stone-700 mb-1">
-            Cat's Name <span class="text-orange-600">*</span>
-          </label>
-          <div class="input-with-icon-wrapper">
-            <i data-lucide="tag" class="input-icon-left"></i>
-            <input type="text" id="submitCatNameInput" required maxlength="40" placeholder="e.g. Buttercup, Professor Whiskers, Milo" class="auth-input">
+          <div>
+            <h3 class="text-base font-extrabold text-stone-900">Publish to Leaderboard</h3>
+            <p class="text-xs text-stone-500">Showcase your cat's certified loaf to the world</p>
           </div>
-          <p class="text-[10px] text-stone-500 mt-1">Every loaf on the public leaderboard requires an official cat name.</p>
         </div>
 
-        <!-- Baker Display Name Input (Required) -->
-        <div>
-          <div class="flex items-center justify-between mb-1">
-            <label for="submitDisplayNameInput" class="text-xs font-bold text-stone-700">
-              Public Baker Display Name <span class="text-orange-600">*</span>
+        <!-- Preview Summary Box -->
+        <div class="p-3.5 bg-orange-50/70 rounded-xl border border-orange-200/80 mb-4 flex items-center gap-3.5">
+          <img id="submitModalThumbnail" src="/static/logo.png" alt="Loaf Thumbnail" class="modal-thumb bg-white">
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between">
+              <h4 id="submitModalCatName" class="font-extrabold text-sm text-stone-900 truncate">Cat Name</h4>
+              <span id="submitModalScoreBadge" class="stamp text-xs font-black text-orange-700 bg-white">98 A+</span>
+            </div>
+            <p id="submitModalRank" class="text-xs text-orange-800 font-bold mt-0.5 truncate">Grandmaster Artisan Loaf</p>
+            <p id="submitModalBread" class="text-[11px] text-stone-500 truncate">Golden Brioche</p>
+          </div>
+        </div>
+
+        <!-- Required Names Section -->
+        <div class="space-y-3 mb-4">
+          <!-- Cat Name Input (Required) -->
+          <div>
+            <label for="submitCatNameInput" class="block text-xs font-bold text-stone-700 mb-1">
+              Cat's Name <span class="text-orange-600">*</span>
             </label>
-            <button type="button" id="rollSubmitBakerTagBtn" class="tag-generator-btn" title="Generate a fun cat baker gamertag">
-              <i data-lucide="dice-5" class="w-3.5 h-3.5 text-orange-600"></i>
-              <span>Roll Baker Tag</span>
+            <div class="input-with-icon-wrapper">
+              <i data-lucide="tag" class="input-icon-left"></i>
+              <input type="text" id="submitCatNameInput" required maxlength="40" placeholder="e.g. Buttercup, Professor Whiskers, Milo" class="auth-input">
+            </div>
+            <p class="text-[10px] text-stone-500 mt-1">Every loaf on the public leaderboard requires an official cat name.</p>
+          </div>
+
+          <!-- Baker Display Name Input (Required) -->
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <label for="submitDisplayNameInput" class="text-xs font-bold text-stone-700">
+                Public Baker Display Name <span class="text-orange-600">*</span>
+              </label>
+              <button type="button" id="rollSubmitBakerTagBtn" class="tag-generator-btn" title="Generate a fun cat baker gamertag">
+                <i data-lucide="dice-5" class="w-3.5 h-3.5 text-orange-600"></i>
+                <span>Roll Baker Tag</span>
+              </button>
+            </div>
+            <div class="input-with-icon-wrapper">
+              <i data-lucide="user" class="input-icon-left"></i>
+              <input type="text" id="submitDisplayNameInput" required maxlength="30" placeholder="e.g. SirToastyLoaf or CaptainBrioche" class="auth-input">
+            </div>
+            <p class="text-[10px] text-stone-500 mt-1">Your baker gamertag displayed alongside your cat on the leaderboard.</p>
+          </div>
+        </div>
+
+        <!-- Submission Validation Notice -->
+        <div id="submitModalNotice" class="hidden mb-3 p-3 rounded-xl text-xs font-medium border leading-relaxed auth-notice-error"></div>
+
+        <!-- Privacy & Leaderboard Storage Disclosure -->
+        <div class="p-3.5 bg-amber-50/80 rounded-xl border border-amber-200/90 mb-3.5 flex items-start gap-2.5 text-xs text-amber-950 shadow-2xs">
+          <i data-lucide="shield-check" class="w-4 h-4 text-emerald-600 shrink-0 mt-0.5"></i>
+          <div class="leading-relaxed text-[11px] text-amber-900">
+            <strong class="font-extrabold text-amber-950">Leaderboard Data Retention Only:</strong> Your cat photos are never saved during regular audits. By publishing, only this photo, your cat's name, and their loaf score are kept exclusively for the public leaderboard. You can remove your entry or delete your account at any time from your profile.
+          </div>
+        </div>
+
+        <!-- Opt-In Consent Checkbox -->
+        <label class="flex items-start gap-2.5 mb-5 cursor-pointer text-xs text-stone-600 bg-stone-50 p-3 rounded-xl border border-stone-200 hover:bg-orange-50/40 transition-colors">
+          <input type="checkbox" id="submitConsentCheckbox" class="mt-0.5 w-4 h-4 rounded text-orange-600 focus:ring-orange-500 border-stone-300">
+          <span class="leading-relaxed text-[11.5px]">
+            I voluntarily opt in to publish this cat loaf score and photo to the public Leaderboard. I understand this data is kept solely for the leaderboard and can be removed by me anytime.
+          </span>
+        </label>
+
+        <!-- Action Buttons -->
+        <div class="flex items-center gap-2.5 justify-end">
+          <button id="cancelSubmitModalBtn" class="min-h-[44px] px-4 py-2 rounded-xl bg-orange-50 hover:bg-orange-100 text-stone-700 text-xs font-bold transition-colors">
+            Cancel
+          </button>
+          <button id="confirmSubmitLeaderboardBtn" disabled class="btn-action-primary" aria-label="Confirm and publish to leaderboard">
+            <i data-lucide="check" class="w-4 h-4"></i>
+            <span>Confirm & Publish</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Submission Success / Share Link View -->
+      <div id="submitSuccessView" class="hidden text-center py-2">
+        <div class="w-14 h-14 rounded-2xl bg-emerald-100 border border-emerald-300 text-emerald-700 flex items-center justify-center mx-auto mb-3 shadow-xs">
+          <i data-lucide="check-circle-2" class="w-8 h-8"></i>
+        </div>
+        <h3 class="text-lg font-black text-stone-900 tracking-tight">Certified &amp; Published!</h3>
+        <p class="text-xs text-stone-600 mt-1 mb-4 leading-relaxed max-w-sm mx-auto" id="submitSuccessMessage">
+          Your cat loaf has been officially published to the Leaderboard. Share your certified scorecard with friends!
+        </p>
+
+        <!-- Preview Card -->
+        <div class="p-3.5 bg-orange-50/70 rounded-2xl border border-orange-200/80 mb-4 flex items-center gap-3 text-left">
+          <img id="submitSuccessThumb" src="/static/logo.png" alt="Loaf Thumbnail" class="w-14 h-14 rounded-xl object-cover border border-orange-200 bg-white shrink-0">
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between gap-1">
+              <h4 id="submitSuccessCatName" class="font-extrabold text-sm text-stone-900 truncate">Cat Name</h4>
+              <span id="submitSuccessScoreBadge" class="stamp text-xs font-black text-orange-700 bg-white">98 A+</span>
+            </div>
+            <p id="submitSuccessRank" class="text-xs text-orange-800 font-bold mt-0.5 truncate">Grandmaster Artisan Loaf</p>
+            <p class="text-[11px] text-stone-500">Official Bureau Certified Scorecard</p>
+          </div>
+        </div>
+
+        <!-- Shareable Link Copy Box -->
+        <div class="space-y-1.5 text-left mb-4">
+          <label class="text-[11px] font-bold uppercase tracking-wider text-stone-600 block">Shareable Scorecard Link</label>
+          <div class="flex items-center gap-2">
+            <input type="text" id="submitSuccessShareUrl" readonly class="w-full px-3 py-2.5 rounded-xl bg-stone-100 border border-stone-200 text-xs font-mono text-stone-600 select-all outline-none">
+            <button type="button" id="copySubmitSuccessUrlBtn" class="min-h-[42px] px-4 py-2 rounded-xl bg-orange-100 hover:bg-orange-200 text-orange-950 font-bold text-xs flex items-center gap-1.5 shrink-0 transition-colors btn-tactile cursor-pointer">
+              <i data-lucide="copy" class="w-3.5 h-3.5 text-orange-700"></i>
+              <span>Copy</span>
             </button>
           </div>
-          <div class="input-with-icon-wrapper">
-            <i data-lucide="user" class="input-icon-left"></i>
-            <input type="text" id="submitDisplayNameInput" required maxlength="30" placeholder="e.g. SirToastyLoaf or CaptainBrioche" class="auth-input">
-          </div>
-          <p class="text-[10px] text-stone-500 mt-1">Your baker gamertag displayed alongside your cat on the leaderboard.</p>
         </div>
-      </div>
 
-      <!-- Submission Validation Notice -->
-      <div id="submitModalNotice" class="hidden mb-3 p-3 rounded-xl text-xs font-medium border leading-relaxed auth-notice-error"></div>
-
-      <!-- Privacy & Leaderboard Storage Disclosure -->
-      <div class="p-3.5 bg-amber-50/80 rounded-xl border border-amber-200/90 mb-3.5 flex items-start gap-2.5 text-xs text-amber-950 shadow-2xs">
-        <i data-lucide="shield-check" class="w-4 h-4 text-emerald-600 shrink-0 mt-0.5"></i>
-        <div class="leading-relaxed text-[11px] text-amber-900">
-          <strong class="font-extrabold text-amber-950">Leaderboard Data Retention Only:</strong> Your cat photos are never saved during regular audits. By publishing, only this photo, your cat's name, and their loaf score are kept exclusively for the public leaderboard. You can remove your entry or delete your account at any time from your profile.
+        <!-- Action Buttons -->
+        <div class="flex flex-col sm:flex-row items-center gap-2.5 justify-center pt-2">
+          <button type="button" id="shareSuccessNativeBtn" class="w-full sm:w-auto min-h-[44px] px-5 py-2.5 rounded-xl bg-gradient-to-r from-orange-600 via-amber-600 to-orange-700 hover:from-orange-700 hover:to-amber-700 text-white font-bold text-xs shadow-xs flex items-center justify-center gap-2 active:scale-95 shimmer-btn btn-tactile cursor-pointer">
+            <i data-lucide="share-2" class="w-4 h-4"></i>
+            <span>Share Loaf Link</span>
+          </button>
+          <a id="submitSuccessViewLeaderboardBtn" href="/leaderboard" class="w-full sm:w-auto min-h-[44px] px-4 py-2.5 rounded-xl bg-orange-50 hover:bg-orange-100 text-orange-950 font-bold text-xs flex items-center justify-center gap-1.5 border border-orange-200 transition-colors cursor-pointer">
+            <i data-lucide="trophy" class="w-4 h-4 text-orange-700"></i>
+            <span>View on Leaderboard</span>
+          </a>
         </div>
-      </div>
-
-      <!-- Opt-In Consent Checkbox -->
-      <label class="flex items-start gap-2.5 mb-5 cursor-pointer text-xs text-stone-600 bg-stone-50 p-3 rounded-xl border border-stone-200 hover:bg-orange-50/40 transition-colors">
-        <input type="checkbox" id="submitConsentCheckbox" class="mt-0.5 w-4 h-4 rounded text-orange-600 focus:ring-orange-500 border-stone-300">
-        <span class="leading-relaxed text-[11.5px]">
-          I voluntarily opt in to publish this cat loaf score and photo to the public Leaderboard. I understand this data is kept solely for the leaderboard and can be removed by me anytime.
-        </span>
-      </label>
-
-      <!-- Action Buttons -->
-      <div class="flex items-center gap-2.5 justify-end">
-        <button id="cancelSubmitModalBtn" class="min-h-[44px] px-4 py-2 rounded-xl bg-orange-50 hover:bg-orange-100 text-stone-700 text-xs font-bold transition-colors">
-          Cancel
-        </button>
-        <button id="confirmSubmitLeaderboardBtn" disabled class="btn-action-primary" aria-label="Confirm and publish to leaderboard">
-          <i data-lucide="check" class="w-4 h-4"></i>
-          <span>Confirm & Publish</span>
-        </button>
       </div>
     </div>
   </div>

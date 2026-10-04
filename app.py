@@ -12,6 +12,7 @@ import urllib.request
 import urllib.parse
 from typing import Optional, List, Dict, Any
 from pathlib import Path
+from decimal import Decimal
 
 from PIL import Image, UnidentifiedImageError
 import boto3
@@ -501,6 +502,17 @@ def generate_grade_token(result_data: dict, image_hash: Optional[str] = None) ->
         "grade_letter": str(result_data.get("grade_letter", "")),
         "loaf_rank": str(result_data.get("loaf_rank", "")),
         "bread_classification": str(result_data.get("bread_classification", "")),
+        "summary_critique": str(result_data.get("summary_critique", "")),
+        "paw_tuck": result_data.get("paw_tuck", {}),
+        "tail_tuck": result_data.get("tail_tuck", {}),
+        "elbow_compactness": result_data.get("elbow_compactness", {}),
+        "crust_symmetry": result_data.get("crust_symmetry", {}),
+        "drag_coefficient": float(result_data.get("drag_coefficient", 0.15)) if result_data.get("drag_coefficient") is not None else 0.15,
+        "badges": result_data.get("badges", []),
+        "fun_tips_for_cat": result_data.get("fun_tips_for_cat", []),
+        "oar_detected": bool(result_data.get("oar_detected", False)),
+        "face_loaf": bool(result_data.get("face_loaf", False)),
+        "multi_angle_bonus": int(result_data.get("multi_angle_bonus", 0)),
         "image_sha256": image_hash,
         "ts": int(time.time()),
         "salt": uuid.uuid4().hex[:12]
@@ -1874,6 +1886,13 @@ async def submit_to_leaderboard(
     ddb = session.resource("dynamodb")
     table = ddb.Table(DYNAMODB_TABLE_NAME)
 
+    # Safely convert drag_coefficient for DynamoDB TypeSerializer
+    raw_drag = score_data.get("drag_coefficient")
+    try:
+        drag_coeff_val = Decimal(str(round(float(raw_drag if raw_drag is not None else 0.15), 3)))
+    except Exception:
+        drag_coeff_val = Decimal("0.15")
+
     # Primary item in PERIOD#ALL with user_id for GSI UserIndex
     item_all = {
         "pk": "PERIOD#ALL",
@@ -1891,7 +1910,18 @@ async def submit_to_leaderboard(
         "created_at": now_iso,
         "periods": ["ALL", month_str, week_str],
         "report_count": 0,
-        "is_hidden": False
+        "is_hidden": False,
+        "summary_critique": score_data.get("summary_critique", ""),
+        "paw_tuck": score_data.get("paw_tuck", {}),
+        "tail_tuck": score_data.get("tail_tuck", {}),
+        "elbow_compactness": score_data.get("elbow_compactness", {}),
+        "crust_symmetry": score_data.get("crust_symmetry", {}),
+        "drag_coefficient": drag_coeff_val,
+        "badges": score_data.get("badges", []),
+        "fun_tips_for_cat": score_data.get("fun_tips_for_cat", []),
+        "oar_detected": bool(score_data.get("oar_detected", False)),
+        "face_loaf": bool(score_data.get("face_loaf", False)),
+        "multi_angle_bonus": int(score_data.get("multi_angle_bonus", 0))
     }
 
     # Partition items for Month and Week (without user_id to keep GSI clean)
@@ -1903,10 +1933,16 @@ async def submit_to_leaderboard(
     item_week["pk"] = f"PERIOD#{week_str}"
     item_week.pop("user_id", None)
 
+    # Direct lookup item for fast O(1) retrieval by entry_id
+    item_entry = dict(item_all)
+    item_entry["pk"] = f"ENTRY#{entry_id}"
+    item_entry["sk"] = "METADATA"
+
     try:
         table.put_item(Item=item_all)
         table.put_item(Item=item_month)
         table.put_item(Item=item_week)
+        table.put_item(Item=item_entry)
     except Exception as e:
         logger.error(f"DynamoDB write error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to save leaderboard record.")
@@ -1972,6 +2008,159 @@ async def get_leaderboard(period: str = "all", limit: int = 50):
         "period": period,
         "count": len(entries),
         "entries": entries
+    }
+
+
+@app.get("/api/loaf/{entry_id}")
+async def get_loaf_details(entry_id: str):
+    """Retrieves full audit scorecard and observation critique for a specific cat loaf."""
+    entry_id = entry_id.strip()
+    if not entry_id or not re.match(r'^[a-zA-Z0-9_\-]+$', entry_id):
+        raise HTTPException(status_code=400, detail="Invalid loaf identifier.")
+
+    session = get_boto3_session()
+    ddb = session.resource("dynamodb")
+    table = ddb.Table(DYNAMODB_TABLE_NAME)
+
+    item = None
+    # 1. Direct O(1) key lookup
+    try:
+        res = table.get_item(Key={"pk": f"ENTRY#{entry_id}", "sk": "METADATA"})
+        item = res.get("Item")
+    except Exception as e:
+        logger.warning(f"DynamoDB get_item error for ENTRY#{entry_id}: {e}")
+
+    # 2. Query fallback on PERIOD#ALL
+    if not item:
+        try:
+            res = table.query(
+                KeyConditionExpression=Key("pk").eq("PERIOD#ALL"),
+                FilterExpression=Attr("entry_id").eq(entry_id)
+            )
+            items = res.get("Items", [])
+            if items:
+                item = items[0]
+        except Exception as e:
+            logger.warning(f"DynamoDB query fallback error for {entry_id}: {e}")
+
+    # 3. Table scan fallback for legacy items
+    if not item:
+        try:
+            res = table.scan(
+                FilterExpression=Attr("entry_id").eq(entry_id)
+            )
+            items = res.get("Items", [])
+            if items:
+                item = items[0]
+        except Exception as e:
+            logger.warning(f"DynamoDB scan fallback error for {entry_id}: {e}")
+
+    if not item or item.get("is_hidden") is True or int(item.get("report_count", 0)) >= 3:
+        raise HTTPException(status_code=404, detail="Cat loaf not found or has been removed.")
+
+    # Match benchmark presets if applicable
+    preset_data = {}
+    if entry_id == "hof_buttercup":
+        preset_data = PRESET_BUTTERCUP
+    elif entry_id == "hof_chonks":
+        preset_data = PRESET_CHONKS
+    elif entry_id == "hof_flash":
+        preset_data = PRESET_FLASH
+
+    overall_score = int(item.get("overall_score", 0))
+    cat_name = item.get("cat_name") or preset_data.get("cat_name", "Anonymous Loaf")
+    display_name = item.get("display_name", "Anonymous Baker")
+    grade_letter = item.get("grade_letter") or preset_data.get("grade_letter", "B")
+    loaf_rank = item.get("loaf_rank") or preset_data.get("loaf_rank", "Certified Artisan Loaf")
+    bread_class = item.get("bread_classification") or preset_data.get("bread_classification", "Golden Brioche")
+    thumb = item.get("thumbnail_url", "")
+    created_at = item.get("created_at", "")
+
+    summary_critique = item.get("summary_critique") or preset_data.get("summary_critique")
+    if not summary_critique:
+        summary_critique = f"{cat_name} demonstrates authentic domestic feline bakery curvature with commendable perimeter compacting and a distinguished {bread_class} rise."
+
+    paw_tuck = item.get("paw_tuck") or preset_data.get("paw_tuck")
+    if not paw_tuck:
+        pt_score = min(25, max(15, overall_score // 4))
+        paw_tuck = {
+            "score": pt_score,
+            "status": "Commendable Paw Concealment",
+            "critique": "Undercarriage perimeter is firmly tucked with minimal paw flaring.",
+            "observations": ["Paws withdrawn beneath chest silhouette", "Solid base perimeter"]
+        }
+
+    tail_tuck = item.get("tail_tuck") or preset_data.get("tail_tuck")
+    if not tail_tuck:
+        tt_score = min(25, max(15, (overall_score + 2) // 4))
+        tail_tuck = {
+            "score": tt_score,
+            "status": "Flush Flank Contour",
+            "critique": "Tail wraps cleanly along flank line minimizing aerodynamic drag.",
+            "observations": ["Tail follows natural lateral curvature", "Flush haunch tuck"]
+        }
+
+    elbow_compactness = item.get("elbow_compactness") or preset_data.get("elbow_compactness")
+    if not elbow_compactness:
+        ec_score = min(25, max(15, (overall_score - 1) // 4))
+        elbow_compactness = {
+            "score": ec_score,
+            "status": "Compact Dough Form",
+            "critique": "Elbow joints are compressed inwards to form a tight, aerodynamic loaf silhouette.",
+            "observations": ["Zero significant wing protrusion", "Stable dough density"]
+        }
+
+    crust_symmetry = item.get("crust_symmetry") or preset_data.get("crust_symmetry")
+    if not crust_symmetry:
+        cs_score = min(25, max(10, overall_score - (paw_tuck.get('score', 20) + tail_tuck.get('score', 20) + elbow_compactness.get('score', 20))))
+        crust_symmetry = {
+            "score": cs_score,
+            "status": "Balanced Crust Toastiness",
+            "critique": "Coat toastiness is uniform across dorsal spine with pleasing bilateral symmetry.",
+            "observations": ["Bilateral spinal alignment", "Even coat toast distribution"]
+        }
+
+    drag_coeff = item.get("drag_coefficient")
+    if drag_coeff is None:
+        drag_coeff = preset_data.get("drag_coefficient", 0.12)
+    else:
+        try:
+            drag_coeff = float(drag_coeff)
+        except Exception:
+            drag_coeff = 0.12
+
+    badges = item.get("badges") or preset_data.get("badges") or [
+        "Certified Feline Loaf",
+        "Official Bureau Audit",
+        f"{bread_class} Silhouette"
+    ]
+
+    tips = item.get("fun_tips_for_cat") or preset_data.get("fun_tips_for_cat") or [
+        "Maintain optimal hydration for crust sheen.",
+        "Practice daily dough rising on warm surfaces."
+    ]
+
+    return {
+        "entry_id": entry_id,
+        "cat_name": cat_name,
+        "display_name": display_name,
+        "overall_score": overall_score,
+        "grade_letter": grade_letter,
+        "loaf_rank": loaf_rank,
+        "bread_classification": bread_class,
+        "thumbnail_url": thumb,
+        "created_at": created_at,
+        "summary_critique": summary_critique,
+        "paw_tuck": paw_tuck,
+        "tail_tuck": tail_tuck,
+        "elbow_compactness": elbow_compactness,
+        "crust_symmetry": crust_symmetry,
+        "drag_coefficient": drag_coeff,
+        "badges": badges,
+        "fun_tips_for_cat": tips,
+        "oar_detected": bool(item.get("oar_detected", preset_data.get("oar_detected", False))),
+        "face_loaf": bool(item.get("face_loaf", preset_data.get("face_loaf", False))),
+        "multi_angle_bonus": int(item.get("multi_angle_bonus", preset_data.get("multi_angle_bonus", 0)))
     }
 
 
@@ -2095,6 +2284,11 @@ async def admin_remove_entry(req: AdminRemoveRequest):
             logger.warning(f"Admin delete item error {pk}/{sk}: {e}")
 
     try:
+        table.delete_item(Key={"pk": f"ENTRY#{entry_id}", "sk": "METADATA"})
+    except Exception as e:
+        logger.warning(f"Admin delete entry lookup error ENTRY#{entry_id}: {e}")
+
+    try:
         s3_client.delete_object(Bucket=S3_BUCKET_NAME, Key=f"thumbnails/{entry_id}.webp")
     except Exception as e:
         logger.warning(f"Admin delete S3 thumbnail error for {entry_id}: {e}")
@@ -2173,6 +2367,11 @@ async def delete_leaderboard_entry(entry_id: str, authorization: Optional[str] =
             table.delete_item(Key={"pk": pk, "sk": sk})
         except Exception as e:
             logger.warning(f"Error deleting item {pk}/{sk}: {e}")
+
+    try:
+        table.delete_item(Key={"pk": f"ENTRY#{entry_id}", "sk": "METADATA"})
+    except Exception as e:
+        logger.warning(f"Error deleting entry lookup item ENTRY#{entry_id}: {e}")
 
     try:
         s3_client.delete_object(Bucket=S3_BUCKET_NAME, Key=f"thumbnails/{entry_id}.webp")

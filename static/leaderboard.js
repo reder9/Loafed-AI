@@ -184,6 +184,42 @@ document.addEventListener('DOMContentLoaded', () => {
   const lightboxImage = document.getElementById('lightboxImage');
   const closeLightboxBtn = document.getElementById('closeLightboxBtn');
 
+  // Loaf Inspection Details Modal Elements
+  const loafDetailsModal = document.getElementById('loafDetailsModal');
+  const closeLoafDetailsBtn = document.getElementById('closeLoafDetailsBtn');
+  const loafDetailsLoading = document.getElementById('loafDetailsLoading');
+  const loafDetailsContent = document.getElementById('loafDetailsContent');
+  const loafDetailsVerificationId = document.getElementById('loafDetailsVerificationId');
+  const loafDetailsDate = document.getElementById('loafDetailsDate');
+  const loafDetailsCatName = document.getElementById('loafDetailsCatName');
+  const loafDetailsBakerName = document.getElementById('loafDetailsBakerName');
+  const loafDetailsScoreStamp = document.getElementById('loafDetailsScoreStamp');
+  const loafDetailsPhotoContainer = document.getElementById('loafDetailsPhotoContainer');
+  const loafDetailsPhoto = document.getElementById('loafDetailsPhoto');
+  const loafDetailsRank = document.getElementById('loafDetailsRank');
+  const loafDetailsBread = document.getElementById('loafDetailsBread');
+  const loafDetailsCritique = document.getElementById('loafDetailsCritique');
+  const loafDetailsDragBadge = document.getElementById('loafDetailsDragBadge');
+  const loafDetailsDragVal = document.getElementById('loafDetailsDragVal');
+  const loafDetailsOarBadge = document.getElementById('loafDetailsOarBadge');
+  const loafDetailsOarText = document.getElementById('loafDetailsOarText');
+  const loafDetailsPawScore = document.getElementById('loafDetailsPawScore');
+  const loafDetailsPawStatus = document.getElementById('loafDetailsPawStatus');
+  const loafDetailsPawCritique = document.getElementById('loafDetailsPawCritique');
+  const loafDetailsTailScore = document.getElementById('loafDetailsTailScore');
+  const loafDetailsTailStatus = document.getElementById('loafDetailsTailStatus');
+  const loafDetailsTailCritique = document.getElementById('loafDetailsTailCritique');
+  const loafDetailsElbowScore = document.getElementById('loafDetailsElbowScore');
+  const loafDetailsElbowStatus = document.getElementById('loafDetailsElbowStatus');
+  const loafDetailsElbowCritique = document.getElementById('loafDetailsElbowCritique');
+  const loafDetailsCrustScore = document.getElementById('loafDetailsCrustScore');
+  const loafDetailsCrustStatus = document.getElementById('loafDetailsCrustStatus');
+  const loafDetailsCrustCritique = document.getElementById('loafDetailsCrustCritique');
+  const loafDetailsBadgesList = document.getElementById('loafDetailsBadgesList');
+  const loafDetailsShareUrlInput = document.getElementById('loafDetailsShareUrlInput');
+  const copyLoafShareUrlBtn = document.getElementById('copyLoafShareUrlBtn');
+  const modalNativeShareBtn = document.getElementById('modalNativeShareBtn');
+
   // Display Name Safety Filters & Gamertag Generator
   const CLIENT_PROFANITY_REGEX = /\b(?:fuck|fck|shit|bitch|asshole|bastard|dick|pussy|cunt|cock|nigger|nigga|faggot|retard|whore|slut|twat|wanker|prick|penis|vagina|tit|tits|boob|boobs|nazi|hitler)\b/i;
   const ALLOWED_NAME_REGEX = /^[a-zA-Z0-9\u00C0-\u017F\s\-'.&_]+$/;
@@ -642,6 +678,217 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // Loaf Inspection Details Modal View
+  let activeLoafDetail = null;
+
+  async function openLoafDetails(entryId) {
+    if (!loafDetailsModal || !entryId) return;
+
+    loafDetailsModal.classList.remove('hidden');
+    if (loafDetailsLoading) loafDetailsLoading.classList.remove('hidden');
+    if (loafDetailsContent) loafDetailsContent.classList.add('hidden');
+    refreshIcons();
+
+    try {
+      const res = await fetch(`/api/loaf/${encodeURIComponent(entryId)}`);
+      if (!res.ok) {
+        throw new Error('Cat loaf details not found or may have been removed.');
+      }
+      const data = await res.json();
+      activeLoafDetail = data;
+
+      // Update URL with query param without full reload
+      const newUrl = new URL(window.location);
+      newUrl.searchParams.set('loaf', entryId);
+      window.history.replaceState({ loaf: entryId }, '', newUrl.toString());
+
+      // Verification Badge
+      if (loafDetailsVerificationId) {
+        const gradeCode = (data.grade_letter || 'A').replace(/[^a-zA-Z]/g, '');
+        const hash = (data.entry_id || '').slice(0, 6).toUpperCase();
+        loafDetailsVerificationId.textContent = `LF-2026-${gradeCode}${hash}`;
+      }
+
+      // Date
+      if (loafDetailsDate) {
+        let dateStr = 'Certified 2026';
+        if (data.created_at) {
+          try {
+            const d = new Date(data.created_at);
+            dateStr = `Certified ${d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+          } catch (_) {}
+        }
+        loafDetailsDate.textContent = dateStr;
+      }
+
+      if (loafDetailsCatName) loafDetailsCatName.textContent = data.cat_name || 'Anonymous Loaf';
+      if (loafDetailsBakerName) loafDetailsBakerName.textContent = data.display_name || 'Anonymous Baker';
+      if (loafDetailsScoreStamp) loafDetailsScoreStamp.textContent = `${data.overall_score || 0} ${data.grade_letter || ''}`;
+
+      const photoUrl = data.thumbnail_url || '/static/logo.png';
+      if (loafDetailsPhoto) {
+        loafDetailsPhoto.src = photoUrl;
+        loafDetailsPhoto.alt = `${data.cat_name || 'Cat'} Loaf Photo`;
+      }
+      if (loafDetailsPhotoContainer) {
+        loafDetailsPhotoContainer.onclick = () => openLightbox(data.cat_name || 'Cat Loaf', photoUrl);
+      }
+
+      if (loafDetailsRank) loafDetailsRank.textContent = data.loaf_rank || 'Certified Artisan Loaf';
+      if (loafDetailsBread) loafDetailsBread.textContent = data.bread_classification || 'Golden Brioche';
+      if (loafDetailsCritique) loafDetailsCritique.textContent = data.summary_critique || 'Exemplary feline loaf posture.';
+
+      if (loafDetailsDragVal) {
+        const drag = data.drag_coefficient !== undefined ? Number(data.drag_coefficient).toFixed(2) : '0.12';
+        loafDetailsDragVal.textContent = drag;
+      }
+
+      if (loafDetailsOarText) {
+        loafDetailsOarText.textContent = data.oar_detected ? 'Oar Paw Deployed (Demerit)' : 'Flush Perimeter';
+      }
+
+      // 4 Pillars Breakdown
+      const pt = data.paw_tuck || {};
+      if (loafDetailsPawScore) loafDetailsPawScore.textContent = `${pt.score !== undefined ? pt.score : 20}/25`;
+      if (loafDetailsPawStatus) loafDetailsPawStatus.textContent = pt.status || 'Paw Concealment';
+      if (loafDetailsPawCritique) loafDetailsPawCritique.textContent = pt.critique || 'Perimeter inspected.';
+
+      const tt = data.tail_tuck || {};
+      if (loafDetailsTailScore) loafDetailsTailScore.textContent = `${tt.score !== undefined ? tt.score : 20}/25`;
+      if (loafDetailsTailStatus) loafDetailsTailStatus.textContent = tt.status || 'Tail Tuck';
+      if (loafDetailsTailCritique) loafDetailsTailCritique.textContent = tt.critique || 'Tail alignment inspected.';
+
+      const ec = data.elbow_compactness || {};
+      if (loafDetailsElbowScore) loafDetailsElbowScore.textContent = `${ec.score !== undefined ? ec.score : 20}/25`;
+      if (loafDetailsElbowStatus) loafDetailsElbowStatus.textContent = ec.status || 'Elbow Compactness';
+      if (loafDetailsElbowCritique) loafDetailsElbowCritique.textContent = ec.critique || 'Elbow fold inspected.';
+
+      const cs = data.crust_symmetry || {};
+      if (loafDetailsCrustScore) loafDetailsCrustScore.textContent = `${cs.score !== undefined ? cs.score : 20}/25`;
+      if (loafDetailsCrustStatus) loafDetailsCrustStatus.textContent = cs.status || 'Crust Symmetry';
+      if (loafDetailsCrustCritique) loafDetailsCrustCritique.textContent = cs.critique || 'Dorsal coat inspected.';
+
+      // Badges
+      if (loafDetailsBadgesList) {
+        const badges = Array.isArray(data.badges) && data.badges.length > 0
+          ? data.badges
+          : ['Certified Feline Loaf', 'Zero Paw Visibility', `${data.bread_classification || 'Artisan'} Silhouette`];
+        loafDetailsBadgesList.innerHTML = badges.map(b => `
+          <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white border border-orange-200 text-stone-800 font-bold text-[11px] shadow-2xs">
+            <i data-lucide="check-circle" class="w-3 h-3 text-orange-600"></i>
+            <span>${escapeHtml(b)}</span>
+          </span>
+        `).join('');
+      }
+
+      // Share URL input
+      const shareUrl = `${window.location.origin}/leaderboard?loaf=${encodeURIComponent(data.entry_id)}`;
+      if (loafDetailsShareUrlInput) loafDetailsShareUrlInput.value = shareUrl;
+
+      // Show content
+      if (loafDetailsLoading) loafDetailsLoading.classList.add('hidden');
+      if (loafDetailsContent) loafDetailsContent.classList.remove('hidden');
+      refreshIcons();
+
+      // Highlight matching row if visible in current list
+      const rowEl = document.getElementById(`loaf-row-${entryId}`);
+      if (rowEl) {
+        rowEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        rowEl.classList.add('ring-2', 'ring-orange-400');
+        setTimeout(() => rowEl.classList.remove('ring-2', 'ring-orange-400'), 3000);
+      }
+    } catch (err) {
+      console.error('Error opening loaf details:', err);
+      showToast({ type: 'error', title: 'Inspection Record Not Found', message: err.message || 'Could not load loaf details.' });
+      closeLoafDetails();
+    }
+  }
+
+  function closeLoafDetails() {
+    if (loafDetailsModal) loafDetailsModal.classList.add('hidden');
+    // Clear URL param without reloading
+    const newUrl = new URL(window.location);
+    if (newUrl.searchParams.has('loaf')) {
+      newUrl.searchParams.delete('loaf');
+      window.history.replaceState({}, '', newUrl.pathname + (newUrl.search ? newUrl.search : ''));
+    }
+  }
+
+  window.loafedOpenLoafDetails = openLoafDetails;
+
+  async function shareLoafLink(entryId, catName, score, grade) {
+    const shareUrl = `${window.location.origin}/leaderboard?loaf=${encodeURIComponent(entryId)}`;
+    const shareData = {
+      title: `${catName || 'Cat Loaf'} — Loafed AI Certified Feline`,
+      text: `Check out ${catName || 'this cat loaf'} audited by Loafed AI with a verified score of ${score || ''} ${grade || ''}!`,
+      url: shareUrl
+    };
+
+    if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+      try {
+        await navigator.share(shareData);
+        return;
+      } catch (_) {}
+    }
+
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      showToast({
+        type: 'success',
+        title: 'Share Link Copied',
+        message: `Shareable link for ${catName || 'this loaf'} copied to clipboard!`
+      });
+    } catch (_) {
+      prompt('Copy shareable loaf link:', shareUrl);
+    }
+  }
+  window.loafedShareLoaf = shareLoafLink;
+
+  if (closeLoafDetailsBtn) closeLoafDetailsBtn.addEventListener('click', closeLoafDetails);
+  if (loafDetailsModal) {
+    loafDetailsModal.addEventListener('click', (e) => {
+      if (e.target === loafDetailsModal) closeLoafDetails();
+    });
+  }
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && loafDetailsModal && !loafDetailsModal.classList.contains('hidden')) {
+      closeLoafDetails();
+    }
+  });
+
+  if (copyLoafShareUrlBtn && loafDetailsShareUrlInput) {
+    copyLoafShareUrlBtn.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(loafDetailsShareUrlInput.value);
+        showToast({
+          type: 'success',
+          title: 'Link Copied',
+          message: 'Loaf inspection link copied to clipboard!'
+        });
+      } catch (_) {
+        loafDetailsShareUrlInput.select();
+        document.execCommand('copy');
+        showToast({
+          type: 'success',
+          title: 'Link Copied',
+          message: 'Loaf inspection link copied to clipboard!'
+        });
+      }
+    });
+  }
+
+  if (modalNativeShareBtn) {
+    modalNativeShareBtn.addEventListener('click', () => {
+      if (!activeLoafDetail) return;
+      shareLoafLink(
+        activeLoafDetail.entry_id,
+        activeLoafDetail.cat_name,
+        activeLoafDetail.overall_score,
+        activeLoafDetail.grade_letter
+      );
+    });
+  }
+
   // Leaderboard Filtering & Rendering
   function setPeriodTab(period) {
     state.period = period;
@@ -692,12 +939,12 @@ document.addEventListener('DOMContentLoaded', () => {
       const rankTitle = escapeHtml(entry.loaf_rank || 'Artisan Loaf');
 
       return `
-        <div class="pedestal-card">
+        <div class="pedestal-card cursor-pointer" onclick="window.loafedOpenLoafDetails('${entry.entry_id}')" title="Click to view full inspection scorecard for ${catName}">
           <div class="pedestal-badge ${badgeClass}">
             <i data-lucide="${medalIcon}" class="w-3.5 h-3.5"></i>
             <span>${placeTitle}</span>
           </div>
-          <div class="pedestal-photo-frame" onclick="window.loafedOpenLightbox('${catName}', '${thumb}')" title="Click to inspect ${catName}">
+          <div class="pedestal-photo-frame">
             <img src="${thumb}" alt="${catName}" loading="lazy">
             <span class="pedestal-stamp">${score} ${grade}</span>
           </div>
@@ -769,32 +1016,42 @@ document.addEventListener('DOMContentLoaded', () => {
       const loafRank = escapeHtml(entry.loaf_rank || 'Artisan Loaf');
       const bread = escapeHtml(entry.bread_classification || 'Brioche');
 
-      let actionBtn = '';
+      let actionBtns = '';
       if (isMine) {
-        actionBtn = `
-          <button class="delete-loaf-btn p-2 rounded-xl text-stone-400 hover:text-red-600 hover:bg-red-50 transition-colors ml-2" data-id="${entry.entry_id}" aria-label="Delete ${catName} submission">
-            <i data-lucide="trash-2" class="w-4 h-4"></i>
-          </button>
+        actionBtns = `
+          <div class="flex items-center gap-1 shrink-0 ml-1.5" onclick="event.stopPropagation()">
+            <button class="share-loaf-btn p-2 rounded-xl text-stone-400 hover:text-orange-600 hover:bg-orange-50 transition-colors" data-id="${entry.entry_id}" data-name="${catName}" data-score="${score}" data-grade="${gradeLetter}" aria-label="Share ${catName} loaf link" title="Share link to this cat loaf">
+              <i data-lucide="share-2" class="w-4 h-4 text-orange-600"></i>
+            </button>
+            <button class="delete-loaf-btn p-2 rounded-xl text-stone-400 hover:text-red-600 hover:bg-red-50 transition-colors" data-id="${entry.entry_id}" aria-label="Delete ${catName} submission" title="Delete submission">
+              <i data-lucide="trash-2" class="w-4 h-4"></i>
+            </button>
+          </div>
         `;
       } else {
-        actionBtn = `
-          <button class="report-loaf-btn p-2 rounded-xl text-stone-300 hover:text-amber-700 hover:bg-orange-50 transition-colors ml-2" data-id="${entry.entry_id}" data-score="${score}" aria-label="Report ${catName} submission" title="Report submission as inappropriate or non-cat">
-            <i data-lucide="flag" class="w-4 h-4"></i>
-          </button>
+        actionBtns = `
+          <div class="flex items-center gap-1 shrink-0 ml-1.5" onclick="event.stopPropagation()">
+            <button class="share-loaf-btn p-2 rounded-xl text-stone-400 hover:text-orange-600 hover:bg-orange-50 transition-colors" data-id="${entry.entry_id}" data-name="${catName}" data-score="${score}" data-grade="${gradeLetter}" aria-label="Share ${catName} loaf link" title="Share link to this cat loaf">
+              <i data-lucide="share-2" class="w-4 h-4 text-orange-600"></i>
+            </button>
+            <button class="report-loaf-btn p-2 rounded-xl text-stone-300 hover:text-amber-700 hover:bg-orange-50 transition-colors" data-id="${entry.entry_id}" data-score="${score}" aria-label="Report ${catName} submission" title="Report submission as inappropriate or non-cat">
+              <i data-lucide="flag" class="w-4 h-4"></i>
+            </button>
+          </div>
         `;
       }
 
       return `
-        <div class="p-3.5 sm:p-4 rounded-2xl bg-white border border-orange-200/90 hover:border-amber-400 shadow-2xs hover:shadow-xs transition-all flex items-center gap-3.5 sm:gap-4 group">
+        <div id="loaf-row-${entry.entry_id}" class="leaderboard-entry-row p-3.5 sm:p-4 rounded-2xl bg-white border border-orange-200/90 hover:border-amber-400 shadow-2xs hover:shadow-xs transition-all flex items-center gap-3.5 sm:gap-4 group cursor-pointer" onclick="window.loafedOpenLoafDetails('${entry.entry_id}')" title="Click to view full inspection scorecard for ${catName}">
           <div class="shrink-0 flex items-center justify-center">
             ${rankBadge}
           </div>
-          <div class="relative w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border border-orange-200/80 bg-orange-50 shrink-0 cursor-pointer" onclick="window.loafedOpenLightbox('${catName}', '${thumb}')">
+          <div class="relative w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border border-orange-200/80 bg-orange-50 shrink-0">
             <img src="${thumb}" alt="${catName}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200">
           </div>
           <div class="flex-1 min-w-0">
             <div class="flex items-center justify-between gap-2">
-              <h4 class="font-extrabold text-sm sm:text-base text-stone-900 truncate">${catName}</h4>
+              <h4 class="font-extrabold text-sm sm:text-base text-stone-900 truncate group-hover:text-orange-950 transition-colors">${catName}</h4>
               <span class="stamp text-xs font-black text-orange-700 bg-white border-orange-700 shrink-0">${score} ${gradeLetter}</span>
             </div>
             <div class="flex items-center gap-2 text-xs text-stone-600 mt-0.5 flex-wrap">
@@ -806,12 +1063,23 @@ document.addEventListener('DOMContentLoaded', () => {
               Baked by <span class="font-medium text-stone-600">${bakerName}</span>
             </div>
           </div>
-          ${actionBtn}
+          ${actionBtns}
         </div>
       `;
     }).join('');
 
     refreshIcons();
+
+    leaderboardEntriesList.querySelectorAll('.share-loaf-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const id = e.currentTarget.getAttribute('data-id');
+        const name = e.currentTarget.getAttribute('data-name');
+        const score = e.currentTarget.getAttribute('data-score');
+        const grade = e.currentTarget.getAttribute('data-grade');
+        shareLoafLink(id, name, score, grade);
+      });
+    });
 
     if (isMine) {
       leaderboardEntriesList.querySelectorAll('.delete-loaf-btn').forEach(btn => {
@@ -1482,6 +1750,12 @@ document.addEventListener('DOMContentLoaded', () => {
     loadLeaderboard(requestedPeriod);
   } else {
     loadLeaderboard('all');
+  }
+
+  // Check if a specific loaf was linked in the URL
+  const requestedLoaf = initialParams.get('loaf');
+  if (requestedLoaf) {
+    openLoafDetails(requestedLoaf);
   }
 
   refreshIcons();
