@@ -45,14 +45,30 @@ except ImportError:
 
 app = FastAPI(title="Loafed AI", description="AI Cat Loaf Grading System")
 
-# Enable CORS for local development
+# Enable CORS for production and development
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "https://loafed.redersoft.com",
+        "https://main.d14utztk41y058.amplifyapp.com",
+        "http://localhost:8000",
+        "http://127.0.0.1:8000",
+        "http://localhost:3000",
+        "http://localhost:5173",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "SAMEORIGIN"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+    return response
 
 BASE_DIR = Path(__file__).resolve().parent
 STATIC_DIR = BASE_DIR / "static"
@@ -1723,7 +1739,7 @@ class AdminRemoveRequest(BaseModel):
 async def admin_remove_entry(req: AdminRemoveRequest):
     """Admin endpoint to forcefully purge an offensive submission from DynamoDB and S3."""
     expected_secret = os.getenv("ADMIN_SECRET", SIGNATURE_SECRET)
-    if not req.admin_key or req.admin_key != expected_secret:
+    if not req.admin_key or not hmac.compare_digest(req.admin_key, expected_secret):
         raise HTTPException(status_code=403, detail="Unauthorized admin access.")
 
     entry_id = req.entry_id.strip()

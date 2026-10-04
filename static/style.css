@@ -757,6 +757,14 @@ body {
   padding: 0 !important;
 }
 
+/* Touch hit-area expansion for mobile (Apple HIG 44px min target) */
+.modal-close-btn::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 9999px;
+}
+
 .modal-close-btn:hover {
   background-color: #fee2e2 !important;
   border-color: #fca5a5 !important;
@@ -986,4 +994,23 @@ body {
   border-radius: 0.75rem !important;
   object-fit: cover !important;
   border: 1px solid #fed7aa !important;
+}
+
+/* ==========================================================================
+   Mobile Accessibility & Usability Enhancements
+   ========================================================================== */
+@media screen and (max-width: 640px) {
+  /* Prevent iOS Safari 115% automatic viewport zoom on input focus */
+  input,
+  select,
+  textarea,
+  .auth-input {
+    font-size: 16px !important;
+  }
+
+  /* Ensure modal card scrolls cleanly within small phone viewports / virtual keyboards */
+  .bakery-card {
+    max-height: 92vh;
+    overflow-y: auto;
+  }
 }
