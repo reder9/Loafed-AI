@@ -1865,6 +1865,117 @@ async def delete_leaderboard_entry(entry_id: str, authorization: Optional[str] =
     return {"success": True, "deleted_id": entry_id, "message": "Leaderboard entry removed."}
 
 
+class UpdateProfileRequest(BaseModel):
+    display_name: str
+
+
+@app.get("/api/user/profile")
+async def get_user_profile(authorization: Optional[str] = Header(None)):
+    """Returns profile details for the authenticated Baker."""
+    user_claims = verify_cognito_token(authorization)
+    user_id = user_claims.get("sub")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="User identification missing.")
+
+    email = user_claims.get("email", "")
+    name = user_claims.get("name") or user_claims.get("cognito:username") or (email.split("@")[0] if email else "Baker")
+
+    identities = user_claims.get("identities", [])
+    auth_provider = "Email & Password"
+    if identities:
+        try:
+            if isinstance(identities, str):
+                identities = json.loads(identities)
+            if isinstance(identities, list) and len(identities) > 0:
+                provider_name = identities[0].get("providerName", "")
+                if "Google" in provider_name:
+                    auth_provider = "Google Sign-In"
+        except Exception:
+            pass
+    elif "google" in str(user_claims.get("cognito:username", "")).lower():
+        auth_provider = "Google Sign-In"
+
+    return {
+        "user_id": user_id,
+        "email": email,
+        "display_name": name,
+        "auth_provider": auth_provider
+    }
+
+
+@app.patch("/api/user/profile")
+async def update_user_profile(
+    req: UpdateProfileRequest,
+    authorization: Optional[str] = Header(None)
+):
+    """Updates the Baker display name for the authenticated user in Cognito and DynamoDB."""
+    user_claims = verify_cognito_token(authorization)
+    user_id = user_claims.get("sub")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="User identification missing.")
+
+    # Validate and sanitize display name with content safety & profanity filters
+    clean_name = validate_name(req.display_name, field_label="Baker display name")
+
+    session = get_boto3_session()
+    cognito_client = session.client("cognito-idp")
+    ddb = session.resource("dynamodb")
+    table = ddb.Table(DYNAMODB_TABLE_NAME)
+
+    username = user_claims.get("cognito:username") or user_claims.get("username") or user_id
+
+    # 1. Update in Cognito User Pool
+    try:
+        cognito_client.admin_update_user_attributes(
+            UserPoolId=COGNITO_USER_POOL_ID,
+            Username=username,
+            UserAttributes=[{"Name": "name", "Value": clean_name}]
+        )
+    except Exception as e:
+        logger.error(f"Error updating Cognito user attributes for {username}: {e}")
+        try:
+            cognito_client.admin_update_user_attributes(
+                UserPoolId=COGNITO_USER_POOL_ID,
+                Username=user_id,
+                UserAttributes=[{"Name": "name", "Value": clean_name}]
+            )
+        except Exception as e2:
+            logger.error(f"Failed fallback Cognito update for {user_id}: {e2}")
+            raise HTTPException(status_code=500, detail="Failed to update profile name in authentication directory.")
+
+    # 2. Update existing submissions in DynamoDB so all leaderboard loaves reflect the new display name
+    try:
+        res = table.query(
+            IndexName="UserIndex",
+            KeyConditionExpression=Key("user_id").eq(user_id)
+        )
+        user_entries = res.get("Items", [])
+        for item in user_entries:
+            entry_id = item.get("entry_id")
+            score = int(item.get("overall_score", 0))
+            sk = f"SCORE#{score:03d}#{entry_id}"
+            periods = item.get("periods", ["ALL"])
+            for p in periods:
+                pk = "PERIOD#ALL" if p == "ALL" else f"PERIOD#{p}"
+                try:
+                    table.update_item(
+                        Key={"pk": pk, "sk": sk},
+                        UpdateExpression="SET display_name = :dn",
+                        ExpressionAttributeValues={":dn": clean_name}
+                    )
+                except Exception as update_err:
+                    logger.warning(f"Error updating display_name on {pk}/{sk}: {update_err}")
+    except Exception as ddb_err:
+        logger.warning(f"Could not batch update display_name on DynamoDB entries for user {user_id}: {ddb_err}")
+
+    logger.info(f"User {user_id} ({username}) updated Baker display name to '{clean_name}'.")
+    return {
+        "success": True,
+        "display_name": clean_name,
+        "message": f"Baker display name updated to '{clean_name}'."
+    }
+
+
 @app.delete("/api/user/account")
 async def delete_user_account(authorization: Optional[str] = Header(None)):
     """Permanently deletes the user account, all submissions, and all stored media."""

@@ -106,7 +106,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const dropdownUserName = document.getElementById('dropdownUserName');
   const menuMyLoavesBtn = document.getElementById('menuMyLoavesBtn');
   const menuSignOutBtn = document.getElementById('menuSignOutBtn');
-  const menuDeleteAccountBtn = document.getElementById('menuDeleteAccountBtn');
+  const menuProfileBtn = document.getElementById('menuProfileBtn');
 
   const tabPeriodAll = document.getElementById('tabPeriodAll');
   const tabPeriodMonth = document.getElementById('tabPeriodMonth');
@@ -159,6 +159,19 @@ document.addEventListener('DOMContentLoaded', () => {
   const authForgotSubmitBtn = document.getElementById('authForgotSubmitBtn');
   const authForgotSubmitBtnText = document.getElementById('authForgotSubmitBtnText');
   const authForgotCancelBtn = document.getElementById('authForgotCancelBtn');
+
+  const profileModal = document.getElementById('profileModal');
+  const closeProfileBtn = document.getElementById('closeProfileBtn');
+  const profileAvatarLarge = document.getElementById('profileAvatarLarge');
+  const profileModalName = document.getElementById('profileModalName');
+  const profileModalEmail = document.getElementById('profileModalEmail');
+  const profileDisplayNameInput = document.getElementById('profileDisplayNameInput');
+  const profileForm = document.getElementById('profileForm');
+  const profileNotice = document.getElementById('profileNotice');
+  const saveProfileBtn = document.getElementById('saveProfileBtn');
+  const saveProfileBtnText = document.getElementById('saveProfileBtnText');
+  const profileAuthMethodDisplay = document.getElementById('profileAuthMethodDisplay');
+  const profileDeleteAccountBtn = document.getElementById('profileDeleteAccountBtn');
 
   const deleteAccountModal = document.getElementById('deleteAccountModal');
   const cancelDeleteAccountBtn = document.getElementById('cancelDeleteAccountBtn');
@@ -216,7 +229,9 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
     const email = payload.email || '';
-    const name = payload.name || payload['cognito:username'] || (email ? email.split('@')[0] : 'Baker');
+    const tokenName = payload.name || payload['cognito:username'] || (email ? email.split('@')[0] : 'Baker');
+    const savedName = localStorage.getItem('loafed_user_name');
+    const name = savedName || tokenName;
     const avatarLetter = (name || 'B').charAt(0).toUpperCase();
 
     state.user = {
@@ -368,11 +383,13 @@ document.addEventListener('DOMContentLoaded', () => {
   function signOut() {
     localStorage.removeItem('loafed_id_token');
     localStorage.removeItem('loafed_access_token');
+    localStorage.removeItem('loafed_user_name');
     state.idToken = null;
     state.accessToken = null;
     state.user = null;
     updateAuthUI();
     if (headerUserDropdown) headerUserDropdown.classList.add('hidden');
+    if (profileModal) profileModal.classList.add('hidden');
     showToast({ type: 'info', title: 'Signed Out', message: 'You have been signed out.' });
 
     if (state.period === 'mine') {
@@ -1097,18 +1114,178 @@ document.addEventListener('DOMContentLoaded', () => {
     menuSignOutBtn.addEventListener('click', signOut);
   }
 
-  if (menuDeleteAccountBtn) {
-    menuDeleteAccountBtn.addEventListener('click', () => {
+  function showProfileNotice(message, type = 'error') {
+    if (!profileNotice) return;
+    profileNotice.className = `mb-3 p-3 rounded-xl text-xs font-semibold border leading-relaxed ${
+      type === 'error' ? 'auth-notice-error' : 'auth-notice-success'
+    }`;
+    profileNotice.textContent = message;
+    profileNotice.classList.remove('hidden');
+  }
+
+  function hideProfileNotice() {
+    if (profileNotice) {
+      profileNotice.classList.add('hidden');
+      profileNotice.textContent = '';
+    }
+  }
+
+  async function openProfileModal() {
+    if (!state.user) {
+      openAuthModal('signin');
+      return;
+    }
+    hideProfileNotice();
+    if (profileModal) profileModal.classList.remove('hidden');
+    if (profileModalName) profileModalName.textContent = state.user.name || 'Baker Profile';
+    if (profileModalEmail) profileModalEmail.textContent = state.user.email || 'baker@example.com';
+    if (profileAvatarLarge) profileAvatarLarge.textContent = state.user.avatar || 'B';
+    if (profileDisplayNameInput) profileDisplayNameInput.value = state.user.name || '';
+    if (profileAuthMethodDisplay) profileAuthMethodDisplay.textContent = 'Email & Password';
+
+    refreshIcons();
+
+    if (state.idToken) {
+      try {
+        const res = await fetch('/api/user/profile', {
+          headers: { 'Authorization': `Bearer ${state.idToken}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.display_name) {
+            state.user.name = data.display_name;
+            state.user.avatar = (data.display_name || 'B').charAt(0).toUpperCase();
+            localStorage.setItem('loafed_user_name', data.display_name);
+            if (profileModalName) profileModalName.textContent = data.display_name;
+            if (profileDisplayNameInput) profileDisplayNameInput.value = data.display_name;
+            if (profileAvatarLarge) profileAvatarLarge.textContent = state.user.avatar;
+            updateAuthUI();
+          }
+          if (data.email && profileModalEmail) {
+            profileModalEmail.textContent = data.email;
+          }
+          if (data.auth_provider && profileAuthMethodDisplay) {
+            profileAuthMethodDisplay.textContent = data.auth_provider;
+          }
+        }
+      } catch (err) {
+        console.warn('Could not refresh profile details:', err);
+      }
+    }
+  }
+
+  function closeProfileModal() {
+    if (profileModal) profileModal.classList.add('hidden');
+    hideProfileNotice();
+  }
+
+  if (menuProfileBtn) {
+    menuProfileBtn.addEventListener('click', () => {
       if (headerUserDropdown) headerUserDropdown.classList.add('hidden');
+      openProfileModal();
+    });
+  }
+
+  if (closeProfileBtn) {
+    closeProfileBtn.addEventListener('click', closeProfileModal);
+  }
+
+  if (profileModal) {
+    profileModal.addEventListener('click', (e) => {
+      if (e.target === profileModal) {
+        closeProfileModal();
+      }
+    });
+  }
+
+  if (profileForm) {
+    profileForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      hideProfileNotice();
+      if (!state.idToken) {
+        showProfileNotice('Please sign in to update your profile.', 'error');
+        return;
+      }
+      const newName = profileDisplayNameInput ? profileDisplayNameInput.value.trim() : '';
+      if (!newName) {
+        showProfileNotice('Please enter a valid display name.', 'error');
+        return;
+      }
+      if (newName.length > 40) {
+        showProfileNotice('Display name cannot exceed 40 characters.', 'error');
+        return;
+      }
+
+      const origText = saveProfileBtnText ? saveProfileBtnText.textContent : 'Save Display Name';
+      if (saveProfileBtn) saveProfileBtn.disabled = true;
+      if (saveProfileBtnText) saveProfileBtnText.textContent = 'Saving...';
+
+      try {
+        const res = await fetch('/api/user/profile', {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${state.idToken}`
+          },
+          body: JSON.stringify({ display_name: newName })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          throw new Error(data.detail || 'Failed to update profile name.');
+        }
+
+        const cleanName = data.display_name || newName;
+        state.user.name = cleanName;
+        state.user.avatar = (cleanName || 'B').charAt(0).toUpperCase();
+        localStorage.setItem('loafed_user_name', cleanName);
+
+        if (profileModalName) profileModalName.textContent = cleanName;
+        if (profileAvatarLarge) profileAvatarLarge.textContent = state.user.avatar;
+        if (profileDisplayNameInput) profileDisplayNameInput.value = cleanName;
+
+        updateAuthUI();
+        showProfileNotice('Baker display name updated successfully!', 'success');
+        showToast({
+          type: 'success',
+          title: 'Profile Updated',
+          message: `Baker display name set to "${cleanName}".`
+        });
+
+        if (typeof loadLeaderboard === 'function' && state.period) {
+          loadLeaderboard(state.period);
+        }
+      } catch (err) {
+        showProfileNotice(err.message || 'An error occurred while updating profile.', 'error');
+      } finally {
+        if (saveProfileBtn) saveProfileBtn.disabled = false;
+        if (saveProfileBtnText) saveProfileBtnText.textContent = origText;
+        refreshIcons();
+      }
+    });
+  }
+
+  if (profileDeleteAccountBtn) {
+    profileDeleteAccountBtn.addEventListener('click', () => {
+      closeProfileModal();
       if (deleteAccountModal) deleteAccountModal.classList.remove('hidden');
       refreshIcons();
     });
   }
+
   if (cancelDeleteAccountBtn) {
     cancelDeleteAccountBtn.addEventListener('click', () => {
       if (deleteAccountModal) deleteAccountModal.classList.add('hidden');
     });
   }
+
+  if (deleteAccountModal) {
+    deleteAccountModal.addEventListener('click', (e) => {
+      if (e.target === deleteAccountModal) {
+        deleteAccountModal.classList.add('hidden');
+      }
+    });
+  }
+
   if (confirmDeleteAccountBtn) {
     confirmDeleteAccountBtn.addEventListener('click', async () => {
       if (!state.idToken) return;
@@ -1126,6 +1303,7 @@ document.addEventListener('DOMContentLoaded', () => {
           throw new Error(err.detail || 'Account deletion failed.');
         }
         if (deleteAccountModal) deleteAccountModal.classList.add('hidden');
+        if (profileModal) profileModal.classList.add('hidden');
         signOut();
         showToast({
           type: 'info',
