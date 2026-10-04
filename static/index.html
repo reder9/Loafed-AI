@@ -474,9 +474,48 @@
     <!-- Results Display -->
     <div id="resultsSection" class="hidden space-y-6">
       
+      <!-- Example Loaf Inspection Notice & Collapse Bar -->
+      <div id="exampleLoafBanner" class="hidden p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-amber-50 via-orange-50 to-amber-50 border-2 border-orange-300 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="flex items-center gap-3.5">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 text-white flex items-center justify-center shrink-0 shadow-xs">
+            <i data-lucide="award" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="text-xs font-black uppercase tracking-wider text-orange-950">Example Loaf Inspection</span>
+              <span id="exampleCatBadge" class="text-[11px] font-bold bg-orange-200 text-orange-950 px-2.5 py-0.5 rounded-full border border-orange-300">Buttercup Baseline</span>
+              <span class="text-[11px] font-medium text-stone-600 hidden md:inline">&bull; Sample Demonstration</span>
+            </div>
+            <p class="text-xs text-stone-700 mt-0.5">
+              You are inspecting an official benchmark cat. Ready to grade your own cat's loaf score?
+            </p>
+          </div>
+        </div>
+        <button 
+          type="button" 
+          id="collapseExampleBtn" 
+          class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-gradient-to-r from-orange-600 via-amber-600 to-orange-700 hover:from-orange-700 hover:to-amber-700 text-white font-bold text-xs sm:text-sm shadow-sm transition-all flex items-center justify-center gap-2 active:scale-95 shrink-0"
+          aria-label="Collapse example and upload your own cat"
+        >
+          <i data-lucide="upload" class="w-4 h-4"></i>
+          <span>Upload Your Own Cat</span>
+        </button>
+      </div>
+
       <!-- Top Score Hero Card -->
       <div class="bakery-card p-6 sm:p-10 relative overflow-hidden bg-gradient-to-br from-white via-orange-50/40 to-amber-50/50 border border-orange-200/90 shadow-lg shadow-orange-500/5">
         
+        <!-- Close / Return to Upload Button -->
+        <button 
+          type="button" 
+          id="closeResultsSectionBtn" 
+          class="absolute top-3.5 right-3.5 sm:top-5 sm:right-5 w-9 h-9 rounded-xl bg-white/90 hover:bg-orange-100 text-stone-500 hover:text-stone-900 border border-orange-200/80 hover:border-orange-300 flex items-center justify-center transition-all shadow-2xs z-10 active:scale-95" 
+          title="Return to upload bay" 
+          aria-label="Return to upload bay"
+        >
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+
         <div class="flex flex-col lg:flex-row items-center justify-between gap-8">
           
           <!-- Score Dial + Stamp -->
@@ -523,6 +562,10 @@
             <button id="submitLeaderboardBtn" class="btn-submit-leaderboard" aria-label="Submit to Official Leaderboard">
               <i data-lucide="trophy" class="w-4 h-4 text-amber-200"></i>
               <span>Submit to Leaderboard</span>
+            </button>
+            <button id="uploadOwnLoafBtn" class="min-h-[48px] px-5 py-3 bg-gradient-to-r from-orange-600 via-amber-600 to-orange-700 hover:from-orange-700 hover:to-amber-700 text-white rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 shadow-sm active:scale-95" aria-label="Upload Your Own Cat">
+              <i data-lucide="upload" class="w-4 h-4"></i>
+              <span id="uploadOwnLoafBtnText">Grade Your Own Cat</span>
             </button>
             <button id="downloadCertificateBtn" class="btn-download-cert" aria-label="Export Certificate PNG">
               <i data-lucide="download" class="w-4 h-4"></i>
@@ -716,6 +759,28 @@
           </ul>
         </div>
 
+      </div>
+
+      <!-- Bottom Return / Grade Your Own Loaf Banner -->
+      <div class="p-5 sm:p-6 rounded-2xl bg-gradient-to-r from-orange-50 via-amber-50 to-orange-50 border border-orange-200 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-2xs">
+        <div class="flex items-center gap-3.5">
+          <div class="w-10 h-10 rounded-xl bg-orange-100 border border-orange-300 text-orange-700 flex items-center justify-center shrink-0 shadow-xs">
+            <i data-lucide="cat" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h4 class="text-sm font-extrabold text-stone-950">Ready to audit your own feline baker?</h4>
+            <p class="text-xs text-stone-600">Return to the inspection bay to stage front, side, and top photos.</p>
+          </div>
+        </div>
+        <button 
+          type="button" 
+          id="bottomUploadOwnLoafBtn" 
+          class="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-orange-600 via-amber-600 to-orange-700 hover:from-orange-700 hover:to-amber-700 text-white font-bold text-xs sm:text-sm shadow-sm transition-all flex items-center justify-center gap-2 active:scale-95 shrink-0"
+          aria-label="Return to photo staging bay"
+        >
+          <i data-lucide="upload" class="w-4 h-4"></i>
+          <span id="bottomUploadBtnText">Upload Your Own Cat</span>
+        </button>
       </div>
 
     </div>

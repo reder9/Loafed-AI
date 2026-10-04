@@ -22,7 +22,12 @@ document.addEventListener('DOMContentLoaded', () => {
     idToken: localStorage.getItem('loafed_id_token') || null,
     accessToken: localStorage.getItem('loafed_access_token') || null,
     authConfig: null,
-    leaderboardPeriod: 'all'
+    leaderboardPeriod: 'all',
+    // Example preview & state preservation
+    isExamplePreset: false,
+    activePresetKey: null,
+    userSavedPhotos: [],
+    userSavedCatName: ''
   };
 
   // Helper to re-render Lucide icons
@@ -46,6 +51,16 @@ document.addEventListener('DOMContentLoaded', () => {
   const copySummaryBtn = document.getElementById('copySummaryBtn');
   const downloadCertificateBtn = document.getElementById('downloadCertificateBtn');
   const certificateCanvas = document.getElementById('certificateCanvas');
+
+  // Example Preview & Collapsible Inspection Elements
+  const exampleLoafBanner = document.getElementById('exampleLoafBanner');
+  const exampleCatBadge = document.getElementById('exampleCatBadge');
+  const collapseExampleBtn = document.getElementById('collapseExampleBtn');
+  const closeResultsSectionBtn = document.getElementById('closeResultsSectionBtn');
+  const uploadOwnLoafBtn = document.getElementById('uploadOwnLoafBtn');
+  const uploadOwnLoafBtnText = document.getElementById('uploadOwnLoafBtnText');
+  const bottomUploadOwnLoafBtn = document.getElementById('bottomUploadOwnLoafBtn');
+  const bottomUploadBtnText = document.getElementById('bottomUploadBtnText');
 
   // Multi-Photo Upload & Staging Elements
   const mainDropzone = document.getElementById('mainDropzone');
@@ -514,6 +529,8 @@ document.addEventListener('DOMContentLoaded', () => {
   if (clearAllPhotosBtn) {
     clearAllPhotosBtn.addEventListener('click', () => {
       clearAllPhotos();
+      state.userSavedPhotos = [];
+      state.userSavedCatName = '';
     });
   }
 
@@ -769,17 +786,72 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
+  // Benchmark button UI helpers
+  function resetBenchmarkButtons() {
+    document.querySelectorAll('.load-benchmark-btn').forEach(btn => {
+      btn.innerHTML = `
+        <i data-lucide="sparkles" class="w-3.5 h-3.5 text-orange-700"></i>
+        <span>Inspect Loaf</span>
+      `;
+      btn.classList.remove('bg-orange-200', 'border-orange-400', 'shadow-sm');
+      btn.classList.add('bg-orange-50', 'border-orange-200');
+    });
+    refreshIcons();
+  }
+
+  function setActiveBenchmarkButton(catKey) {
+    document.querySelectorAll('.load-benchmark-btn').forEach(btn => {
+      const cat = btn.getAttribute('data-cat');
+      if (cat === catKey) {
+        btn.innerHTML = `
+          <i data-lucide="chevron-up" class="w-3.5 h-3.5 text-orange-800"></i>
+          <span>Collapse Preview</span>
+        `;
+        btn.classList.remove('bg-orange-50', 'border-orange-200');
+        btn.classList.add('bg-orange-200', 'border-orange-400', 'shadow-sm');
+      } else {
+        btn.innerHTML = `
+          <i data-lucide="sparkles" class="w-3.5 h-3.5 text-orange-700"></i>
+          <span>Inspect Loaf</span>
+        `;
+        btn.classList.remove('bg-orange-200', 'border-orange-400', 'shadow-sm');
+        btn.classList.add('bg-orange-50', 'border-orange-200');
+      }
+    });
+    refreshIcons();
+  }
+
   // Helper to load benchmark cat presets
   async function loadBenchmarkLoaf(catKey) {
+    // If the same cat preset is already active and results section is visible, clicking it collapses it!
+    if (state.isExamplePreset && state.activePresetKey === catKey && !resultsSection.classList.contains('hidden')) {
+      collapseResultsSection(true);
+      return;
+    }
+
     const preset = BENCHMARK_PRESETS[catKey];
     if (!preset) return;
 
     try {
+      // If user had staged photos that were NOT from an example preset, preserve them!
+      if (!state.isExamplePreset && state.photos.length > 0) {
+        state.userSavedPhotos = [...state.photos];
+        state.userSavedCatName = catNameInput ? catNameInput.value : '';
+        // Clear active photos without revoking user object URLs
+        state.photos = [];
+      } else if (state.isExamplePreset) {
+        // Revoke object URLs from previous preset photos
+        state.photos.forEach(p => URL.revokeObjectURL(p.previewUrl));
+        state.photos = [];
+      } else {
+        state.photos = [];
+      }
+
       if (catNameInput) catNameInput.value = preset.name;
-      clearAllPhotos();
 
       const loadPresetImage = async (url, filename) => {
         const resp = await fetch(url);
+        if (!resp.ok) throw new Error(`HTTP ${resp.status} fetching sample image`);
         const blob = await resp.blob();
         return new File([blob], filename, { type: 'image/jpeg' });
       };
@@ -789,7 +861,13 @@ document.addEventListener('DOMContentLoaded', () => {
       );
 
       await addFiles(files);
+      state.isExamplePreset = true;
+      state.activePresetKey = catKey;
       state.currentResult = preset.result;
+      state.gradeToken = null;
+      state.submittedPhotoBlob = null;
+
+      setActiveBenchmarkButton(catKey);
       renderResults(preset.result, false);
 
       showToast({
@@ -953,6 +1031,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     isGradingActive = true;
+    state.isExamplePreset = false;
+    state.activePresetKey = null;
+    state.userSavedPhotos = [];
+    state.userSavedCatName = '';
+    resetBenchmarkButtons();
     startLoadingAnimation();
 
     const formData = new FormData();
@@ -1041,6 +1124,40 @@ document.addEventListener('DOMContentLoaded', () => {
     resultsSection.classList.remove('hidden');
     inspectorBay.classList.add('hidden');
     scrollToSection(resultsSection);
+
+    // Configure Example Preset vs User Inspection UX
+    if (state.isExamplePreset) {
+      if (exampleLoafBanner) {
+        exampleLoafBanner.classList.remove('hidden');
+        if (exampleCatBadge) {
+          exampleCatBadge.textContent = `${result.cat_name || 'Benchmark'} Baseline`;
+        }
+      }
+      if (submitLeaderboardBtn) {
+        submitLeaderboardBtn.classList.add('hidden');
+      }
+      if (uploadOwnLoafBtn) {
+        uploadOwnLoafBtn.classList.remove('hidden');
+        if (uploadOwnLoafBtnText) uploadOwnLoafBtnText.textContent = 'Grade Your Own Cat';
+      }
+      if (bottomUploadBtnText) {
+        bottomUploadBtnText.textContent = 'Upload Your Own Cat';
+      }
+    } else {
+      if (exampleLoafBanner) {
+        exampleLoafBanner.classList.add('hidden');
+      }
+      if (submitLeaderboardBtn && result.is_cat !== false) {
+        submitLeaderboardBtn.classList.remove('hidden');
+      }
+      if (uploadOwnLoafBtn) {
+        uploadOwnLoafBtn.classList.remove('hidden');
+        if (uploadOwnLoafBtnText) uploadOwnLoafBtnText.textContent = 'Grade Another Loaf';
+      }
+      if (bottomUploadBtnText) {
+        bottomUploadBtnText.textContent = 'Grade Another Loaf';
+      }
+    }
 
     // Header info
     document.getElementById('resultCatName').textContent = result.cat_name || 'The Mysterious Loaf';
@@ -1238,22 +1355,88 @@ document.addEventListener('DOMContentLoaded', () => {
     requestAnimationFrame(step);
   }
 
-  // Reset Button
-  resetInspectorBtn.addEventListener('click', () => {
+  // Collapse Results Section & Return to Photo Staging Bay
+  function collapseResultsSection(scroll = true) {
     resultsSection.classList.add('hidden');
+    if (exampleLoafBanner) exampleLoafBanner.classList.add('hidden');
     inspectorBay.classList.remove('hidden');
-    clearAllPhotos();
-    state.currentResult = null;
-    state.gradeToken = null;
-    state.submittedPhotoBlob = null;
-    if (catNameInput) catNameInput.value = '';
-    scrollToSection(inspectorBay);
-    showToast({
-      type: 'info',
-      title: 'Inspector Ready',
-      message: 'Returned to photo staging bay for a new feline inspection.'
-    });
-  });
+
+    if (state.isExamplePreset) {
+      // Clean up the preset's photos
+      state.photos.forEach(p => URL.revokeObjectURL(p.previewUrl));
+
+      if (state.userSavedPhotos && state.userSavedPhotos.length > 0) {
+        // Restore photos user had staged previously
+        state.photos = [...state.userSavedPhotos];
+        state.userSavedPhotos = [];
+        if (catNameInput) catNameInput.value = state.userSavedCatName || '';
+        state.userSavedCatName = '';
+        syncLegacySlots();
+        renderStagedPhotos();
+        updateSubmitButton();
+
+        showToast({
+          type: 'info',
+          title: 'Inspection Bay Restored',
+          message: 'Restored your staged photos. Ready to audit your cat!'
+        });
+      } else {
+        // Clean slate for uploading
+        state.photos = [];
+        if (catNameInput) catNameInput.value = '';
+        if (photosInput) photosInput.value = '';
+        syncLegacySlots();
+        renderStagedPhotos();
+        updateSubmitButton();
+
+        showToast({
+          type: 'info',
+          title: 'Inspection Bay Ready',
+          message: 'Upload 1 to 5 photos to grade your cat loaf.'
+        });
+      }
+
+      state.isExamplePreset = false;
+      state.activePresetKey = null;
+      state.currentResult = null;
+    } else {
+      // Return after grading user's cat
+      clearAllPhotos();
+      state.currentResult = null;
+      state.gradeToken = null;
+      state.submittedPhotoBlob = null;
+      if (catNameInput) catNameInput.value = '';
+
+      showToast({
+        type: 'info',
+        title: 'Inspector Ready',
+        message: 'Returned to photo staging bay for a new feline inspection.'
+      });
+    }
+
+    resetBenchmarkButtons();
+    if (scroll) {
+      scrollToSection(inspectorBay);
+    }
+    refreshIcons();
+  }
+
+  // Collapse / Return to Staging Event Handlers
+  if (collapseExampleBtn) {
+    collapseExampleBtn.addEventListener('click', () => collapseResultsSection(true));
+  }
+  if (closeResultsSectionBtn) {
+    closeResultsSectionBtn.addEventListener('click', () => collapseResultsSection(true));
+  }
+  if (uploadOwnLoafBtn) {
+    uploadOwnLoafBtn.addEventListener('click', () => collapseResultsSection(true));
+  }
+  if (bottomUploadOwnLoafBtn) {
+    bottomUploadOwnLoafBtn.addEventListener('click', () => collapseResultsSection(true));
+  }
+  if (resetInspectorBtn) {
+    resetInspectorBtn.addEventListener('click', () => collapseResultsSection(true));
+  }
 
   // Copy Summary (Technical & Clean Plain Text, Zero Emojis)
   copySummaryBtn.addEventListener('click', () => {
@@ -1627,7 +1810,7 @@ Certified by Loafed Inspection Engine`;
   if (ovenAlertPresetBtn) {
     ovenAlertPresetBtn.addEventListener('click', () => {
       ovenAlertModal.classList.add('hidden');
-      loadButtercupBtn.click();
+      loadBenchmarkLoaf('buttercup');
     });
   }
 
