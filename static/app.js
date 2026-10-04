@@ -60,8 +60,8 @@ document.addEventListener('DOMContentLoaded', () => {
     toast.className = 'toast-card w-full p-3.5 rounded-xl shadow-lg border flex items-start gap-3 relative overflow-hidden bg-white text-stone-800';
 
     let iconName = 'info';
-    let iconColor = 'text-stone-700 bg-stone-100 border-stone-200';
-    let borderClass = 'border-stone-200 shadow-stone-900/5';
+    let iconColor = 'text-orange-700 bg-orange-100/80 border-orange-200';
+    let borderClass = 'border-orange-200 shadow-orange-950/5';
 
     if (type === 'error' || type === 'danger') {
       iconName = 'alert-circle';
@@ -346,23 +346,23 @@ document.addEventListener('DOMContentLoaded', () => {
     const count = state.photos.length;
     if (count === 0) {
       gradeLoafBtn.disabled = true;
-      gradeLoafBtn.className = 'w-full sm:w-auto px-8 py-3.5 rounded-xl font-bold text-sm text-white bg-stone-300 cursor-not-allowed shadow-sm transition-all flex items-center justify-center gap-2';
+      gradeLoafBtn.className = 'w-full sm:w-auto px-8 py-3.5 rounded-xl font-bold text-sm text-stone-400 bg-stone-200 cursor-not-allowed shadow-none transition-all flex items-center justify-center gap-2';
       photoCountBadge.textContent = '0 photos selected';
-      photoCountBadge.className = 'font-semibold text-stone-500 bg-stone-100 px-2 py-0.5 rounded border border-stone-200';
+      photoCountBadge.className = 'font-semibold text-stone-600 bg-orange-50 px-2.5 py-0.5 rounded border border-orange-200';
     } else {
       gradeLoafBtn.disabled = false;
-      gradeLoafBtn.className = 'w-full sm:w-auto px-8 py-3.5 rounded-xl font-bold text-sm text-white bg-orange-700 hover:bg-orange-800 shadow-sm transition-all hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-2 cursor-pointer';
+      gradeLoafBtn.className = 'w-full sm:w-auto px-8 py-3.5 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600 hover:from-orange-600 hover:via-amber-600 hover:to-orange-700 shadow-md shadow-orange-500/25 transition-all hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-2 cursor-pointer';
       
       if (count === 1) {
         photoCountBadge.textContent = '1 photo staged (Single-Angle Mode)';
-        photoCountBadge.className = 'font-semibold text-amber-800 bg-amber-50 px-2.5 py-0.5 rounded border border-amber-200';
+        photoCountBadge.className = 'font-semibold text-amber-900 bg-amber-100/80 px-2.5 py-0.5 rounded border border-amber-300';
       } else if (count === 2) {
         photoCountBadge.textContent = '2 photos staged (+2 Bonus)';
-        photoCountBadge.className = 'font-semibold text-amber-800 bg-amber-50 px-2.5 py-0.5 rounded border border-amber-200';
+        photoCountBadge.className = 'font-semibold text-amber-900 bg-amber-100/80 px-2.5 py-0.5 rounded border border-amber-300';
       } else {
         const bonus = count >= 4 ? 5 : 4;
         photoCountBadge.textContent = `${count} photos staged (+${bonus} 360-Degree Bonus)`;
-        photoCountBadge.className = 'font-bold text-orange-900 bg-orange-100 px-2.5 py-0.5 rounded border border-orange-300';
+        photoCountBadge.className = 'font-bold text-orange-950 bg-orange-100 px-2.5 py-0.5 rounded border border-orange-300';
       }
     }
   }
@@ -696,7 +696,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // Strip any accidental emojis from AI output
       const cleanBadge = badge.replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, '').trim();
       const el = document.createElement('span');
-      el.className = 'px-3 py-1 rounded-md text-xs font-semibold bg-stone-100 text-stone-800 border border-stone-200/80 shadow-xs';
+      el.className = 'px-3 py-1 rounded-md text-xs font-semibold bg-gradient-to-r from-orange-100/90 to-amber-100/90 text-orange-950 border border-orange-300/80 shadow-2xs';
       el.textContent = cleanBadge;
       badgesContainer.appendChild(el);
     });
@@ -708,7 +708,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const cleanTip = tip.replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, '').trim();
       const li = document.createElement('li');
       li.className = 'flex items-start gap-2.5';
-      li.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-700 mt-1.5 shrink-0"></span><span>${cleanTip}</span>`;
+      li.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-orange-500 mt-1.5 shrink-0"></span><span>${cleanTip}</span>`;
       tipsList.appendChild(li);
     });
 
@@ -729,7 +729,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const cleanObs = obs.replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, '').trim();
       const li = document.createElement('li');
       li.className = 'flex items-start gap-2';
-      li.innerHTML = `<span class="w-1 h-1 rounded-full bg-stone-400 mt-1.5 shrink-0"></span><span>${cleanObs}</span>`;
+      li.innerHTML = `<span class="w-1 h-1 rounded-full bg-orange-400 mt-1.5 shrink-0"></span><span>${cleanObs}</span>`;
       obsList.appendChild(li);
     });
   }
@@ -750,15 +750,15 @@ document.addEventListener('DOMContentLoaded', () => {
       const icon = icons[idx] || 'camera';
 
       const card = document.createElement('div');
-      card.className = 'p-3 rounded-xl bg-stone-50 border border-stone-200 flex flex-col gap-2';
+      card.className = 'p-3 rounded-xl bg-orange-50/50 border border-orange-200/90 flex flex-col gap-2 shadow-2xs';
       card.innerHTML = `
         <div class="flex items-center justify-between">
-          <span class="text-xs font-bold text-stone-800 flex items-center gap-1.5">
-            <i data-lucide="${icon}" class="w-3.5 h-3.5 text-stone-600"></i> ${label}
+          <span class="text-xs font-bold text-stone-900 flex items-center gap-1.5">
+            <i data-lucide="${icon}" class="w-3.5 h-3.5 text-orange-700"></i> ${label}
           </span>
-          <span class="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.5 rounded">Inspected</span>
+          <span class="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.5 rounded border border-emerald-200">Inspected</span>
         </div>
-        <img src="${photo.previewUrl}" class="w-full h-28 object-cover rounded-lg border border-stone-200" alt="${label}">
+        <img src="${photo.previewUrl}" class="w-full h-28 object-cover rounded-lg border border-orange-200" alt="${label}">
         <p class="text-[11px] text-stone-600 leading-snug">${(note || 'Evaluated in composite score telemetry.').replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, '')}</p>
       `;
       grid.appendChild(card);
@@ -1197,20 +1197,20 @@ Certified by Loafed Inspection Engine`;
       });
 
       return `
-        <div class="p-3.5 rounded-xl border border-stone-200 bg-stone-50/70 hover:bg-stone-50 transition-colors flex items-center justify-between gap-3" data-id="${item.id}">
+        <div class="p-3.5 rounded-xl border border-orange-200/90 bg-orange-50/40 hover:bg-orange-50/80 transition-colors flex items-center justify-between gap-3 shadow-2xs" data-id="${item.id}">
           <div class="flex items-center gap-3 min-w-0">
-            <div class="w-11 h-11 rounded-lg bg-white border border-stone-200 flex flex-col items-center justify-center shrink-0 shadow-xs">
-              <span class="text-xs font-black text-amber-700">${item.overall_score}</span>
-              <span class="text-[9px] font-bold text-stone-400 leading-none">${item.grade_letter}</span>
+            <div class="w-11 h-11 rounded-lg bg-white border border-orange-200 flex flex-col items-center justify-center shrink-0 shadow-xs">
+              <span class="text-xs font-black text-orange-700">${item.overall_score}</span>
+              <span class="text-[9px] font-bold text-orange-900/60 leading-none">${item.grade_letter}</span>
             </div>
             <div class="min-w-0">
               <div class="text-xs font-bold text-stone-900 truncate">${item.cat_name}</div>
-              <div class="text-[11px] text-stone-500 truncate">${item.loaf_rank} &bull; ${item.bread_classification}</div>
+              <div class="text-[11px] text-stone-600 truncate">${item.loaf_rank} &bull; ${item.bread_classification}</div>
               <div class="text-[10px] text-stone-400 mt-0.5">${formattedDate}</div>
             </div>
           </div>
           <div class="flex items-center gap-1.5 shrink-0">
-            <button class="view-history-entry-btn px-2.5 py-1.5 rounded-lg bg-white hover:bg-amber-50 text-stone-700 hover:text-amber-900 text-xs font-bold border border-stone-200 transition-colors" data-id="${item.id}">
+            <button class="view-history-entry-btn px-2.5 py-1.5 rounded-lg bg-white hover:bg-orange-100 text-orange-950 text-xs font-bold border border-orange-200 transition-colors shadow-2xs" data-id="${item.id}">
               View
             </button>
             <button class="delete-history-entry-btn p-1.5 text-stone-400 hover:text-rose-600 transition-colors" data-id="${item.id}" title="Delete">

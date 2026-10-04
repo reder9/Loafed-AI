@@ -15,10 +15,10 @@
 <body class="text-stone-800 antialiased selection:bg-orange-200 selection:text-orange-900 pb-16">
 
   <!-- Navigation Bar -->
-  <header class="border-b border-stone-200/80 bg-white/90 backdrop-blur-md sticky top-0 z-40">
+  <header class="border-b border-orange-200/80 bg-[#fffbf5]/95 backdrop-blur-md sticky top-0 z-40 shadow-xs shadow-orange-500/5">
     <div class="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-orange-50 border border-orange-200/80 flex items-center justify-center text-orange-700 shadow-sm p-1">
+        <div class="w-10 h-10 rounded-xl bg-orange-100/80 border border-orange-300 flex items-center justify-center text-orange-700 shadow-xs p-1">
           <img src="/static/logo.png" alt="Loafed AI Cat Loaf Logo" class="w-8 h-8 object-contain">
         </div>
         <div>
@@ -31,10 +31,10 @@
       </div>
 
       <div class="flex items-center gap-2">
-        <button id="openHistoryBtn" class="px-3.5 py-1.5 rounded-lg border border-stone-200 bg-white hover:bg-stone-50 text-stone-700 text-xs font-semibold flex items-center gap-1.5 shadow-sm transition-all hover:border-orange-300">
-          <i data-lucide="history" class="w-3.5 h-3.5 text-stone-600"></i>
+        <button id="openHistoryBtn" class="px-3.5 py-1.5 rounded-lg border border-orange-200/90 bg-orange-50/60 hover:bg-orange-100 text-stone-800 hover:text-orange-950 text-xs font-semibold flex items-center gap-1.5 shadow-2xs transition-all hover:border-orange-400">
+          <i data-lucide="history" class="w-3.5 h-3.5 text-orange-700"></i>
           <span>Past Loaves</span>
-          <span id="historyBadgeCount" class="px-1.5 py-0.2 rounded-full bg-stone-100 text-[10px] font-bold text-stone-600 border border-stone-200">0</span>
+          <span id="historyBadgeCount" class="px-1.5 py-0.2 rounded-full bg-orange-200/80 text-[10px] font-bold text-orange-950 border border-orange-300/80">0</span>
         </button>
       </div>
     </div>
@@ -47,28 +47,28 @@
       <!-- Mascot Badge -->
       <div class="flex justify-center mb-4">
         <div class="relative group">
-          <div class="absolute -inset-1.5 bg-gradient-to-r from-orange-400/40 via-amber-300/30 to-orange-500/40 rounded-3xl blur-md opacity-60 group-hover:opacity-80 transition duration-300"></div>
-          <div class="relative w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-gradient-to-b from-orange-50/90 to-white border border-orange-200/80 p-2 shadow-sm flex items-center justify-center animate-float">
+          <div class="absolute -inset-2 bg-gradient-to-r from-orange-500/40 via-amber-400/40 to-orange-400/40 rounded-3xl blur-lg opacity-70 group-hover:opacity-90 transition duration-300"></div>
+          <div class="relative w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-gradient-to-b from-orange-100/90 via-amber-50/60 to-white border border-orange-300/90 p-2 shadow-md shadow-orange-500/10 flex items-center justify-center animate-float">
             <img src="/static/logo.png" alt="Loafed AI Cat Loaf Mascot" class="w-full h-full object-contain filter drop-shadow-sm transition-transform hover:scale-105 duration-200">
           </div>
         </div>
       </div>
 
-      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-50 text-orange-900 text-xs font-semibold mb-3 border border-orange-200/80">
+      <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-orange-100/90 via-amber-100/80 to-orange-100/90 text-orange-950 text-xs font-bold mb-3 border border-orange-300 shadow-2xs">
         <i data-lucide="sparkles" class="w-3.5 h-3.5 text-orange-600"></i>
         <span>Official Feline Bakery &bull; Auditing Loaf Purr-fection</span>
       </div>
       <h1 class="text-3xl sm:text-5xl font-black text-stone-900 tracking-tight leading-tight">
-        Grade Your Cat's <span class="font-serif italic font-normal text-orange-700 underline decoration-orange-400 decoration-2 underline-offset-4">Loaf Score</span>
+        Grade Your Cat's <span class="font-serif italic font-normal text-tabby-gradient underline decoration-orange-400 decoration-2 underline-offset-4">Loaf Score</span>
       </h1>
       <p class="mt-3 text-stone-600 text-sm sm:text-base leading-relaxed">
-        Upload 1 to 3 photos to see if your cat has reached absolute loaf purr-fection. Our AI vision model inspects undercarriage paw concealment, tail drag, and boule symmetry in seconds.
+        Upload 1 to 5 photos to see if your cat has reached absolute loaf purr-fection. Our AI vision model inspects undercarriage paw concealment, tail drag, and boule symmetry in seconds.
       </p>
 
       <!-- Preset Quick Demo Bar -->
       <div class="mt-5 flex items-center justify-center gap-2 flex-wrap">
         <span class="text-xs font-semibold text-stone-500">Benchmark Test:</span>
-        <button id="loadButtercupBtn" class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-orange-50 hover:bg-orange-100 text-orange-900 text-xs font-semibold border border-orange-200/80 transition-all hover:border-orange-300 shadow-sm">
+        <button id="loadButtercupBtn" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-orange-100 via-amber-100/90 to-orange-100 text-orange-950 hover:from-orange-200 hover:to-amber-200 text-xs font-bold border border-orange-300 hover:border-orange-400 transition-all shadow-2xs">
           <i data-lucide="sparkles" class="w-3.5 h-3.5 text-orange-700"></i>
           <span>Load Buttercup Dataset (Purr-fect Baseline)</span>
         </button>
@@ -76,7 +76,7 @@
     </div>
 
     <!-- Main Inspection Form -->
-    <div id="inspectorBay" class="bakery-card p-5 sm:p-8 mb-10">
+    <div id="inspectorBay" class="bakery-card p-5 sm:p-8 mb-10 border border-orange-200/90 shadow-md shadow-orange-500/5">
       
       <!-- Anti-bot honeypot field (hidden from real users) -->
       <div style="position: absolute; left: -9999px; top: -9999px;" aria-hidden="true">
@@ -84,17 +84,17 @@
       </div>
 
       <!-- Cat Name Input -->
-      <div class="mb-6 p-4 rounded-2xl bg-orange-50/60 border border-orange-200/80 flex flex-col sm:flex-row gap-3 sm:items-center justify-between transition-all">
+      <div class="mb-6 p-4 rounded-2xl bg-gradient-to-r from-orange-50/90 via-amber-50/60 to-orange-50/90 border border-orange-200 flex flex-col sm:flex-row gap-3 sm:items-center justify-between transition-all shadow-2xs">
         <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-xl bg-white border border-orange-200 text-orange-600 flex items-center justify-center shrink-0 shadow-xs">
+          <div class="w-10 h-10 rounded-xl bg-white border border-orange-300 text-orange-600 flex items-center justify-center shrink-0 shadow-xs">
             <i data-lucide="tag" class="w-5 h-5"></i>
           </div>
           <div>
             <label for="catNameInput" class="block text-sm font-extrabold text-stone-900 flex items-center gap-2">
               <span>Cat's Name</span>
-              <span class="text-[11px] font-semibold text-orange-800 bg-orange-100/90 px-2 py-0.5 rounded-full border border-orange-200/70">Optional</span>
+              <span class="text-[11px] font-bold text-orange-950 bg-orange-200/80 px-2 py-0.5 rounded-full border border-orange-300">Optional</span>
             </label>
-            <p class="text-xs text-stone-500 mt-0.5">Name your feline baker to personalize the official certificate and posture report</p>
+            <p class="text-xs text-stone-600 mt-0.5">Name your feline baker to personalize the official certificate and posture report</p>
           </div>
         </div>
         <div class="relative sm:w-72">
@@ -103,43 +103,43 @@
             id="catNameInput" 
             placeholder="e.g. Buttercup, Mochi, Oliver..." 
             maxlength="40"
-            class="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-200 outline-none text-sm font-medium text-stone-900 placeholder:text-stone-400 transition-all shadow-xs"
+            class="w-full px-3.5 py-2.5 rounded-xl border border-orange-200 bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-200 outline-none text-sm font-medium text-stone-900 placeholder:text-stone-400 transition-all shadow-xs"
           >
         </div>
       </div>
 
       <!-- Recommended Angles Guidance Banner -->
-      <div class="mb-5 p-4 rounded-2xl bg-amber-50/70 border border-amber-200/80">
+      <div class="mb-5 p-4.5 rounded-2xl bg-gradient-to-br from-amber-50/90 via-orange-50/70 to-amber-50/50 border border-orange-200/90 shadow-2xs">
         <div class="flex items-center justify-between mb-2">
           <span class="text-xs font-extrabold text-amber-950 uppercase tracking-wider flex items-center gap-1.5">
             <i data-lucide="compass" class="w-4 h-4 text-orange-600"></i>
             <span>Recommended Angles for Top Accuracy</span>
           </span>
-          <span class="text-[11px] font-bold text-orange-800 bg-orange-100/90 px-2 py-0.5 rounded-full border border-orange-200/70">
+          <span class="text-[11px] font-bold text-orange-950 bg-orange-200/80 px-2.5 py-0.5 rounded-full border border-orange-300">
             Upload 1 to 5 Photos
           </span>
         </div>
-        <p class="text-xs text-amber-900/80 mb-3 leading-relaxed">
+        <p class="text-xs text-amber-950/80 mb-3 leading-relaxed">
           The more angles you submit, the higher and more reliably your loaf can score! Single-photo submissions receive strict conservative grading because unseen paws cannot be verified. We suggest:
         </p>
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-          <div class="p-2.5 rounded-xl bg-white/90 border border-amber-200/60 shadow-2xs">
+          <div class="p-3 rounded-xl bg-white/95 border border-orange-200 shadow-2xs">
             <div class="flex items-center gap-2 mb-1">
-              <span class="w-5 h-5 rounded-md bg-orange-100 text-orange-800 font-bold text-[11px] flex items-center justify-center">1</span>
+              <span class="w-5 h-5 rounded-md bg-gradient-to-br from-orange-500 to-amber-500 text-white font-extrabold text-[11px] flex items-center justify-center shadow-xs">1</span>
               <span class="text-xs font-bold text-stone-900">Front View</span>
             </div>
             <p class="text-[11px] text-stone-600 leading-tight">Inspects paw concealment beneath chest and chin alignment.</p>
           </div>
-          <div class="p-2.5 rounded-xl bg-white/90 border border-amber-200/60 shadow-2xs">
+          <div class="p-3 rounded-xl bg-white/95 border border-orange-200 shadow-2xs">
             <div class="flex items-center gap-2 mb-1">
-              <span class="w-5 h-5 rounded-md bg-orange-100 text-orange-800 font-bold text-[11px] flex items-center justify-center">2</span>
+              <span class="w-5 h-5 rounded-md bg-gradient-to-br from-orange-500 to-amber-500 text-white font-extrabold text-[11px] flex items-center justify-center shadow-xs">2</span>
               <span class="text-xs font-bold text-stone-900">Side Profile</span>
             </div>
             <p class="text-[11px] text-stone-600 leading-tight">Evaluates tail wrap tightness, flank curve, and elbow tuck.</p>
           </div>
-          <div class="p-2.5 rounded-xl bg-white/90 border border-amber-200/60 shadow-2xs">
+          <div class="p-3 rounded-xl bg-white/95 border border-orange-200 shadow-2xs">
             <div class="flex items-center gap-2 mb-1">
-              <span class="w-5 h-5 rounded-md bg-orange-100 text-orange-800 font-bold text-[11px] flex items-center justify-center">3</span>
+              <span class="w-5 h-5 rounded-md bg-gradient-to-br from-orange-500 to-amber-500 text-white font-extrabold text-[11px] flex items-center justify-center shadow-xs">3</span>
               <span class="text-xs font-bold text-stone-900">Overhead (Top)</span>
             </div>
             <p class="text-[11px] text-stone-600 leading-tight">Checks bilateral boule symmetry, bread width, and zero splay.</p>
@@ -152,17 +152,17 @@
         <!-- Unified Dropzone (Shown when 0 photos uploaded) -->
         <div 
           id="mainDropzone" 
-          class="upload-slot p-8 sm:p-12 flex flex-col items-center justify-center text-center cursor-pointer transition-all border-2 border-dashed border-orange-200/90 hover:border-orange-500 bg-orange-50/20 hover:bg-orange-50/50 rounded-2xl group"
+          class="upload-slot p-8 sm:p-12 flex flex-col items-center justify-center text-center cursor-pointer transition-all border-2 border-dashed border-orange-300 hover:border-orange-500 rounded-2xl group shadow-xs"
         >
           <input type="file" id="photosInput" accept="image/*" multiple class="hidden">
-          <div class="w-16 h-16 rounded-2xl bg-white text-orange-600 border border-orange-200/80 flex items-center justify-center mb-3.5 shadow-sm group-hover:scale-105 transition-transform">
+          <div class="w-16 h-16 rounded-2xl bg-gradient-to-b from-orange-100 to-white text-orange-600 border border-orange-300/90 flex items-center justify-center mb-3.5 shadow-sm group-hover:scale-105 transition-transform">
             <i data-lucide="images" class="w-8 h-8"></i>
           </div>
           <span class="font-extrabold text-stone-900 text-base mb-1">Select or Drop 1 to 5 Cat Photos</span>
-          <span class="text-xs text-stone-500 max-w-sm mb-4">
+          <span class="text-xs text-stone-600 max-w-sm mb-4">
             Upload multiple photos at once. Capture front, side, or top views for full 360-degree telemetry!
           </span>
-          <button type="button" class="px-5 py-2.5 bg-white border border-stone-300 rounded-xl text-xs font-bold text-stone-800 shadow-xs group-hover:border-orange-500 group-hover:text-orange-700 transition-all flex items-center gap-2 pointer-events-none">
+          <button type="button" class="px-5 py-2.5 bg-white border border-orange-300 rounded-xl text-xs font-bold text-orange-950 shadow-2xs group-hover:border-orange-500 group-hover:bg-orange-50/80 transition-all flex items-center gap-2 pointer-events-none">
             <i data-lucide="folder-up" class="w-4 h-4 text-orange-600"></i>
             <span>Browse Photos</span>
           </button>
@@ -173,7 +173,7 @@
           <div class="flex items-center justify-between mb-3">
             <div class="flex items-center gap-2">
               <span class="text-xs font-extrabold text-stone-900 uppercase tracking-wider">Staged Inspection Photos</span>
-              <span id="stagedCountBadge" class="text-xs font-bold text-orange-800 bg-orange-100 px-2 py-0.5 rounded-full border border-orange-200/60">0 / 5 Photos</span>
+              <span id="stagedCountBadge" class="text-xs font-bold text-orange-950 bg-orange-100 px-2 py-0.5 rounded-full border border-orange-300">0 / 5 Photos</span>
             </div>
             <button type="button" id="clearAllPhotosBtn" class="text-xs text-stone-500 hover:text-rose-600 font-semibold transition-colors flex items-center gap-1">
               <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
@@ -187,11 +187,11 @@
           </div>
 
           <!-- Add More Button & Telemetry Indicator -->
-          <div class="p-3 rounded-xl bg-stone-50 border border-stone-200/80 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
-            <div id="telemetryStatusText" class="text-stone-600 flex items-center gap-2 font-medium">
+          <div class="p-3.5 rounded-xl bg-gradient-to-r from-orange-50/90 via-amber-50/60 to-orange-50/90 border border-orange-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs shadow-2xs">
+            <div id="telemetryStatusText" class="text-stone-700 flex items-center gap-2 font-medium">
               <!-- Dynamically populated -->
             </div>
-            <button type="button" id="addMorePhotosBtn" class="px-3.5 py-1.5 rounded-lg bg-white border border-stone-300 hover:border-orange-400 text-stone-800 font-bold flex items-center gap-1.5 transition-colors shadow-2xs">
+            <button type="button" id="addMorePhotosBtn" class="px-3.5 py-1.5 rounded-lg bg-white border border-orange-300 hover:border-orange-500 text-orange-950 font-bold flex items-center gap-1.5 transition-colors shadow-2xs hover:bg-orange-50">
               <i data-lucide="plus" class="w-3.5 h-3.5 text-orange-600"></i>
               <span>Add More (Max 5)</span>
             </button>
@@ -200,16 +200,16 @@
       </div>
 
       <!-- Action Button -->
-      <div class="mt-6 pt-4 border-t border-stone-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="mt-6 pt-4 border-t border-orange-100 flex flex-col sm:flex-row items-center justify-between gap-4">
         <div class="text-xs text-stone-500 flex items-center gap-2">
-          <span id="photoCountBadge" class="font-semibold text-stone-600 bg-stone-100 px-2 py-0.5 rounded border border-stone-200">0 images selected</span>
-          <span class="hidden sm:inline">• Multimodal Computer Vision Engine</span>
+          <span id="photoCountBadge" class="font-semibold text-stone-600 bg-orange-50 px-2.5 py-0.5 rounded border border-orange-200">0 images selected</span>
+          <span class="hidden sm:inline">&bull; Multimodal Computer Vision Engine</span>
         </div>
 
         <button 
           id="gradeLoafBtn" 
           disabled
-          class="w-full sm:w-auto px-8 py-3.5 rounded-xl font-bold text-sm text-white bg-stone-300 cursor-not-allowed shadow-sm transition-all flex items-center justify-center gap-2"
+          class="w-full sm:w-auto px-8 py-3.5 rounded-xl font-bold text-sm text-stone-400 bg-stone-200 cursor-not-allowed shadow-none transition-all flex items-center justify-center gap-2"
         >
           <i data-lucide="sparkles" class="w-4 h-4"></i>
           <span>Audit Loaf Right Meow</span>
@@ -219,32 +219,32 @@
     </div>
 
     <!-- Inspecting Loading State -->
-    <div id="loadingState" class="hidden bakery-card p-8 sm:p-10 text-center max-w-xl mx-auto my-12">
+    <div id="loadingState" class="hidden bakery-card p-8 sm:p-10 text-center max-w-xl mx-auto my-12 border border-orange-200/90 shadow-lg shadow-orange-500/5">
       <!-- Animated Oven / Whisk Icon -->
       <div class="relative w-16 h-16 mx-auto mb-5">
-        <div class="w-16 h-16 rounded-2xl bg-orange-50 border border-orange-200/80 text-orange-700 flex items-center justify-center animate-pulse-gentle shadow-sm">
+        <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-orange-100 to-amber-100 border border-orange-300 text-orange-700 flex items-center justify-center animate-pulse-gentle shadow-md shadow-orange-500/10">
           <i data-lucide="sparkles" class="w-8 h-8 text-orange-600"></i>
         </div>
-        <div class="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-white border border-orange-200 flex items-center justify-center shadow-xs">
+        <div class="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-white border border-orange-300 flex items-center justify-center shadow-xs">
           <i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin text-orange-600"></i>
         </div>
       </div>
 
-      <h3 class="text-xl font-bold text-stone-900 mb-1">Baking Right Meow...</h3>
+      <h3 class="text-xl font-black text-stone-900 mb-1">Baking Right Meow...</h3>
       <p id="loadingPhrase" class="text-orange-800 font-bold text-sm h-6 transition-all duration-300">Loading the oven right meow...</p>
       
       <!-- Progress Bar -->
-      <div class="w-full bg-stone-100 h-2.5 rounded-full overflow-hidden mt-5 max-w-sm mx-auto border border-stone-200">
-        <div id="loadingProgressBar" class="h-full bg-orange-600 w-1/4 transition-all duration-500 rounded-full"></div>
+      <div class="w-full bg-orange-100/70 h-3 rounded-full overflow-hidden mt-5 max-w-sm mx-auto border border-orange-200">
+        <div id="loadingProgressBar" class="h-full bg-gradient-to-r from-orange-500 to-amber-500 w-1/4 transition-all duration-500 rounded-full shadow-xs"></div>
       </div>
 
       <!-- Live Bakery Activity Log (Cute step-by-step ticker) -->
-      <div class="mt-6 pt-4 border-t border-orange-100/80 text-left max-w-sm mx-auto">
-        <div class="text-[10px] font-bold uppercase tracking-wider text-stone-400 mb-2.5 flex items-center justify-between">
+      <div class="mt-6 pt-4 border-t border-orange-200/80 text-left max-w-sm mx-auto">
+        <div class="text-[10px] font-extrabold uppercase tracking-wider text-orange-950/60 mb-2.5 flex items-center justify-between">
           <span>Live Bakery Activity</span>
-          <span class="text-orange-600 font-semibold">AI Inspection</span>
+          <span class="text-orange-700 font-bold">AI Inspection</span>
         </div>
-        <div id="loadingStepLog" class="space-y-1.5 text-xs text-stone-600">
+        <div id="loadingStepLog" class="space-y-1.5 text-xs text-stone-700">
           <!-- Populated dynamically in app.js -->
         </div>
       </div>
@@ -254,7 +254,7 @@
     <div id="resultsSection" class="hidden space-y-6">
       
       <!-- Top Score Hero Card -->
-      <div class="bakery-card p-6 sm:p-10 relative overflow-hidden bg-gradient-to-b from-white to-stone-50/60">
+      <div class="bakery-card p-6 sm:p-10 relative overflow-hidden bg-gradient-to-br from-white via-orange-50/40 to-amber-50/50 border border-orange-200/90 shadow-lg shadow-orange-500/5">
         
         <div class="flex flex-col lg:flex-row items-center justify-between gap-8">
           
@@ -262,19 +262,19 @@
           <div class="flex flex-col sm:flex-row items-center gap-6 sm:gap-8 text-center sm:text-left">
             <div class="relative w-44 h-44 flex-shrink-0 flex items-center justify-center">
               <svg class="score-circle-svg w-full h-full" viewBox="0 0 200 200">
-                <circle cx="100" cy="100" r="90" class="stroke-stone-100" stroke-width="14" fill="transparent" />
-                <circle id="scoreMeterCircle" cx="100" cy="100" r="90" class="score-circle-meter stroke-orange-600" stroke-width="14" stroke-linecap="round" fill="transparent" />
+                <circle cx="100" cy="100" r="90" class="stroke-orange-100" stroke-width="14" fill="transparent" />
+                <circle id="scoreMeterCircle" cx="100" cy="100" r="90" class="score-circle-meter stroke-orange-500" stroke-width="14" stroke-linecap="round" fill="transparent" />
               </svg>
               <div class="absolute flex flex-col items-center justify-center">
                 <span id="scoreNumber" class="text-5xl font-black tracking-tight text-stone-900">0</span>
-                <span class="text-xs uppercase tracking-widest font-extrabold text-stone-400 mt-0.5">/ 100</span>
+                <span class="text-xs uppercase tracking-widest font-extrabold text-orange-900/60 mt-0.5">/ 100</span>
               </div>
             </div>
 
             <div>
               <div class="flex items-center gap-3 mb-2 justify-center sm:justify-start flex-wrap">
                 <span id="gradeStamp" class="stamp text-orange-800 border-orange-800 text-lg">A+</span>
-                <span id="multiAngleBadge" class="text-xs font-bold bg-orange-50 text-orange-900 px-2.5 py-1 rounded-md border border-orange-200/80 flex items-center gap-1.5">
+                <span id="multiAngleBadge" class="text-xs font-bold bg-orange-100 text-orange-950 px-2.5 py-1 rounded-md border border-orange-300 flex items-center gap-1.5 shadow-2xs">
                   <i data-lucide="shield-check" class="w-3.5 h-3.5 text-orange-700"></i>
                   <span>+5 Multi-Angle Bonus</span>
                 </span>
@@ -287,28 +287,28 @@
               <h2 id="resultCatName" class="text-2xl sm:text-3xl font-black text-stone-900 tracking-tight">
                 Buttercup
               </h2>
-              <div class="text-orange-800 font-bold text-lg mt-0.5" id="resultHonoraryRank">
+              <div class="text-orange-800 font-extrabold text-lg mt-0.5" id="resultHonoraryRank">
                 Grandmaster Artisan Loaf
               </div>
-              <div class="inline-flex items-center gap-1.5 text-stone-600 text-sm mt-1 bg-stone-100 px-3 py-1 rounded-lg">
-                <i data-lucide="tag" class="w-3.5 h-3.5 text-stone-500"></i>
-                <span class="font-semibold text-stone-800" id="resultBreadClass">Toasted Golden Brioche</span>
+              <div class="inline-flex items-center gap-1.5 text-orange-950 text-sm mt-1 bg-orange-100/90 border border-orange-300/80 px-3 py-1 rounded-lg font-semibold shadow-2xs">
+                <i data-lucide="tag" class="w-3.5 h-3.5 text-orange-700"></i>
+                <span id="resultBreadClass">Toasted Golden Brioche</span>
               </div>
             </div>
           </div>
 
           <!-- Quick Action Buttons -->
           <div class="flex flex-col sm:flex-row lg:flex-col gap-2.5 w-full lg:w-auto">
-            <button id="downloadCertificateBtn" class="px-5 py-2.5 bg-orange-700 hover:bg-orange-800 text-white rounded-xl font-bold text-xs shadow-sm transition-all flex items-center justify-center gap-2">
+            <button id="downloadCertificateBtn" class="px-5 py-2.5 bg-gradient-to-r from-orange-600 via-amber-600 to-orange-700 hover:from-orange-700 hover:to-amber-700 text-white rounded-xl font-bold text-xs shadow-md shadow-orange-600/20 transition-all flex items-center justify-center gap-2">
               <i data-lucide="download" class="w-3.5 h-3.5"></i>
               <span>Export Certificate (PNG)</span>
             </button>
-            <button id="copySummaryBtn" class="px-5 py-2.5 bg-white hover:bg-stone-50 border border-stone-200 text-stone-700 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-2 hover:border-orange-300">
-              <i data-lucide="copy" class="w-3.5 h-3.5" id="copyIcon"></i>
+            <button id="copySummaryBtn" class="px-5 py-2.5 bg-white hover:bg-orange-50/70 border border-orange-200 text-stone-800 hover:text-orange-950 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-2 hover:border-orange-400 shadow-2xs">
+              <i data-lucide="copy" class="w-3.5 h-3.5 text-orange-700" id="copyIcon"></i>
               <span id="copyBtnText">Copy Technical Summary</span>
             </button>
-            <button id="resetInspectorBtn" class="px-5 py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-xl font-semibold text-xs transition-all flex items-center justify-center gap-2">
-              <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+            <button id="resetInspectorBtn" class="px-5 py-2.5 bg-orange-50 hover:bg-orange-100/80 border border-orange-200 text-orange-950 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-2 shadow-2xs">
+              <i data-lucide="rotate-ccw" class="w-3.5 h-3.5 text-orange-700"></i>
               <span>New Inspection</span>
             </button>
           </div>
@@ -316,13 +316,13 @@
         </div>
 
         <!-- Auditor's Summary Box -->
-        <div class="mt-8 p-4 sm:p-5 rounded-xl bg-orange-50/70 border border-orange-200/70 relative">
+        <div class="mt-8 p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-orange-50 via-amber-50/80 to-orange-50 border border-orange-200/90 relative shadow-2xs">
           <div class="flex items-start gap-3">
-            <div class="p-2 rounded-lg bg-orange-100 text-orange-800 shrink-0">
+            <div class="p-2.5 rounded-xl bg-orange-100/90 border border-orange-200 text-orange-800 shrink-0">
               <i data-lucide="clipboard-check" class="w-4 h-4"></i>
             </div>
             <div>
-              <h4 class="text-xs font-bold uppercase tracking-wider text-orange-900 mb-1">Chief Auditor's Findings</h4>
+              <h4 class="text-xs font-extrabold uppercase tracking-wider text-orange-900 mb-1">Chief Auditor's Findings</h4>
               <p id="resultSummaryCritique" class="text-stone-800 text-sm leading-relaxed font-serif italic">
                 "A masterclass in feline bakery arts. Buttercup demonstrates peerless geometry with zero paw visibility across all three inspected planes..."
               </p>
@@ -336,25 +336,25 @@
       <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
         
         <!-- Criterion 1: Paw Tuck -->
-        <div class="bakery-card p-5 sm:p-6">
+        <div class="bakery-card p-5 sm:p-6 border border-orange-200/80 shadow-xs">
           <div class="flex items-center justify-between mb-3">
             <div class="flex items-center gap-2.5">
-              <div class="w-9 h-9 rounded-xl bg-orange-50 border border-orange-200/60 text-orange-700 flex items-center justify-center">
+              <div class="w-9 h-9 rounded-xl bg-orange-100/80 border border-orange-200 text-orange-700 flex items-center justify-center">
                 <i data-lucide="shield" class="w-4 h-4"></i>
               </div>
               <div>
                 <h3 class="font-bold text-stone-900 text-sm">Paw Tuck & Undercarriage</h3>
-                <span id="pawStatusTag" class="text-[11px] font-semibold text-orange-800">100% Peet Concealment</span>
+                <span id="pawStatusTag" class="text-[11px] font-bold text-orange-800 bg-orange-50 px-2 py-0.5 rounded-md border border-orange-200/70">100% Peet Concealment</span>
               </div>
             </div>
             <div class="text-right">
               <span id="pawScoreNum" class="text-xl font-black text-stone-900">25</span>
-              <span class="text-xs font-bold text-stone-400">/ 25</span>
+              <span class="text-xs font-bold text-orange-900/60">/ 25</span>
             </div>
           </div>
           <!-- Progress bar -->
-          <div class="w-full bg-stone-100 h-2 rounded-full overflow-hidden mb-3">
-            <div id="pawBar" class="h-full bg-orange-600 rounded-full" style="width: 100%;"></div>
+          <div class="w-full bg-orange-100/70 h-2.5 rounded-full overflow-hidden mb-3 border border-orange-200/50">
+            <div id="pawBar" class="h-full bg-gradient-to-r from-orange-500 to-amber-500 rounded-full shadow-2xs" style="width: 100%;"></div>
           </div>
           <p id="pawCritique" class="text-xs text-stone-600 mb-3 leading-relaxed">
             Front and rear peet are completely tucked beneath the chest.
@@ -365,28 +365,28 @@
         </div>
 
         <!-- Criterion 2: Tail Tuck -->
-        <div class="bakery-card p-5 sm:p-6">
+        <div class="bakery-card p-5 sm:p-6 border border-orange-200/80 shadow-xs">
           <div class="flex items-center justify-between mb-3">
             <div class="flex items-center gap-2.5">
-              <div class="w-9 h-9 rounded-xl bg-orange-50 border border-orange-200/60 text-orange-700 flex items-center justify-center">
+              <div class="w-9 h-9 rounded-xl bg-orange-100/80 border border-orange-200 text-orange-700 flex items-center justify-center">
                 <i data-lucide="wind" class="w-4 h-4"></i>
               </div>
               <div>
                 <h3 class="font-bold text-stone-900 text-sm">Tail Aerodynamics & Drag</h3>
-                <span id="tailStatusTag" class="text-[11px] font-semibold text-orange-800">Zero Drag Flank Wrap</span>
+                <span id="tailStatusTag" class="text-[11px] font-bold text-orange-800 bg-orange-50 px-2 py-0.5 rounded-md border border-orange-200/70">Zero Drag Flank Wrap</span>
               </div>
             </div>
             <div class="text-right">
               <span id="tailScoreNum" class="text-xl font-black text-stone-900">24</span>
-              <span class="text-xs font-bold text-stone-400">/ 25</span>
+              <span class="text-xs font-bold text-orange-900/60">/ 25</span>
             </div>
           </div>
-          <div class="w-full bg-stone-100 h-2 rounded-full overflow-hidden mb-3">
-            <div id="tailBar" class="h-full bg-orange-600 rounded-full" style="width: 96%;"></div>
+          <div class="w-full bg-orange-100/70 h-2.5 rounded-full overflow-hidden mb-3 border border-orange-200/50">
+            <div id="tailBar" class="h-full bg-gradient-to-r from-orange-500 to-amber-500 rounded-full shadow-2xs" style="width: 96%;"></div>
           </div>
           <div class="flex items-center gap-2 mb-2">
-            <span class="text-[10px] font-bold uppercase tracking-wider bg-stone-100 text-stone-600 px-2 py-0.5 rounded">
-              Drag Coefficient: <span id="dragCoeffNum" class="text-orange-800 font-extrabold">0.03</span>
+            <span class="text-[10px] font-bold uppercase tracking-wider bg-orange-100/80 text-orange-950 px-2.5 py-0.5 rounded border border-orange-200/80">
+              Drag Coefficient: <span id="dragCoeffNum" class="text-orange-700 font-extrabold">0.03</span>
             </span>
           </div>
           <p id="tailCritique" class="text-xs text-stone-600 mb-3 leading-relaxed">
@@ -398,24 +398,24 @@
         </div>
 
         <!-- Criterion 3: Elbows & Compactness -->
-        <div class="bakery-card p-5 sm:p-6">
+        <div class="bakery-card p-5 sm:p-6 border border-orange-200/80 shadow-xs">
           <div class="flex items-center justify-between mb-3">
             <div class="flex items-center gap-2.5">
-              <div class="w-9 h-9 rounded-xl bg-orange-50 border border-orange-200/60 text-orange-700 flex items-center justify-center">
+              <div class="w-9 h-9 rounded-xl bg-orange-100/80 border border-orange-200 text-orange-700 flex items-center justify-center">
                 <i data-lucide="maximize-2" class="w-4 h-4"></i>
               </div>
               <div>
                 <h3 class="font-bold text-stone-900 text-sm">Flank Compression & Form</h3>
-                <span id="elbowStatusTag" class="text-[11px] font-semibold text-orange-800">Artisanal Dough Fold</span>
+                <span id="elbowStatusTag" class="text-[11px] font-bold text-orange-800 bg-orange-50 px-2 py-0.5 rounded-md border border-orange-200/70">Artisanal Dough Fold</span>
               </div>
             </div>
             <div class="text-right">
               <span id="elbowScoreNum" class="text-xl font-black text-stone-900">24</span>
-              <span class="text-xs font-bold text-stone-400">/ 25</span>
+              <span class="text-xs font-bold text-orange-900/60">/ 25</span>
             </div>
           </div>
-          <div class="w-full bg-stone-100 h-2 rounded-full overflow-hidden mb-3">
-            <div id="elbowBar" class="h-full bg-orange-600 rounded-full" style="width: 96%;"></div>
+          <div class="w-full bg-orange-100/70 h-2.5 rounded-full overflow-hidden mb-3 border border-orange-200/50">
+            <div id="elbowBar" class="h-full bg-gradient-to-r from-orange-500 to-amber-500 rounded-full shadow-2xs" style="width: 96%;"></div>
           </div>
           <p id="elbowCritique" class="text-xs text-stone-600 mb-3 leading-relaxed">
             Elbows pulled inwards against ribcage with zero lateral flare.
@@ -426,24 +426,24 @@
         </div>
 
         <!-- Criterion 4: Crust & Symmetry -->
-        <div class="bakery-card p-5 sm:p-6">
+        <div class="bakery-card p-5 sm:p-6 border border-orange-200/80 shadow-xs">
           <div class="flex items-center justify-between mb-3">
             <div class="flex items-center gap-2.5">
-              <div class="w-9 h-9 rounded-xl bg-orange-50 border border-orange-200/60 text-orange-700 flex items-center justify-center">
+              <div class="w-9 h-9 rounded-xl bg-orange-100/80 border border-orange-200 text-orange-700 flex items-center justify-center">
                 <i data-lucide="sparkles" class="w-4 h-4"></i>
               </div>
               <div>
                 <h3 class="font-bold text-stone-900 text-sm">Dorsal Symmetry & Crust</h3>
-                <span id="crustStatusTag" class="text-[11px] font-semibold text-orange-800">Dorsal Boule Symmetry</span>
+                <span id="crustStatusTag" class="text-[11px] font-bold text-orange-800 bg-orange-50 px-2 py-0.5 rounded-md border border-orange-200/70">Dorsal Boule Symmetry</span>
               </div>
             </div>
             <div class="text-right">
               <span id="crustScoreNum" class="text-xl font-black text-stone-900">25</span>
-              <span class="text-xs font-bold text-stone-400">/ 25</span>
+              <span class="text-xs font-bold text-orange-900/60">/ 25</span>
             </div>
           </div>
-          <div class="w-full bg-stone-100 h-2 rounded-full overflow-hidden mb-3">
-            <div id="crustBar" class="h-full bg-orange-600 rounded-full" style="width: 100%;"></div>
+          <div class="w-full bg-orange-100/70 h-2.5 rounded-full overflow-hidden mb-3 border border-orange-200/50">
+            <div id="crustBar" class="h-full bg-gradient-to-r from-orange-500 to-amber-500 rounded-full shadow-2xs" style="width: 100%;"></div>
           </div>
           <p id="crustCritique" class="text-xs text-stone-600 mb-3 leading-relaxed">
             Overhead inspection reveals a textbook oval boule with uniform dorsal coat distribution.
@@ -456,9 +456,9 @@
       </div>
 
       <!-- Submitted Angles Review Strip -->
-      <div id="angleReviewStrip" class="bakery-card p-5">
-        <h3 class="text-xs font-bold uppercase tracking-wider text-stone-500 mb-3 flex items-center gap-1.5">
-          <i data-lucide="layers" class="w-3.5 h-3.5 text-stone-600"></i>
+      <div id="angleReviewStrip" class="bakery-card p-5 border border-orange-200/80 shadow-xs">
+        <h3 class="text-xs font-extrabold uppercase tracking-wider text-orange-950 mb-3 flex items-center gap-1.5">
+          <i data-lucide="layers" class="w-3.5 h-3.5 text-orange-700"></i>
           <span>Orthographic Plane Observations</span>
         </h3>
         <div id="angleReviewGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
@@ -470,9 +470,9 @@
       <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
         
         <!-- Badges Card -->
-        <div class="bakery-card p-5">
-          <h3 class="text-xs font-bold uppercase tracking-wider text-stone-500 mb-3 flex items-center gap-1.5">
-            <i data-lucide="award" class="w-3.5 h-3.5 text-stone-600"></i>
+        <div class="bakery-card p-5 border border-orange-200/80 shadow-xs">
+          <h3 class="text-xs font-extrabold uppercase tracking-wider text-orange-950 mb-3 flex items-center gap-1.5">
+            <i data-lucide="award" class="w-3.5 h-3.5 text-orange-700"></i>
             <span>Certified Accolades & Demerits</span>
           </h3>
           <div id="badgesContainer" class="flex flex-wrap gap-2">
@@ -481,9 +481,9 @@
         </div>
 
         <!-- Tips for Cat Card -->
-        <div class="bakery-card p-5">
-          <h3 class="text-xs font-bold uppercase tracking-wider text-stone-500 mb-3 flex items-center gap-1.5">
-            <i data-lucide="lightbulb" class="w-3.5 h-3.5 text-stone-600"></i>
+        <div class="bakery-card p-5 border border-orange-200/80 shadow-xs">
+          <h3 class="text-xs font-extrabold uppercase tracking-wider text-orange-950 mb-3 flex items-center gap-1.5">
+            <i data-lucide="lightbulb" class="w-3.5 h-3.5 text-orange-700"></i>
             <span>Kinematic Recommendations</span>
           </h3>
           <ul id="tipsList" class="space-y-2 text-xs text-stone-700">
@@ -498,19 +498,19 @@
   </main>
 
   <!-- Site Footer with Terms & Policies -->
-  <footer class="mt-20 border-t border-stone-200 bg-white/70 py-8 text-stone-500 text-xs">
+  <footer class="mt-20 border-t border-orange-200/80 bg-[#fffbf5]/95 py-8 text-stone-600 text-xs">
     <div class="max-w-5xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
       <div class="flex items-center gap-2 flex-wrap justify-center sm:justify-start">
-        <span class="font-bold text-stone-800">Loafed<span class="text-orange-600">AI</span></span>
+        <span class="font-bold text-stone-900">Loafed<span class="text-orange-600 font-extrabold">AI</span></span>
         <span>&bull;</span>
-        <span>A free, open feline posture appreciation project by <a href="https://redersoft.com" target="_blank" rel="noopener noreferrer" class="font-bold text-orange-700 hover:text-orange-800 hover:underline inline-flex items-center gap-1">RederSoft <i data-lucide="external-link" class="w-3 h-3 text-orange-600"></i></a></span>
+        <span>A free, open feline posture appreciation project by <a href="https://redersoft.com" target="_blank" rel="noopener noreferrer" class="font-bold text-orange-700 hover:text-orange-900 hover:underline inline-flex items-center gap-1">RederSoft <i data-lucide="external-link" class="w-3 h-3 text-orange-600"></i></a></span>
       </div>
 
       <div class="flex items-center gap-4 text-xs font-semibold">
-        <button id="openPrivacyBtn" class="hover:text-stone-900 underline underline-offset-2 transition-colors">
+        <button id="openPrivacyBtn" class="hover:text-orange-900 underline underline-offset-2 transition-colors">
           Privacy Policy
         </button>
-        <button id="openTermsBtn" class="hover:text-stone-900 underline underline-offset-2 transition-colors">
+        <button id="openTermsBtn" class="hover:text-orange-900 underline underline-offset-2 transition-colors">
           Terms of Service
         </button>
       </div>
@@ -519,8 +519,8 @@
 
   <!-- Capacity Notice Modal -->
   <div id="ovenAlertModal" class="hidden fixed inset-0 z-50 bg-stone-950/60 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bakery-card max-w-md w-full p-6 sm:p-7 relative bg-white shadow-2xl text-center">
-      <div class="w-14 h-14 mx-auto rounded-2xl bg-orange-50 border border-orange-200/60 text-orange-800 flex items-center justify-center mb-3">
+    <div class="bakery-card max-w-md w-full p-6 sm:p-7 relative bg-white border border-orange-200/90 shadow-2xl text-center">
+      <div class="w-14 h-14 mx-auto rounded-2xl bg-orange-100/80 border border-orange-300 text-orange-700 flex items-center justify-center mb-3 shadow-xs">
         <i data-lucide="clock" class="w-7 h-7"></i>
       </div>
       <h3 class="text-lg font-bold text-stone-900 mb-1" id="ovenAlertTitle">Evaluation Capacity Reached</h3>
@@ -528,10 +528,10 @@
         The public evaluation limit has been reached for today. Please wait for the daily quota reset or try again later.
       </p>
       <div class="flex flex-col gap-2">
-        <button id="ovenAlertPresetBtn" class="w-full py-2.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 font-bold text-xs border border-stone-200 transition-colors">
+        <button id="ovenAlertPresetBtn" class="w-full py-2.5 rounded-xl bg-orange-50 hover:bg-orange-100 text-orange-950 font-bold text-xs border border-orange-200 transition-colors">
           View Buttercup Baseline Dataset
         </button>
-        <button id="closeOvenAlertBtn" class="w-full py-2.5 rounded-xl bg-orange-700 hover:bg-orange-800 text-white font-bold text-xs transition-colors shadow-sm">
+        <button id="closeOvenAlertBtn" class="w-full py-2.5 rounded-xl bg-gradient-to-r from-orange-600 via-amber-600 to-orange-700 hover:from-orange-700 hover:to-amber-700 text-white font-bold text-xs transition-colors shadow-sm">
           Dismiss
         </button>
       </div>
@@ -540,13 +540,13 @@
 
   <!-- Past Loaves / Local History Modal -->
   <div id="historyModal" class="hidden fixed inset-0 z-50 bg-stone-950/60 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bakery-card max-w-lg w-full p-6 sm:p-7 relative bg-white shadow-2xl max-h-[85vh] flex flex-col">
-      <button id="closeHistoryBtn" class="absolute right-4 top-4 text-stone-400 hover:text-stone-700 p-1 rounded-lg hover:bg-stone-100 transition-colors">
+    <div class="bakery-card max-w-lg w-full p-6 sm:p-7 relative bg-white border border-orange-200/90 shadow-2xl max-h-[85vh] flex flex-col">
+      <button id="closeHistoryBtn" class="absolute right-4 top-4 text-stone-400 hover:text-stone-700 p-1 rounded-lg hover:bg-orange-50 transition-colors">
         <i data-lucide="x" class="w-4 h-4"></i>
       </button>
 
       <div class="flex items-center gap-3 mb-4">
-        <div class="w-10 h-10 rounded-xl bg-orange-50 border border-orange-200/60 text-orange-800 flex items-center justify-center shrink-0">
+        <div class="w-10 h-10 rounded-xl bg-orange-100/80 border border-orange-300 text-orange-700 flex items-center justify-center shrink-0 shadow-xs">
           <i data-lucide="history" class="w-5 h-5"></i>
         </div>
         <div>
@@ -560,11 +560,11 @@
         <!-- Rendered dynamically -->
       </div>
 
-      <div class="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between text-xs">
+      <div class="mt-4 pt-3 border-t border-orange-100 flex items-center justify-between text-xs">
         <button id="clearAllHistoryBtn" class="text-stone-400 hover:text-rose-600 transition-colors text-[11px] font-medium">
           Clear Local History
         </button>
-        <button id="dismissHistoryBtn" class="px-3.5 py-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-700 font-semibold text-xs transition-colors">
+        <button id="dismissHistoryBtn" class="px-3.5 py-1.5 rounded-lg bg-orange-100/80 hover:bg-orange-200 text-orange-950 font-semibold text-xs transition-colors">
           Close
         </button>
       </div>
@@ -573,13 +573,13 @@
 
   <!-- Legal / Privacy & Terms Modal -->
   <div id="legalModal" class="hidden fixed inset-0 z-50 bg-stone-950/60 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bakery-card max-w-xl w-full p-6 sm:p-7 relative bg-white shadow-2xl max-h-[85vh] flex flex-col">
-      <button id="closeLegalBtn" class="absolute right-4 top-4 text-stone-400 hover:text-stone-700 p-1 rounded-lg hover:bg-stone-100 transition-colors">
+    <div class="bakery-card max-w-xl w-full p-6 sm:p-7 relative bg-white border border-orange-200/90 shadow-2xl max-h-[85vh] flex flex-col">
+      <button id="closeLegalBtn" class="absolute right-4 top-4 text-stone-400 hover:text-stone-700 p-1 rounded-lg hover:bg-orange-50 transition-colors">
         <i data-lucide="x" class="w-4 h-4"></i>
       </button>
 
       <div class="flex items-center gap-3 mb-4">
-        <div class="w-10 h-10 rounded-xl bg-orange-50 border border-orange-200/60 text-orange-800 flex items-center justify-center shrink-0">
+        <div class="w-10 h-10 rounded-xl bg-orange-100/80 border border-orange-300 text-orange-700 flex items-center justify-center shrink-0 shadow-xs">
           <i data-lucide="shield-check" class="w-5 h-5"></i>
         </div>
         <div>
@@ -589,8 +589,8 @@
       </div>
 
       <!-- Modal Tabs -->
-      <div class="flex items-center gap-2 border-b border-stone-200 pb-3 mb-4">
-        <button id="tabPrivacyBtn" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all bg-orange-50 text-orange-900 border border-orange-200/80">
+      <div class="flex items-center gap-2 border-b border-orange-200/80 pb-3 mb-4">
+        <button id="tabPrivacyBtn" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all bg-orange-100 text-orange-950 border border-orange-300 shadow-2xs">
           Privacy Policy
         </button>
         <button id="tabTermsBtn" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all text-stone-600 hover:text-stone-900 border border-transparent">
@@ -603,9 +603,9 @@
         <!-- Rendered dynamically -->
       </div>
 
-      <div class="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between text-[11px] text-stone-400">
+      <div class="mt-4 pt-3 border-t border-orange-100 flex items-center justify-between text-[11px] text-stone-400">
         <span>Zero tracking cookies &bull; Zero data retention &bull; 100% Freeware</span>
-        <button id="dismissLegalBtn" class="px-3.5 py-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-700 font-semibold text-xs transition-colors">
+        <button id="dismissLegalBtn" class="px-3.5 py-1.5 rounded-lg bg-orange-100/80 hover:bg-orange-200 text-orange-950 font-semibold text-xs transition-colors">
           Dismiss
         </button>
       </div>

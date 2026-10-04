@@ -4,20 +4,22 @@
   --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
   --font-serif: 'Playfair Display', Georgia, serif;
   
-  /* Cream White & Orange Tabby Palette */
-  --bg-cream: #fefdfb;
-  --bg-cream-tint: #faf5ee;
+  /* Cream White & Warm Tabby Orange Palette */
+  --bg-cream: #fffaf4;
+  --bg-cream-tint: #fdf5ec;
   --bg-card: #ffffff;
   
   --tabby-orange: #ea580c;
   --tabby-orange-hover: #c2410c;
   --tabby-ginger: #f97316;
+  --tabby-amber: #d97706;
   --tabby-orange-light: #fff7ed;
   --tabby-orange-soft: #ffedd5;
   --tabby-border: #fed7aa;
+  --tabby-border-strong: #fdba74;
   
   --crust-gold: #f97316;
-  --toast-border: #f6ebd9;
+  --toast-border: #fbd38d;
   --text-primary: #292524;
   --text-muted: #78716c;
 }
@@ -27,10 +29,12 @@ body {
   background-color: var(--bg-cream);
   color: var(--text-primary);
   background-image: 
-    radial-gradient(#ea580c14 1px, transparent 1px),
-    radial-gradient(#ea580c06 1px, #fefdfb 1px);
-  background-size: 24px 24px;
-  background-position: 0 0, 12px 12px;
+    radial-gradient(ellipse at 50% -10%, rgba(249, 115, 22, 0.24) 0%, rgba(251, 146, 60, 0.14) 38%, rgba(255, 250, 244, 0.5) 70%, transparent 100%),
+    radial-gradient(rgba(234, 88, 12, 0.08) 1.2px, transparent 1.2px),
+    radial-gradient(rgba(249, 115, 22, 0.04) 1.2px, #fffaf4 1.2px);
+  background-size: 100% 800px, 24px 24px, 24px 24px;
+  background-position: 0 0, 0 0, 12px 12px;
+  background-repeat: no-repeat, repeat, repeat;
   min-height: 100vh;
 }
 
@@ -41,36 +45,64 @@ body {
 /* Glassmorphism & Warm Cream Tabby Card styling */
 .bakery-card {
   background: #ffffff;
-  border: 1px solid var(--toast-border);
-  box-shadow: 0 10px 30px -10px rgba(234, 88, 12, 0.06), 0 4px 6px -2px rgba(234, 88, 12, 0.02);
+  border: 1px solid rgba(251, 146, 60, 0.30);
+  box-shadow: 0 10px 30px -10px rgba(234, 88, 12, 0.10), 0 4px 10px -2px rgba(249, 115, 22, 0.04);
   border-radius: 1.25rem;
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .bakery-card:hover {
-  box-shadow: 0 20px 35px -10px rgba(234, 88, 12, 0.10), 0 6px 12px -2px rgba(234, 88, 12, 0.03);
+  border-color: rgba(249, 115, 22, 0.45);
+  box-shadow: 0 20px 38px -10px rgba(234, 88, 12, 0.16), 0 6px 14px -2px rgba(249, 115, 22, 0.07);
+}
+
+/* Warm Tabby Gradient Text */
+.text-tabby-gradient {
+  background: linear-gradient(135deg, #ea580c 0%, #f97316 45%, #d97706 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Primary Tabby Action Button */
+.btn-tabby-primary {
+  background: linear-gradient(135deg, #f97316 0%, #ea580c 55%, #c2410c 100%);
+  color: #ffffff;
+  box-shadow: 0 6px 20px -3px rgba(234, 88, 12, 0.40);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-tabby-primary:hover {
+  background: linear-gradient(135deg, #fb923c 0%, #f97316 50%, #ea580c 100%);
+  box-shadow: 0 8px 24px -3px rgba(234, 88, 12, 0.50);
+  transform: translateY(-1px);
+}
+
+.btn-tabby-primary:active {
+  transform: translateY(0);
 }
 
 /* Slot upload box */
 .upload-slot {
   position: relative;
-  border: 2px dashed #fed7aa;
-  background-color: #fffaf5;
-  border-radius: 1rem;
-  transition: all 0.2s ease;
+  border: 2px dashed #fdba74;
+  background: linear-gradient(180deg, #fffaf5 0%, #fff7ed 100%);
+  border-radius: 1.25rem;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   cursor: pointer;
   overflow: hidden;
 }
 
 .upload-slot:hover {
-  border-color: #f97316;
-  background-color: #fff7ed;
+  border-color: #ea580c;
+  background: linear-gradient(180deg, #fff7ed 0%, #ffedd5 100%);
+  box-shadow: 0 10px 25px -8px rgba(234, 88, 12, 0.16);
   transform: translateY(-2px);
 }
 
 .upload-slot.drag-over {
   border-color: #ea580c;
-  background-color: #ffedd5;
+  background: #ffedd5;
+  box-shadow: 0 12px 30px -6px rgba(234, 88, 12, 0.25);
   transform: scale(1.02);
 }
 
