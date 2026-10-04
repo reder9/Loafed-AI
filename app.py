@@ -20,7 +20,7 @@ from botocore.exceptions import ClientError
 import jwt
 from jwt.algorithms import RSAAlgorithm
 
-from fastapi import FastAPI, UploadFile, File, Form, Header, HTTPException, Request
+from fastapi import FastAPI, UploadFile, File, Form, Header, HTTPException, Request, BackgroundTasks
 from fastapi.responses import JSONResponse, FileResponse, PlainTextResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
@@ -1173,8 +1173,241 @@ async def get_auth_config():
     }
 
 
+RECENT_SIGNIN_NOTIFICATIONS: Dict[str, float] = {}
+
+
+def send_google_signin_notification(id_token: str):
+    """Dispatches a stylized Google Sign-In security heads-up notification via AWS SES."""
+    if not id_token:
+        return
+
+    try:
+        claims = jwt.decode(id_token, options={"verify_signature": False})
+    except Exception as e:
+        logger.warning(f"Could not decode id_token for sign-in notification: {e}")
+        return
+
+    email = (claims.get("email") or "").strip().lower()
+    if not email:
+        return
+
+    # Verify if authentication was performed via Google
+    is_google = False
+    identities = claims.get("identities", [])
+    if identities:
+        if isinstance(identities, str):
+            try:
+                identities = json.loads(identities)
+            except Exception:
+                pass
+        if isinstance(identities, list):
+            for ident in identities:
+                if isinstance(ident, dict) and "google" in str(ident.get("providerName", "")).lower():
+                    is_google = True
+                    break
+
+    cognito_username = str(claims.get("cognito:username") or claims.get("username", "")).lower()
+    if "google" in cognito_username:
+        is_google = True
+
+    if not is_google:
+        logger.info(f"Sign-in token for {email} is not Google provider; skipping Google security alert.")
+        return
+
+    # In-memory sliding window deduplication (15 minutes)
+    now = time.time()
+    last_notified = RECENT_SIGNIN_NOTIFICATIONS.get(email, 0.0)
+    if now - last_notified < 900:
+        logger.info(f"Skipping duplicate Google sign-in notification for {email} (notified {int(now - last_notified)}s ago).")
+        return
+
+    RECENT_SIGNIN_NOTIFICATIONS[email] = now
+
+    raw_name = claims.get("name") or claims.get("cognito:username") or email.split("@")[0]
+    clean_display_name = re.sub(r'[^a-zA-Z0-9\s_\-\.]', '', raw_name).strip()[:30] or "Baker"
+
+    formatted_time = datetime.now(timezone.utc).strftime("%B %d, %Y at %I:%M %p UTC")
+    logo_url = "https://loafed.redersoft.com/static/logo.png"
+    website_url = "https://loafed.redersoft.com"
+    subject = "Loafed AI -- Google Sign-In Security Notice"
+
+    html_body = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>{subject}</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #fffaf4; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; color: #292524; -webkit-font-smoothing: antialiased;">
+  <div style="display: none; font-size: 1px; color: #fffaf4; line-height: 1px; max-height: 0px; max-width: 0px; opacity: 0; overflow: hidden;">
+    Heads up: Your Loafed AI account was just accessed with Google Sign-In on {formatted_time}.
+  </div>
+
+  <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #fffaf4; padding: 36px 16px 48px 16px;">
+    <tr>
+      <td align="center">
+        <table width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 580px; background-color: #ffffff; border: 1px solid #fed7aa; border-radius: 20px; box-shadow: 0 10px 30px -10px rgba(234, 88, 12, 0.12); overflow: hidden;">
+          <tr>
+            <td height="5" style="background: linear-gradient(90deg, #ea580c 0%, #f97316 50%, #d97706 100%);"></td>
+          </tr>
+          <tr>
+            <td style="padding: 36px 32px 28px 32px;">
+              <table width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 28px; border-bottom: 1px solid #ffedd5; padding-bottom: 22px;">
+                <tr>
+                  <td width="64" valign="middle" style="padding-right: 14px;">
+                    <a href="{website_url}" target="_blank" style="text-decoration: none; display: block;">
+                      <img src="{logo_url}" alt="Loafed AI Mascot" width="56" height="56" style="display: block; width: 56px; height: 56px; border-radius: 14px; border: 1.5px solid #fed7aa; background-color: #fff7ed; object-fit: contain;" />
+                    </a>
+                  </td>
+                  <td valign="middle">
+                    <div style="font-size: 22px; font-weight: 900; letter-spacing: -0.5px; color: #1c1917; line-height: 1.2;">
+                      Loafed<span style="color: #ea580c;">AI</span>
+                    </div>
+                    <div style="font-size: 11px; color: #9a3412; letter-spacing: 0.5px; font-weight: 700; margin-top: 3px;">
+                      Feline Posture &amp; Silhouette Certification Bureau
+                    </div>
+                  </td>
+                  <td align="right" valign="middle">
+                    <span style="display: inline-block; padding: 5px 12px; background-color: #ffedd5; border: 1px solid #fed7aa; border-radius: 999px; font-size: 10px; font-weight: 800; color: #9a3412; letter-spacing: 0.8px; text-transform: uppercase; white-space: nowrap;">
+                      SECURITY NOTICE
+                    </span>
+                  </td>
+                </tr>
+              </table>
+
+              <h1 style="color: #1c1917; font-size: 22px; font-weight: 900; margin: 0 0 12px 0; line-height: 1.3; letter-spacing: -0.3px;">
+                Google Sign-In Detected
+              </h1>
+              <p style="color: #57534e; font-size: 14px; line-height: 1.6; margin: 0 0 20px 0;">
+                Hello Baker <strong>{clean_display_name}</strong>,
+              </p>
+              <p style="color: #57534e; font-size: 14px; line-height: 1.6; margin: 0 0 24px 0;">
+                We wanted to give you a quick heads up that your Loafed AI account was just accessed using Google Sign-In.
+              </p>
+
+              <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #fff7ed; border: 1px solid #fed7aa; border-radius: 14px; margin-bottom: 24px;">
+                <tr>
+                  <td style="padding: 20px;">
+                    <div style="font-size: 11px; font-weight: 800; letter-spacing: 1.5px; color: #9a3412; text-transform: uppercase; margin-bottom: 12px;">
+                      SESSION DETAILS
+                    </div>
+                    <table width="100%" border="0" cellspacing="0" cellpadding="0" style="font-size: 13px;">
+                      <tr>
+                        <td style="color: #78716c; padding-bottom: 8px; width: 35%;">Account:</td>
+                        <td style="color: #1c1917; font-weight: 700; padding-bottom: 8px;">{email}</td>
+                      </tr>
+                      <tr>
+                        <td style="color: #78716c; padding-bottom: 8px;">Auth Provider:</td>
+                        <td style="color: #1c1917; font-weight: 700; padding-bottom: 8px;">Google Single Sign-On</td>
+                      </tr>
+                      <tr>
+                        <td style="color: #78716c; padding-bottom: 8px;">Date &amp; Time:</td>
+                        <td style="color: #1c1917; font-weight: 700; padding-bottom: 8px;">{formatted_time}</td>
+                      </tr>
+                      <tr>
+                        <td style="color: #78716c;">Status:</td>
+                        <td style="color: #15803d; font-weight: 800;">Authenticated Successfully</td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #fafaf9; border: 1px solid #e7e5e4; border-radius: 12px; margin-bottom: 24px;">
+                <tr>
+                  <td style="padding: 16px 18px; font-size: 12.5px; color: #57534e; line-height: 1.6;">
+                    <strong style="color: #1c1917;">Was this you?</strong> If you just signed in, you can safely disregard this message. You are all set to audit cat loaves, download official certificates, and compete on the leaderboard.<br><br>
+                    <strong style="color: #b91c1c;">Did not sign in?</strong> If this was not you, please check your Google account security settings immediately and unlink unauthorized sessions.
+                  </td>
+                </tr>
+              </table>
+
+              <table width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-top: 10px;">
+                <tr>
+                  <td align="center">
+                    <a href="{website_url}" target="_blank" style="display: inline-block; padding: 12px 32px; background-color: #ea580c; color: #ffffff; text-decoration: none; font-size: 13px; font-weight: 800; border-radius: 12px; box-shadow: 0 4px 12px rgba(234, 88, 12, 0.25);">
+                      Open Loafed AI
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+            </td>
+          </tr>
+
+          <tr>
+            <td style="background-color: #fafaf9; border-top: 1px solid #f5f5f4; padding: 22px 32px; text-align: center;">
+              <p style="font-size: 11px; color: #78716c; line-height: 1.6; margin: 0 0 8px 0;">
+                <strong>Loafed AI</strong> &bull; An open feline posture appreciation project by <a href="https://redersoft.com" target="_blank" style="color: #ea580c; text-decoration: none; font-weight: 700;">RederSoft</a>
+              </p>
+              <p style="font-size: 11px; color: #a8a29e; line-height: 1.5; margin: 0;">
+                <a href="{website_url}/leaderboard" target="_blank" style="color: #78716c; text-decoration: underline;">Leaderboard</a> &bull;
+                <a href="{website_url}" target="_blank" style="color: #78716c; text-decoration: underline;">Audit Loaf</a> &bull;
+                <a href="https://redersoft.com" target="_blank" style="color: #78716c; text-decoration: underline;">RederSoft</a>
+              </p>
+              <p style="font-size: 10px; color: #a8a29e; margin: 8px 0 0 0;">
+                &copy; 2026 RederSoft. All rights reserved.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>"""
+
+    text_body = f"""Loafed AI -- Google Sign-In Security Notice
+
+Hello Baker {clean_display_name},
+
+We wanted to give you a quick heads up that your Loafed AI account was just accessed using Google Sign-In.
+
+SESSION DETAILS:
+- Account: {email}
+- Auth Provider: Google Single Sign-On
+- Date & Time: {formatted_time}
+- Status: Authenticated Successfully
+
+Was this you?
+If you just signed in, you can safely disregard this message. You are all set to audit cat loaves and compete on the leaderboard: {website_url}
+
+Did not sign in?
+If this was not you, please check your Google account security settings immediately and unlink unauthorized sessions.
+
+--
+Loafed AI - Feline Posture & Silhouette Certification Bureau
+An open feline posture appreciation project by RederSoft
+https://loafed.redersoft.com
+"""
+
+    session = get_boto3_session()
+    ses_client = session.client("ses", region_name=AWS_REGION)
+
+    try:
+        resp = ses_client.send_email(
+            Source="Loafed AI Security <notifications@redersoft.com>",
+            Destination={"ToAddresses": [email]},
+            Message={
+                "Subject": {"Data": subject, "Charset": "UTF-8"},
+                "Body": {
+                    "Html": {"Data": html_body, "Charset": "UTF-8"},
+                    "Text": {"Data": text_body, "Charset": "UTF-8"}
+                }
+            }
+        )
+        logger.info(f"Dispatched Google sign-in heads-up email to {email}. MessageId: {resp.get('MessageId')}")
+    except ClientError as ce:
+        err_msg = ce.response.get("Error", {}).get("Message", str(ce))
+        logger.warning(f"Could not send Google sign-in notification to {email} via SES: {err_msg}")
+    except Exception as ex:
+        logger.warning(f"Unexpected error sending Google sign-in email to {email}: {ex}")
+
+
 @app.post("/api/auth/token")
-async def exchange_auth_code(req: TokenExchangeRequest):
+async def exchange_auth_code(req: TokenExchangeRequest, background_tasks: BackgroundTasks):
     """Securely proxies authorization code exchange with Cognito Hosted UI."""
     token_url = f"https://{COGNITO_DOMAIN}/oauth2/token"
     payload = {
@@ -1197,7 +1430,7 @@ async def exchange_auth_code(req: TokenExchangeRequest):
     )
     try:
         with urllib.request.urlopen(http_req, timeout=10) as resp:
-            return json.loads(resp.read().decode("utf-8"))
+            tokens = json.loads(resp.read().decode("utf-8"))
     except urllib.error.HTTPError as e:
         err_body = e.read().decode("utf-8", errors="ignore")
         logger.warning(f"Cognito token exchange failed: {err_body}")
@@ -1205,6 +1438,13 @@ async def exchange_auth_code(req: TokenExchangeRequest):
     except Exception as e:
         logger.error(f"Token exchange error: {e}")
         raise HTTPException(status_code=500, detail="Token exchange connection error.")
+
+    # Dispatch Google Sign-In heads-up security notification in background
+    id_token = tokens.get("id_token")
+    if id_token:
+        background_tasks.add_task(send_google_signin_notification, id_token)
+
+    return tokens
 
 
 # Direct Email / Password Authentication Endpoints (RederSoft Auth Pattern)
