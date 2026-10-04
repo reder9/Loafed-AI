@@ -1082,14 +1082,20 @@
 
         <!-- Baker Display Name Input (Required) -->
         <div>
-          <label for="submitDisplayNameInput" class="block text-xs font-bold text-stone-700 mb-1">
-            Public Baker Display Name <span class="text-orange-600">*</span>
-          </label>
+          <div class="flex items-center justify-between mb-1">
+            <label for="submitDisplayNameInput" class="text-xs font-bold text-stone-700">
+              Public Baker Display Name <span class="text-orange-600">*</span>
+            </label>
+            <button type="button" id="rollSubmitBakerTagBtn" class="tag-generator-btn" title="Generate a fun cat baker gamertag">
+              <i data-lucide="dice-5" class="w-3.5 h-3.5 text-orange-600"></i>
+              <span>Roll Baker Tag</span>
+            </button>
+          </div>
           <div class="input-with-icon-wrapper">
             <i data-lucide="user" class="input-icon-left"></i>
-            <input type="text" id="submitDisplayNameInput" required maxlength="30" placeholder="e.g. Baker Sarah or The Cat Whisperer" class="auth-input">
+            <input type="text" id="submitDisplayNameInput" required maxlength="30" placeholder="e.g. SirToastyLoaf or CaptainBrioche" class="auth-input">
           </div>
-          <p class="text-[10px] text-stone-500 mt-1">Your baker title displayed alongside your cat on the leaderboard.</p>
+          <p class="text-[10px] text-stone-500 mt-1">Your baker gamertag displayed alongside your cat on the leaderboard.</p>
         </div>
       </div>
 
@@ -1195,10 +1201,16 @@
         <form id="authEmailForm" class="space-y-3">
           <!-- Sign Up Only: Baker Display Name -->
           <div id="authNameField" class="hidden space-y-1">
-            <label class="text-[11px] font-bold uppercase tracking-wider text-stone-600 block">Baker Handle / Display Name</label>
+            <div class="flex items-center justify-between">
+              <label class="text-[11px] font-bold uppercase tracking-wider text-stone-600 block">Baker Handle / Display Name</label>
+              <button type="button" id="rollAuthBakerTagBtn" class="tag-generator-btn" title="Generate a fun cat baker gamertag">
+                <i data-lucide="dice-5" class="w-3.5 h-3.5 text-orange-600"></i>
+                <span>Roll Tag</span>
+              </button>
+            </div>
             <div class="input-with-icon-wrapper">
               <i data-lucide="user" class="input-icon-left"></i>
-              <input type="text" id="authNameInput" placeholder="e.g. MasterBakerSam" class="auth-input">
+              <input type="text" id="authNameInput" placeholder="e.g. SirToastyLoaf" class="auth-input">
             </div>
           </div>
 
@@ -1368,7 +1380,10 @@
             <i data-lucide="user-pen" class="w-3.5 h-3.5 text-orange-600"></i>
             <span>Baker Display Name</span>
           </label>
-          <span class="text-[11px] text-stone-500 font-medium">Max 40 chars</span>
+          <button type="button" id="rollProfileBakerTagBtn" class="tag-generator-btn" title="Generate a fun cat baker gamertag">
+            <i data-lucide="dice-5" class="w-3.5 h-3.5 text-orange-600"></i>
+            <span>Roll Baker Tag</span>
+          </button>
         </div>
         <p class="text-xs text-stone-600 mb-3">
           This name appears publicly on the Official Leaderboard and on your cat's inspection certificates.

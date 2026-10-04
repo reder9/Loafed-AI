@@ -265,14 +265,19 @@ def is_profane(text: str) -> bool:
     return False
 
 
-ALLOWED_NAME_REGEX = re.compile(r"^[a-zA-Z0-9\u00C0-\u017F\s\-'.&]+$")
+ALLOWED_NAME_REGEX = re.compile(r"^[a-zA-Z0-9\u00C0-\u017F\s\-'.&_]+$")
 PLACEHOLDER_NAMES = {
     "anonymous loaf", "anonymous", "unknown", "untitled",
-    "n/a", "na", "none", "null", "undefined", "placeholder"
+    "n/a", "na", "none", "null", "undefined", "placeholder", "test", "user", "username"
+}
+RESERVED_NAMES = {
+    "admin", "administrator", "system", "moderator", "mod", "loafed", 
+    "loafedai", "loafed-ai", "loafed_ai", "redersoft", "staff", "official", 
+    "support", "root", "security", "bureau", "master", "owner"
 }
 
 def validate_and_sanitize_name(name: Optional[str], field_label: str = "Name", min_len: int = 2, max_len: int = 30) -> str:
-    """Strictly validates, sanitizes, and filters user-supplied public names for the leaderboard."""
+    """Strictly validates, sanitizes, and filters user-supplied public names for the leaderboard and profile."""
     if not name or not str(name).strip():
         raise HTTPException(
             status_code=400,
@@ -285,7 +290,7 @@ def validate_and_sanitize_name(name: Optional[str], field_label: str = "Name", m
     if re.search(r'[<>{}\[\];\\/`~=+^%$*"]', raw):
         raise HTTPException(
             status_code=400,
-            detail=f"{field_label} contains invalid characters. Please use letters, numbers, spaces, and basic punctuation (- ' . &)."
+            detail=f"{field_label} contains invalid characters. Please use letters, numbers, spaces, and basic punctuation (- ' . & _)."
         )
 
     # Clean non-printable characters
@@ -309,7 +314,7 @@ def validate_and_sanitize_name(name: Optional[str], field_label: str = "Name", m
     if not ALLOWED_NAME_REGEX.match(cleaned):
         raise HTTPException(
             status_code=400,
-            detail=f"{field_label} contains unsupported characters. Please use standard letters, numbers, spaces, and basic punctuation (- ' . &)."
+            detail=f"{field_label} contains unsupported characters. Please use standard letters, numbers, spaces, and basic punctuation (- ' . & _)."
         )
 
     # Must contain at least one letter or number
@@ -326,6 +331,14 @@ def validate_and_sanitize_name(name: Optional[str], field_label: str = "Name", m
             detail=f"Please provide an actual name for your {field_label.lower()} instead of a generic placeholder."
         )
 
+    # Reject reserved administrative or impersonation titles
+    normalized_alphanumeric = re.sub(r'[^a-z0-9]', '', cleaned.lower())
+    if cleaned.lower() in RESERVED_NAMES or normalized_alphanumeric in RESERVED_NAMES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"'{cleaned}' is a reserved title. Please choose a personalized baker display name."
+        )
+
     # Check profanity / inappropriate terms
     if is_profane(cleaned):
         raise HTTPException(
@@ -334,6 +347,9 @@ def validate_and_sanitize_name(name: Optional[str], field_label: str = "Name", m
         )
 
     return cleaned
+
+# Backward-compatible alias for profile updates
+validate_name = validate_and_sanitize_name
 
 
 def sanitize_cat_name(name: Optional[str]) -> Optional[str]:

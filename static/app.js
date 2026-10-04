@@ -120,11 +120,14 @@ document.addEventListener('DOMContentLoaded', () => {
   const submitModalBread = document.getElementById('submitModalBread');
   const submitCatNameInput = document.getElementById('submitCatNameInput');
   const submitDisplayNameInput = document.getElementById('submitDisplayNameInput');
+  const rollSubmitBakerTagBtn = document.getElementById('rollSubmitBakerTagBtn');
   const submitModalNotice = document.getElementById('submitModalNotice');
   const submitConsentCheckbox = document.getElementById('submitConsentCheckbox');
 
   const authModal = document.getElementById('authModal');
   const closeAuthModalBtn = document.getElementById('closeAuthModalBtn');
+  const rollAuthBakerTagBtn = document.getElementById('rollAuthBakerTagBtn');
+  const rollProfileBakerTagBtn = document.getElementById('rollProfileBakerTagBtn');
   const authMainView = document.getElementById('authMainView');
   const authModalTitle = document.getElementById('authModalTitle');
   const authModalSubtitle = document.getElementById('authModalSubtitle');
@@ -2684,13 +2687,99 @@ Certified by Loafed Inspection Engine`;
     if (leaderboardModal) leaderboardModal.classList.add('hidden');
   }
 
-  // Submit Modal Logic
+  // Submit Modal Logic & Safety Filters
   const CLIENT_PROFANITY_REGEX = /\b(?:fuck|fck|shit|bitch|asshole|bastard|dick|pussy|cunt|cock|nigger|nigga|faggot|retard|whore|slut|twat|wanker|prick|penis|vagina|tit|tits|boob|boobs|nazi|hitler)\b/i;
-  const ALLOWED_NAME_REGEX = /^[a-zA-Z0-9\u00C0-\u017F\s\-'.&]+$/;
+  const ALLOWED_NAME_REGEX = /^[a-zA-Z0-9\u00C0-\u017F\s\-'.&_]+$/;
   const PLACEHOLDER_NAMES = new Set([
     'anonymous loaf', 'anonymous', 'unknown', 'untitled',
-    'n/a', 'na', 'none', 'null', 'undefined', 'placeholder'
+    'n/a', 'na', 'none', 'null', 'undefined', 'placeholder', 'test', 'user', 'username'
   ]);
+  const RESERVED_DISPLAY_NAMES = new Set([
+    'admin', 'administrator', 'system', 'moderator', 'mod', 'loafed',
+    'loafedai', 'loafed-ai', 'loafed_ai', 'redersoft', 'staff', 'official',
+    'support', 'root', 'security', 'bureau', 'master', 'owner'
+  ]);
+
+  // ==========================================================================
+  // Fun Feline & Bakery GamerTag / Display Name Generator
+  // ==========================================================================
+  const GAMERTAG_PREFIXES = [
+    'Sir', 'Lady', 'Captain', 'Baron', 'Professor', 'Chef', 'Master', 
+    'Grandmaster', 'Doctor', 'Agent', 'Count', 'Lord', 'Madame', 'Major'
+  ];
+
+  const GAMERTAG_ADJECTIVES = [
+    'Toasty', 'Crispy', 'Golden', 'Kneady', 'Buttered', 'Sourdough', 'Brioche', 
+    'Fluffy', 'Chonky', 'Glazed', 'Purrfect', 'Snuggly', 'Aerodynamic', 'Yeasty', 
+    'Cinnamon', 'Artisan', 'Midnight', 'Crusty', 'Biscuity', 'Velvet', 'Warm', 
+    'Frosted', 'Caramel', 'Nutty', 'Bubbly', 'Tender', 'DoubleBaked', 'Cozy'
+  ];
+
+  const GAMERTAG_NOUNS = [
+    'Loaf', 'Boule', 'Brioche', 'Baguette', 'Croissant', 'Biscuit', 'Muffin', 
+    'Scone', 'Pastry', 'Dough', 'Crumb', 'Whiskers', 'Paws', 'Peet', 'Claws', 
+    'Tabby', 'Calico', 'Tuxedo', 'Baton', 'Bun', 'Baker', 'Roll', 'Fritter', 'Crust'
+  ];
+
+  const GAMERTAG_TITLES = [
+    'Lord', 'Ninja', 'Knight', 'Wizard', 'Samurai', 'Champion', 'Crafter', 
+    'Whisperer', 'Pilot', 'Overlord', 'Kneader', 'Specialist', 'Sensei', 'Boi'
+  ];
+
+  const GAMERTAG_PUNS = [
+    'KneadForSpeed', 'LordOfLoaves', 'PawsitivelyToasted', 'TheDailyDough',
+    'AerodynamicPeet', 'BaguetteBandit', 'CinnabunClaws', 'TheGlazedTabby',
+    'ToastMaster3000', 'StarBakerCat', 'BreadWinnerMeow', 'RollModel',
+    'DoughReMiFaw', 'BakeMyDay', 'FlourPowerCat', 'UpperCrustPaws'
+  ];
+
+  function generateBakerGamerTag() {
+    const mode = Math.floor(Math.random() * 4);
+    let tag = '';
+
+    if (mode === 0) {
+      const pre = GAMERTAG_PREFIXES[Math.floor(Math.random() * GAMERTAG_PREFIXES.length)];
+      const adj = GAMERTAG_ADJECTIVES[Math.floor(Math.random() * GAMERTAG_ADJECTIVES.length)];
+      const noun = GAMERTAG_NOUNS[Math.floor(Math.random() * GAMERTAG_NOUNS.length)];
+      tag = `${pre}${adj}${noun}`;
+    } else if (mode === 1) {
+      const adj = GAMERTAG_ADJECTIVES[Math.floor(Math.random() * GAMERTAG_ADJECTIVES.length)];
+      const noun = GAMERTAG_NOUNS[Math.floor(Math.random() * GAMERTAG_NOUNS.length)];
+      const title = GAMERTAG_TITLES[Math.floor(Math.random() * GAMERTAG_TITLES.length)];
+      tag = `${adj}${noun}${title}`;
+    } else if (mode === 2) {
+      tag = GAMERTAG_PUNS[Math.floor(Math.random() * GAMERTAG_PUNS.length)];
+    } else {
+      const adj = GAMERTAG_ADJECTIVES[Math.floor(Math.random() * GAMERTAG_ADJECTIVES.length)];
+      const noun = GAMERTAG_NOUNS[Math.floor(Math.random() * GAMERTAG_NOUNS.length)];
+      const num = Math.floor(Math.random() * 90) + 10;
+      tag = `${adj}${noun}${num}`;
+    }
+
+    if (tag.length > 28) tag = tag.slice(0, 28);
+    return tag;
+  }
+
+  function handleRollGamerTag(inputEl, btnEl) {
+    if (!inputEl) return;
+    const tag = generateBakerGamerTag();
+    inputEl.value = tag;
+    inputEl.dispatchEvent(new Event('input', { bubbles: true }));
+    inputEl.focus();
+
+    if (btnEl) {
+      btnEl.classList.remove('rolling');
+      void btnEl.offsetWidth; // Force reflow for spin animation
+      btnEl.classList.add('rolling');
+      setTimeout(() => btnEl.classList.remove('rolling'), 450);
+    }
+
+    showToast({
+      type: 'info',
+      title: 'Baker Tag Rolled',
+      message: `Suggested: "${tag}"!`
+    });
+  }
 
   function showSubmitNotice(msg) {
     if (!submitModalNotice) return;
@@ -2715,14 +2804,23 @@ Certified by Loafed Inspection Engine`;
     if (trimmed.length > maxLen) {
       return `${fieldLabel} cannot exceed ${maxLen} characters.`;
     }
+    // Reject HTML tags, script brackets, or injection characters
+    if (/[<>{}[\];\\/`~=+^%$*"]/.test(trimmed)) {
+      return `${fieldLabel} contains invalid characters. Please use letters, numbers, spaces, and basic punctuation (- ' . & _).`;
+    }
     if (!ALLOWED_NAME_REGEX.test(trimmed)) {
-      return `${fieldLabel} contains unsupported characters. Please use letters, numbers, spaces, and basic punctuation (- ' . &).`;
+      return `${fieldLabel} contains unsupported characters. Please use letters, numbers, spaces, and basic punctuation (- ' . & _).`;
     }
     if (!/[a-zA-Z0-9\u00C0-\u017F]/.test(trimmed)) {
       return `${fieldLabel} must contain at least one letter or number.`;
     }
     if (PLACEHOLDER_NAMES.has(trimmed.toLowerCase())) {
       return `Please provide an actual name for your ${fieldLabel.toLowerCase()} instead of a generic placeholder.`;
+    }
+    // Reserved administrative title checks
+    const normalizedLower = trimmed.toLowerCase().replace(/[^a-z0-9]/g, '');
+    if (RESERVED_DISPLAY_NAMES.has(trimmed.toLowerCase()) || RESERVED_DISPLAY_NAMES.has(normalizedLower)) {
+      return `"${trimmed}" is a reserved system title. Please choose a personalized baker name.`;
     }
     if (CLIENT_PROFANITY_REGEX.test(trimmed)) {
       return `${fieldLabel} contains inappropriate or offensive language. Please choose a family-friendly bakery name.`;
@@ -2810,6 +2908,27 @@ Certified by Loafed Inspection Engine`;
     submitConsentCheckbox.addEventListener('change', () => {
       hideSubmitNotice();
       updateSubmitButtonState();
+    });
+  }
+
+  if (rollSubmitBakerTagBtn) {
+    rollSubmitBakerTagBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      handleRollGamerTag(submitDisplayNameInput, rollSubmitBakerTagBtn);
+    });
+  }
+
+  if (rollAuthBakerTagBtn) {
+    rollAuthBakerTagBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      handleRollGamerTag(authNameInput, rollAuthBakerTagBtn);
+    });
+  }
+
+  if (rollProfileBakerTagBtn) {
+    rollProfileBakerTagBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      handleRollGamerTag(profileDisplayNameInput, rollProfileBakerTagBtn);
     });
   }
 
@@ -2989,6 +3108,15 @@ Certified by Loafed Inspection Engine`;
           applyAuthTokens(data);
         } else {
           // Sign Up
+          if (name) {
+            const nameErr = validateLeaderboardField(name, 'Baker Display Name', 2, 30);
+            if (nameErr) {
+              showAuthNotice(authNotice, nameErr);
+              if (submitBtn) submitBtn.disabled = false;
+              if (authSubmitBtnText) authSubmitBtnText.textContent = origText;
+              return;
+            }
+          }
           if (password.length < 8) {
             throw new Error('Password must be at least 8 characters long.');
           }
@@ -3349,12 +3477,9 @@ Certified by Loafed Inspection Engine`;
         return;
       }
       const newName = profileDisplayNameInput ? profileDisplayNameInput.value.trim() : '';
-      if (!newName) {
-        showProfileNotice('Please enter a valid display name.', 'error');
-        return;
-      }
-      if (newName.length > 40) {
-        showProfileNotice('Display name cannot exceed 40 characters.', 'error');
+      const nameErr = validateLeaderboardField(newName, 'Baker Display Name', 2, 30);
+      if (nameErr) {
+        showProfileNotice(nameErr, 'error');
         return;
       }
 
