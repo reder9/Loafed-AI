@@ -1141,11 +1141,11 @@ Certified by Loafed Inspection Engine`;
   const privacyPolicyContent = `
     <div>
       <h4 class="font-bold text-stone-900 text-xs mb-1">1. Zero Personal Data Collection</h4>
-      <p class="text-stone-600 leading-relaxed">Loafed AI is freeware created strictly for feline appreciation and recreational entertainment. We do not require account registration, and we do not collect your name, email address, phone number, location, or payment information.</p>
+      <p class="text-stone-600 leading-relaxed">Loafed AI is freeware created strictly for feline appreciation and recreational entertainment by <a href="https://redersoft.com" target="_blank" rel="noopener noreferrer" class="text-orange-700 underline font-semibold">RederSoft</a>. We do not require account registration, and we do not collect your name, email address, phone number, location, or payment information.</p>
     </div>
     <div>
       <h4 class="font-bold text-stone-900 text-xs mb-1">2. In-Memory Image Evaluation (No Persistent Storage)</h4>
-      <p class="text-stone-600 leading-relaxed">Uploaded cat photographs are transferred over encrypted HTTPS and streamed in-memory to Google Gemini Vision API solely to generate your real-time posture report. Photos are never saved to persistent server disks, never archived into public storage buckets, and never shared, sold, or used for model training by RederSoft.</p>
+      <p class="text-stone-600 leading-relaxed">Uploaded cat photographs are transferred over encrypted HTTPS and streamed in-memory to Google Gemini Vision API solely to generate your real-time posture report. Photos are never saved to persistent server disks, never archived into public storage buckets, and never shared, sold, or used for model training by <a href="https://redersoft.com" target="_blank" rel="noopener noreferrer" class="text-orange-700 underline font-semibold">RederSoft</a>.</p>
     </div>
     <div>
       <h4 class="font-bold text-stone-900 text-xs mb-1">3. Local Device Storage Only</h4>
@@ -1164,7 +1164,7 @@ Certified by Loafed Inspection Engine`;
   const termsOfServiceContent = `
     <div>
       <h4 class="font-bold text-stone-900 text-xs mb-1">1. Entertainment & Appreciation Purpose</h4>
-      <p class="text-stone-600 leading-relaxed">Loafed AI is provided as free, open novelty software. All scores (including aerodynamic drag coefficients, boule symmetry percentages, and dough classifications) are humorous computer vision evaluations intended solely for personal entertainment.</p>
+      <p class="text-stone-600 leading-relaxed">Loafed AI is an open web experiment developed by <a href="https://redersoft.com" target="_blank" rel="noopener noreferrer" class="text-orange-700 underline font-semibold">RederSoft</a> provided as free novelty software. All scores (including aerodynamic drag coefficients, boule symmetry percentages, and dough classifications) are humorous computer vision evaluations intended solely for personal entertainment.</p>
     </div>
     <div>
       <h4 class="font-bold text-stone-900 text-xs mb-1">2. Not Veterinary or Medical Advice</h4>
