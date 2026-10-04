@@ -2120,15 +2120,29 @@ Certified by Loafed Inspection Engine`;
 
   function updateAuthUI() {
     if (state.user) {
-      if (headerSignInBtn) headerSignInBtn.classList.add('hidden');
-      if (headerUserMenu) headerUserMenu.classList.remove('hidden');
+      document.documentElement.classList.add('user-logged-in');
+      if (headerSignInBtn) {
+        headerSignInBtn.classList.add('hidden');
+        headerSignInBtn.style.setProperty('display', 'none', 'important');
+      }
+      if (headerUserMenu) {
+        headerUserMenu.classList.remove('hidden');
+        headerUserMenu.style.display = '';
+      }
       if (headerUserName) headerUserName.textContent = state.user.name;
       if (headerUserAvatar) headerUserAvatar.textContent = state.user.avatar;
       if (dropdownUserName) dropdownUserName.textContent = state.user.name;
       if (dropdownUserEmail) dropdownUserEmail.textContent = state.user.email || 'Authenticated User';
     } else {
-      if (headerSignInBtn) headerSignInBtn.classList.remove('hidden');
-      if (headerUserMenu) headerUserMenu.classList.add('hidden');
+      document.documentElement.classList.remove('user-logged-in');
+      if (headerSignInBtn) {
+        headerSignInBtn.classList.remove('hidden');
+        headerSignInBtn.style.display = '';
+      }
+      if (headerUserMenu) {
+        headerUserMenu.classList.add('hidden');
+        headerUserMenu.style.setProperty('display', 'none', 'important');
+      }
       if (headerUserDropdown) headerUserDropdown.classList.add('hidden');
     }
     refreshIcons();

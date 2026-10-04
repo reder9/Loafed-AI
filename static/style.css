@@ -279,6 +279,22 @@ body {
   transform: translateY(0);
 }
 
+.btn-header-signin.hidden,
+.btn-header-signin[hidden] {
+  display: none !important;
+}
+
+/* Universal hidden utility and auth state overrides */
+.hidden,
+[hidden] {
+  display: none !important;
+}
+
+html.user-logged-in #headerSignInBtn,
+body.user-logged-in #headerSignInBtn {
+  display: none !important;
+}
+
 /* General Color Button Fallbacks */
 .bg-orange-600 {
   background-color: #ea580c !important;
