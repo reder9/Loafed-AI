@@ -290,8 +290,8 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
 
-  // Image Optimization (Resize large images to maintain responsive performance)
-  async function optimizeImage(file, maxDimension = 1280, quality = 0.85) {
+  // Image Optimization (Resize large images with high-quality smoothing and fidelity)
+  async function optimizeImage(file, maxDimension = 1600, quality = 0.92) {
     if (!file || !file.type.startsWith('image/')) return file;
     return new Promise((resolve) => {
       const img = new Image();
@@ -299,7 +299,7 @@ document.addEventListener('DOMContentLoaded', () => {
       img.onload = () => {
         URL.revokeObjectURL(url);
         let { width, height } = img;
-        if (width <= maxDimension && height <= maxDimension && file.size < 800 * 1024) {
+        if (width <= maxDimension && height <= maxDimension && file.size < 1200 * 1024) {
           return resolve(file);
         }
         if (width > height) {
@@ -317,6 +317,8 @@ document.addEventListener('DOMContentLoaded', () => {
         canvas.width = width;
         canvas.height = height;
         const ctx = canvas.getContext('2d');
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
         ctx.drawImage(img, 0, 0, width, height);
         canvas.toBlob((blob) => {
           if (!blob) return resolve(file);
@@ -437,7 +439,7 @@ document.addEventListener('DOMContentLoaded', () => {
       card.className = 'relative group rounded-xl overflow-hidden border border-orange-200/80 bg-white shadow-2xs flex flex-col';
       card.innerHTML = `
         <div class="relative w-full aspect-square bg-stone-100 overflow-hidden">
-          <img src="${photo.previewUrl}" class="w-full h-full object-cover transition-transform group-hover:scale-105 duration-200" alt="${photo.name}">
+          <img src="${photo.previewUrl}" class="w-full h-full object-cover transition-transform group-hover:scale-105 duration-200 ortho-photo-img" alt="${photo.name}">
           <div class="absolute inset-0 bg-gradient-to-t from-stone-950/75 via-transparent to-transparent flex items-end justify-between p-2 text-white">
             <span class="text-[10px] font-bold flex items-center gap-1 drop-shadow-xs truncate max-w-[80%]">
               <i data-lucide="${labelInfo.icon}" class="w-3 h-3 shrink-0"></i> ${labelInfo.title}
@@ -1452,7 +1454,9 @@ document.addEventListener('DOMContentLoaded', () => {
           </span>
           <span class="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.5 rounded border border-emerald-200">Inspected</span>
         </div>
-        <img src="${photo.previewUrl}" class="w-full h-28 object-cover rounded-lg border border-orange-200" alt="${label}">
+        <div class="w-full h-36 sm:h-40 overflow-hidden rounded-xl border border-orange-200 bg-stone-900/5 relative">
+          <img src="${photo.previewUrl}" class="w-full h-full object-cover ortho-photo-img" alt="${label}">
+        </div>
         <p class="text-[11px] text-stone-600 leading-snug">${(note || 'Evaluated in composite score telemetry.').replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, '')}</p>
       `;
       grid.appendChild(card);
@@ -1469,7 +1473,7 @@ document.addEventListener('DOMContentLoaded', () => {
           </span>
           <span class="text-[10px] bg-amber-100 text-amber-800 font-bold px-1.5 py-0.5 rounded">Omitted</span>
         </div>
-        <div class="w-full h-28 bg-white/80 rounded-lg border border-dashed border-amber-300 flex flex-col items-center justify-center p-3 text-center">
+        <div class="w-full h-36 sm:h-40 bg-white/80 rounded-xl border border-dashed border-amber-300 flex flex-col items-center justify-center p-3 text-center">
           <i data-lucide="camera-off" class="w-6 h-6 text-amber-400 mb-1"></i>
           <span class="text-xs font-bold text-amber-900">Missing Telemetry</span>
           <span class="text-[10px] text-amber-700 mt-0.5">Submit up to 5 photos for full 360-degree audit bonus</span>

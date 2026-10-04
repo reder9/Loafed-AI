@@ -1460,3 +1460,14 @@ img, video, canvas {
   50% { transform: rotate(180deg) scale(1.25); }
   100% { transform: rotate(360deg) scale(1); }
 }
+
+/* ==========================================================================
+   Orthographic Plane Observations Photo Smoothing & High-Fidelity Rendering
+   ========================================================================== */
+.ortho-photo-img {
+  image-rendering: auto;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: high-quality;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+}
