@@ -482,23 +482,24 @@
           <div class="steam-puff steam-puff-3"></div>
         </div>
 
+        <!-- Oven Hearth Chamber with User Cat Photo -->
+        <div class="oven-chamber-portal" aria-hidden="true">
+          <div id="ovenPhotoStage" class="oven-photo-stage">
+            <img id="ovenCatPhoto" class="oven-cat-photo" src="/samples/buttercup_front.jpg" alt="Baking cat loaf photo">
+          </div>
+          <!-- Warm Amber Hearth Tint -->
+          <div class="oven-hearth-sheen"></div>
+        </div>
+
         <!-- Cartoon Oven Illustration with Squash & Stretch -->
         <img 
-          src="/static/cartoon_oven.webp" 
+          src="/static/cartoon_oven_frame.webp" 
           alt="Cozy cartoon bakery oven baking a cat loaf" 
           width="200" 
           height="200" 
           class="cartoon-oven-img relative z-10"
           loading="eager"
         >
-
-        <!-- Cute Floating Sparkles -->
-        <div class="sparkle-float -top-1 -right-2 text-amber-500" aria-hidden="true">
-          <i data-lucide="sparkles" class="w-5 h-5"></i>
-        </div>
-        <div class="sparkle-float bottom-4 -left-2 text-orange-400" aria-hidden="true" style="animation-delay: 1.1s;">
-          <i data-lucide="sparkle" class="w-4 h-4"></i>
-        </div>
       </div>
 
       <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-100/90 text-orange-950 text-xs font-bold mb-2.5 border border-orange-300 shadow-2xs">
@@ -917,6 +918,44 @@
           View Buttercup Baseline Dataset
         </button>
         <button id="closeOvenAlertBtn" class="w-full py-2.5 rounded-xl bg-gradient-to-r from-orange-600 via-amber-600 to-orange-700 hover:from-orange-700 hover:to-amber-700 text-white font-bold text-xs transition-colors shadow-sm" aria-label="Dismiss capacity notice">
+          Dismiss
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Audit Disqualification / Leaderboard Ineligible Modal -->
+  <div id="disqualificationModal" class="hidden fixed inset-0 z-50 bg-stone-950/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bakery-card max-w-md w-full p-6 sm:p-7 relative bg-white border border-rose-200/90 shadow-2xl text-center">
+      <button id="closeDisqualificationModalBtn" class="modal-close-btn" aria-label="Close disqualification notice">
+        <i data-lucide="x" class="w-4 h-4"></i>
+      </button>
+      <div class="w-14 h-14 mx-auto rounded-2xl bg-rose-50 border border-rose-200 text-rose-600 flex items-center justify-center mb-3 shadow-xs">
+        <i data-lucide="shield-alert" class="w-7 h-7"></i>
+      </div>
+      <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-100 text-rose-900 text-[11px] font-bold mb-2 border border-rose-300">
+        <i data-lucide="ban" class="w-3.5 h-3.5 text-rose-600"></i>
+        <span>Audit Disqualification (DQ)</span>
+      </div>
+      <h3 class="text-lg font-bold text-stone-900 mb-1" id="disqualificationModalTitle">Leaderboard Submission Ineligible</h3>
+      <p class="text-xs text-stone-600 leading-relaxed mb-4" id="disqualificationModalReason">
+        This photograph was audited as a non-feline subject. To preserve competition integrity, only authentic living domestic feline loaves can be certified and published to the public Leaderboard.
+      </p>
+      <div class="p-3 bg-stone-50 border border-stone-200 rounded-xl text-left mb-5">
+        <div class="text-[10px] font-bold text-stone-500 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+          <i data-lucide="clipboard-check" class="w-3.5 h-3.5 text-orange-600"></i>
+          <span>Chief Auditor's Findings</span>
+        </div>
+        <p class="text-xs text-stone-700 italic" id="disqualificationModalAuditorNote">
+          "Disqualification: Inspector sensors detected a non-feline subject rather than an authentic, living domestic feline."
+        </p>
+      </div>
+      <div class="flex flex-col gap-2">
+        <button id="disqualificationTryAgainModalBtn" class="w-full py-2.5 rounded-xl bg-gradient-to-r from-orange-600 via-amber-600 to-orange-700 hover:from-orange-700 hover:to-amber-700 text-white font-bold text-xs transition-colors shadow-sm flex items-center justify-center gap-2">
+          <i data-lucide="camera" class="w-4 h-4"></i>
+          <span>Grade an Authentic Cat Loaf</span>
+        </button>
+        <button id="dismissDisqualificationModalBtn" class="w-full py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 font-semibold text-xs border border-stone-200 transition-colors">
           Dismiss
         </button>
       </div>

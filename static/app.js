@@ -72,6 +72,16 @@ document.addEventListener('DOMContentLoaded', () => {
   const badgesAndTipsGrid = document.getElementById('badgesAndTipsGrid');
   const authPendingLoafBadge = document.getElementById('authPendingLoafBadge');
 
+  // Animated Oven Hearth Portal Elements
+  const ovenPhotoStage = document.getElementById('ovenPhotoStage');
+  const ovenCatPhoto = document.getElementById('ovenCatPhoto');
+
+  // Audit Disqualification Modal Elements
+  const disqualificationModal = document.getElementById('disqualificationModal');
+  const closeDisqualificationModalBtn = document.getElementById('closeDisqualificationModalBtn');
+  const dismissDisqualificationModalBtn = document.getElementById('dismissDisqualificationModalBtn');
+  const disqualificationTryAgainModalBtn = document.getElementById('disqualificationTryAgainModalBtn');
+
   // Multi-Photo Upload & Staging Elements
   const mainDropzone = document.getElementById('mainDropzone');
   const photosInput = document.getElementById('photosInput');
@@ -1001,8 +1011,56 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  let photoCycleInterval = null;
+
   function startLoadingAnimation() {
     if (progressInterval) clearInterval(progressInterval);
+    if (photoCycleInterval) clearInterval(photoCycleInterval);
+
+    // Prepare user cat photos to slide into the hearth oven
+    let photoUrls = [];
+    if (state.photos && state.photos.length > 0) {
+      photoUrls = state.photos.map(p => p.previewUrl).filter(Boolean);
+    }
+    if (photoUrls.length === 0 && state.activePresetKey && BENCHMARK_PRESETS[state.activePresetKey]) {
+      photoUrls = BENCHMARK_PRESETS[state.activePresetKey].images.map(img => img.url);
+    }
+    if (photoUrls.length === 0) {
+      photoUrls = ['/samples/buttercup_front.jpg'];
+    }
+
+    if (ovenCatPhoto) {
+      ovenCatPhoto.src = photoUrls[0];
+      ovenCatPhoto.style.opacity = '1';
+    }
+
+    // Trigger smooth slide-into-oven entrance animation
+    if (ovenPhotoStage) {
+      ovenPhotoStage.classList.add('sliding');
+      void ovenPhotoStage.offsetWidth; // Force reflow
+      ovenPhotoStage.classList.remove('sliding');
+    }
+
+    // Smoothly cycle through multi-angle photos if user uploaded multiple photos
+    if (photoUrls.length > 1) {
+      let photoIdx = 0;
+      photoCycleInterval = setInterval(() => {
+        if (!progressInterval) {
+          clearInterval(photoCycleInterval);
+          return;
+        }
+        photoIdx = (photoIdx + 1) % photoUrls.length;
+        if (ovenCatPhoto) {
+          ovenCatPhoto.style.opacity = '0.35';
+          setTimeout(() => {
+            if (ovenCatPhoto && progressInterval) {
+              ovenCatPhoto.src = photoUrls[photoIdx];
+              ovenCatPhoto.style.opacity = '1';
+            }
+          }, 240);
+        }
+      }, 2500);
+    }
 
     loadingState.classList.remove('hidden');
     loadingState.classList.add('hearth-oven-active');
@@ -1055,6 +1113,8 @@ document.addEventListener('DOMContentLoaded', () => {
   function stopLoadingAnimation() {
     if (progressInterval) clearInterval(progressInterval);
     progressInterval = null;
+    if (photoCycleInterval) clearInterval(photoCycleInterval);
+    photoCycleInterval = null;
 
     loadingProgressBar.style.width = '100%';
     loadingPhrase.textContent = 'Inspection complete! Finalizing scorecard...';
@@ -1242,7 +1302,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (angleReviewStrip) angleReviewStrip.classList.remove('hidden');
       if (badgesAndTipsGrid) badgesAndTipsGrid.classList.remove('hidden');
       if (downloadCertificateBtn) downloadCertificateBtn.classList.remove('hidden');
-      if (submitLeaderboardBtn && !isDemo) submitLeaderboardBtn.classList.remove('hidden');
+      if (submitLeaderboardBtn && !isDemoMode) submitLeaderboardBtn.classList.remove('hidden');
     }
 
     // Grade Stamp & Badges
@@ -1251,16 +1311,30 @@ document.addEventListener('DOMContentLoaded', () => {
       gradeStamp.textContent = 'DQ';
       gradeStamp.className = 'stamp text-rose-700 border-rose-700 text-lg font-black';
       if (submitLeaderboardBtn) {
-        submitLeaderboardBtn.disabled = true;
-        submitLeaderboardBtn.classList.add('hidden');
+        submitLeaderboardBtn.classList.remove('hidden');
+        submitLeaderboardBtn.disabled = false;
+        submitLeaderboardBtn.className = 'w-full min-h-[44px] py-2.5 px-4 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-800 font-bold text-xs border border-rose-300 transition-all flex items-center justify-center gap-2 shadow-2xs btn-tactile';
+        submitLeaderboardBtn.innerHTML = `
+          <i data-lucide="ban" class="w-4 h-4 text-rose-600"></i>
+          <span>Leaderboard Ineligible (DQ)</span>
+        `;
         submitLeaderboardBtn.title = result.rejection_reason || 'Audit Disqualified: Not an authentic feline loaf';
       }
     } else {
       gradeStamp.textContent = result.grade_letter;
       if (submitLeaderboardBtn) {
+        if (!isDemoMode) {
+          submitLeaderboardBtn.classList.remove('hidden');
+        } else {
+          submitLeaderboardBtn.classList.add('hidden');
+        }
         submitLeaderboardBtn.disabled = false;
-        submitLeaderboardBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-        submitLeaderboardBtn.title = '';
+        submitLeaderboardBtn.className = 'btn-submit-leaderboard shimmer-btn btn-tactile';
+        submitLeaderboardBtn.innerHTML = `
+          <i data-lucide="trophy" class="w-4 h-4 text-amber-200"></i>
+          <span>Submit to Leaderboard</span>
+        `;
+        submitLeaderboardBtn.title = 'Submit to Official Leaderboard';
       }
       
       // Stamp colors & Physical Stamp Slam Animation
@@ -3320,6 +3394,42 @@ Certified by Loafed Inspection Engine`;
     });
   }
 
+  function openDisqualificationModal(reason) {
+    if (!disqualificationModal) return;
+    const noteEl = document.getElementById('disqualificationModalAuditorNote');
+    const reasonEl = document.getElementById('disqualificationModalReason');
+    if (noteEl) {
+      noteEl.textContent = `"${reason || 'Disqualification: Non-feline subject detected.'}"`;
+    }
+    if (reasonEl) {
+      reasonEl.textContent = reason || 'This photograph was audited as a non-feline subject. To preserve competition integrity, only authentic living domestic feline loaves can be certified and published to the public Leaderboard.';
+    }
+    disqualificationModal.classList.remove('hidden');
+    refreshIcons();
+  }
+
+  function closeDisqualificationModal() {
+    if (disqualificationModal) disqualificationModal.classList.add('hidden');
+  }
+
+  if (closeDisqualificationModalBtn) {
+    closeDisqualificationModalBtn.addEventListener('click', closeDisqualificationModal);
+  }
+  if (dismissDisqualificationModalBtn) {
+    dismissDisqualificationModalBtn.addEventListener('click', closeDisqualificationModal);
+  }
+  if (disqualificationTryAgainModalBtn) {
+    disqualificationTryAgainModalBtn.addEventListener('click', () => {
+      closeDisqualificationModal();
+      collapseResultsSection(true);
+    });
+  }
+  if (disqualificationModal) {
+    disqualificationModal.addEventListener('click', (e) => {
+      if (e.target === disqualificationModal) closeDisqualificationModal();
+    });
+  }
+
   if (submitLeaderboardBtn) {
     submitLeaderboardBtn.addEventListener('click', () => {
       if (!state.currentResult) {
@@ -3327,11 +3437,7 @@ Certified by Loafed Inspection Engine`;
         return;
       }
       if (state.currentResult.is_cat === false) {
-        showToast({
-          type: 'error',
-          title: 'Audit Disqualification',
-          message: state.currentResult.rejection_reason || 'This photo was disqualified as a non-feline subject and cannot be published to the leaderboard.'
-        });
+        openDisqualificationModal(state.currentResult.rejection_reason);
         return;
       }
       if (!state.user) {
