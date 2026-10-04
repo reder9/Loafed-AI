@@ -362,9 +362,13 @@
             <i data-lucide="images" class="w-8 h-8"></i>
           </div>
           <span class="font-extrabold text-stone-900 text-base mb-1">Select or Drop 1 to 5 Cat Photos</span>
-          <span class="text-xs text-stone-600 max-w-sm mb-4">
+          <span class="text-xs text-stone-600 max-w-sm mb-3">
             Upload multiple photos at once. Capture front, side, or top views for full 360-degree telemetry!
           </span>
+          <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-100/90 text-orange-950 text-[11px] font-bold border border-orange-300 mb-4 shadow-2xs">
+            <i data-lucide="cat" class="w-3.5 h-3.5 text-orange-600"></i>
+            <span>Authentic domestic cats only &bull; Non-feline photos disqualified</span>
+          </div>
           <button type="button" class="px-5 py-2.5 bg-white border border-orange-300 rounded-xl text-xs font-bold text-orange-950 shadow-2xs group-hover:border-orange-500 group-hover:bg-orange-50/80 transition-all flex items-center gap-2 pointer-events-none" aria-label="Browse photo files">
             <i data-lucide="folder-up" class="w-4 h-4 text-orange-600"></i>
             <span>Browse Photos</span>
@@ -398,6 +402,18 @@
               <i data-lucide="plus" class="w-3.5 h-3.5 text-orange-600"></i>
               <span>Add More (Max 5)</span>
             </button>
+          </div>
+        </div>
+
+        <!-- Privacy & Storage Transparency Notice -->
+        <div class="mt-4 p-3 sm:p-3.5 rounded-2xl bg-amber-50/80 border border-amber-200/90 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 text-xs text-stone-700 shadow-2xs">
+          <div class="flex items-center gap-2">
+            <i data-lucide="shield-check" class="w-4 h-4 text-emerald-600 shrink-0"></i>
+            <span><strong>Zero Photo Retention:</strong> Uploaded cat photos are evaluated ephemerally and never saved to our servers during audits.</span>
+          </div>
+          <div class="flex items-center gap-1.5 text-stone-500 text-[11px] shrink-0">
+            <i data-lucide="info" class="w-3.5 h-3.5 text-amber-600 shrink-0"></i>
+            <span>Photos are only saved if you choose to publish them to the Leaderboard.</span>
           </div>
         </div>
       </div>
@@ -541,6 +557,46 @@
         </button>
       </div>
 
+      <!-- Stylized Non-Cat Audit Disqualification Banner -->
+      <div id="disqualificationBanner" class="hidden p-5 sm:p-7 rounded-3xl bg-gradient-to-r from-rose-50 via-red-50 to-orange-50/70 border-2 border-rose-300 shadow-md text-stone-900 animate-in fade-in slide-in-from-top-2 duration-300">
+        <div class="flex flex-col sm:flex-row items-start gap-4 sm:gap-5">
+          <div class="w-12 h-12 rounded-2xl bg-rose-100 border border-rose-300 text-rose-700 flex items-center justify-center shrink-0 shadow-xs">
+            <i data-lucide="shield-alert" class="w-6 h-6"></i>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 flex-wrap mb-1">
+              <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-200 text-rose-950 font-black text-xs uppercase tracking-wider border border-rose-300">
+                <i data-lucide="alert-octagon" class="w-3.5 h-3.5 text-rose-700"></i>
+                <span>Audit Disqualification</span>
+              </span>
+              <span class="text-xs font-bold text-rose-800 bg-white/80 px-2.5 py-0.5 rounded-full border border-rose-200">Non-Feline Subject Detected</span>
+            </div>
+            <h3 class="text-xl sm:text-2xl font-black text-stone-900 tracking-tight mt-1 mb-2">
+              Disqualified: Non-Cat Photo Detected!
+            </h3>
+            <div class="p-3.5 bg-white/90 rounded-2xl border border-rose-200 mb-3 shadow-2xs">
+              <p class="text-[11px] font-extrabold uppercase tracking-wider text-rose-900 mb-0.5">Inspector Findings:</p>
+              <p id="disqualificationReason" class="text-rose-950 font-semibold text-sm italic font-serif">
+                "Disqualification: Inspector sensors detected a non-feline imposter rather than an authentic feline loaf!"
+              </p>
+            </div>
+            <p class="text-xs sm:text-sm text-stone-700 leading-relaxed mb-4">
+              Loafed AI is strictly calibrated to evaluate authentic domestic cat postures. Dogs, other animals, humans, pastries, memes, and household objects cannot receive an official loaf certificate or be submitted to the leaderboard.
+            </p>
+            <div class="flex flex-wrap items-center gap-3">
+              <button 
+                type="button" 
+                id="disqualificationTryAgainBtn" 
+                class="min-h-[44px] px-6 py-2.5 bg-gradient-to-r from-orange-600 via-amber-600 to-orange-700 hover:from-orange-700 hover:to-amber-700 text-white font-bold text-xs sm:text-sm rounded-xl shadow-md transition-all flex items-center gap-2 active:scale-95 shimmer-btn btn-tactile"
+              >
+                <i data-lucide="upload" class="w-4 h-4"></i>
+                <span>Upload an Authentic Cat Loaf</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Top Score Hero Card -->
       <div class="bakery-card p-4 sm:p-10 relative overflow-hidden bg-gradient-to-br from-white via-orange-50/40 to-amber-50/50 border border-orange-200/90 shadow-lg shadow-orange-500/5">
         
@@ -640,7 +696,7 @@
       </div>
 
       <!-- 4 Inspection Criteria Grid -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+      <div id="criteriaGrid" class="grid grid-cols-1 md:grid-cols-2 gap-5">
         
         <!-- Criterion 1: Paw Tuck -->
         <div class="bakery-card p-5 sm:p-6 border border-orange-200/80 shadow-xs">
@@ -774,7 +830,7 @@
       </div>
 
       <!-- Badges & Advice Grid -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+      <div id="badgesAndTipsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-5">
         
         <!-- Badges Card -->
         <div class="bakery-card p-5 border border-orange-200/80 shadow-xs">
@@ -1040,11 +1096,19 @@
       <!-- Submission Validation Notice -->
       <div id="submitModalNotice" class="hidden mb-3 p-3 rounded-xl text-xs font-medium border leading-relaxed auth-notice-error"></div>
 
+      <!-- Privacy & Leaderboard Storage Disclosure -->
+      <div class="p-3.5 bg-amber-50/80 rounded-xl border border-amber-200/90 mb-3.5 flex items-start gap-2.5 text-xs text-amber-950 shadow-2xs">
+        <i data-lucide="shield-check" class="w-4 h-4 text-emerald-600 shrink-0 mt-0.5"></i>
+        <div class="leading-relaxed text-[11px] text-amber-900">
+          <strong class="font-extrabold text-amber-950">Leaderboard Data Retention Only:</strong> Your cat photos are never saved during regular audits. By publishing, only this photo, your cat's name, and their loaf score are kept exclusively for the public leaderboard. You can remove your entry or delete your account at any time from your profile.
+        </div>
+      </div>
+
       <!-- Opt-In Consent Checkbox -->
-      <label class="flex items-start gap-2.5 mb-5 cursor-pointer text-xs text-stone-600 bg-stone-50 p-3 rounded-xl border border-stone-200">
+      <label class="flex items-start gap-2.5 mb-5 cursor-pointer text-xs text-stone-600 bg-stone-50 p-3 rounded-xl border border-stone-200 hover:bg-orange-50/40 transition-colors">
         <input type="checkbox" id="submitConsentCheckbox" class="mt-0.5 w-4 h-4 rounded text-orange-600 focus:ring-orange-500 border-stone-300">
-        <span class="leading-relaxed">
-          I voluntarily opt in to publish this cat loaf score and photo to the public Leaderboard. I can delete this submission or my entire account at any time.
+        <span class="leading-relaxed text-[11.5px]">
+          I voluntarily opt in to publish this cat loaf score and photo to the public Leaderboard. I understand this data is kept solely for the leaderboard and can be removed by me anytime.
         </span>
       </label>
 
@@ -1070,7 +1134,7 @@
 
       <!-- View 1: Main Auth (Sign In / Sign Up) -->
       <div id="authMainView">
-        <div class="text-center mb-5 pt-1">
+        <div class="text-center mb-4 pt-1">
           <div class="modal-icon-badge">
             <i data-lucide="shield-check" class="w-6 h-6"></i>
           </div>
@@ -1078,6 +1142,22 @@
           <p id="authModalSubtitle" class="text-xs text-stone-600 mt-1 leading-relaxed">
             Publish certified cat loaves to the public leaderboard and earn bakery titles.
           </p>
+        </div>
+
+        <!-- Privacy & Leaderboard Storage Callout (Shown when user wants to publish a loaf or signing up) -->
+        <div id="authLeaderboardPrivacyCallout" class="mb-4 p-3.5 bg-gradient-to-r from-amber-50 to-orange-50/80 rounded-2xl border border-amber-300 text-left flex items-start gap-3 shadow-2xs">
+          <div class="w-8 h-8 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0 mt-0.5 border border-amber-200">
+            <i data-lucide="shield-check" class="w-4 h-4"></i>
+          </div>
+          <div class="text-xs text-amber-950 flex-1">
+            <div class="flex items-center justify-between mb-0.5">
+              <span class="font-black text-amber-900 text-xs">Photo Privacy & Storage Notice</span>
+              <span id="authPendingLoafBadge" class="hidden text-[10px] font-extrabold bg-orange-200 text-orange-950 px-2 py-0.5 rounded-full border border-orange-300">Ready to Publish</span>
+            </div>
+            <p class="text-amber-800 leading-relaxed text-[11px]">
+              We <strong>never save or store</strong> your cat pictures during loaf audits. Creating an account is only needed if you want to publish your cat to the public leaderboard. When you publish, only your cat's photo, name, and loaf score are kept <strong>exclusively for leaderboard ranking and display</strong>. You can delete your entries or account at any time!
+            </p>
+          </div>
         </div>
 
         <!-- 1-Click Google Sign-In -->

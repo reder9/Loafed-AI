@@ -27,7 +27,8 @@ document.addEventListener('DOMContentLoaded', () => {
     isExamplePreset: false,
     activePresetKey: null,
     userSavedPhotos: [],
-    userSavedCatName: ''
+    userSavedCatName: '',
+    pendingLeaderboardIntent: false
   };
 
   // Helper to re-render Lucide icons
@@ -61,6 +62,15 @@ document.addEventListener('DOMContentLoaded', () => {
   const uploadOwnLoafBtnText = document.getElementById('uploadOwnLoafBtnText');
   const bottomUploadOwnLoafBtn = document.getElementById('bottomUploadOwnLoafBtn');
   const bottomUploadBtnText = document.getElementById('bottomUploadBtnText');
+
+  // Disqualification & Non-Feline Alert Elements
+  const disqualificationBanner = document.getElementById('disqualificationBanner');
+  const disqualificationReason = document.getElementById('disqualificationReason');
+  const disqualificationTryAgainBtn = document.getElementById('disqualificationTryAgainBtn');
+  const criteriaGrid = document.getElementById('criteriaGrid');
+  const angleReviewStrip = document.getElementById('angleReviewStrip');
+  const badgesAndTipsGrid = document.getElementById('badgesAndTipsGrid');
+  const authPendingLoafBadge = document.getElementById('authPendingLoafBadge');
 
   // Multi-Photo Upload & Staging Elements
   const mainDropzone = document.getElementById('mainDropzone');
@@ -1200,6 +1210,38 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('resultBreadClass').textContent = result.bread_classification;
     document.getElementById('resultSummaryCritique').textContent = `"${result.summary_critique}"`;
 
+    // Disqualification & Non-Feline Alert Handling
+    if (result.is_cat === false) {
+      if (disqualificationBanner) disqualificationBanner.classList.remove('hidden');
+      if (disqualificationReason) {
+        disqualificationReason.textContent = `"${result.rejection_reason || result.summary_critique || 'Disqualification: Inspector sensors detected a non-feline imposter rather than an authentic feline loaf!'}"`;
+      }
+      if (criteriaGrid) criteriaGrid.classList.add('hidden');
+      if (angleReviewStrip) angleReviewStrip.classList.add('hidden');
+      if (badgesAndTipsGrid) badgesAndTipsGrid.classList.add('hidden');
+      if (downloadCertificateBtn) downloadCertificateBtn.classList.add('hidden');
+      if (submitLeaderboardBtn) submitLeaderboardBtn.classList.add('hidden');
+
+      showToast({
+        type: 'error',
+        title: 'Non-Feline Disqualification',
+        message: result.rejection_reason || 'Non-feline subject detected. Only authentic domestic cats can be certified!'
+      });
+
+      setTimeout(() => {
+        if (disqualificationBanner) {
+          disqualificationBanner.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 100);
+    } else {
+      if (disqualificationBanner) disqualificationBanner.classList.add('hidden');
+      if (criteriaGrid) criteriaGrid.classList.remove('hidden');
+      if (angleReviewStrip) angleReviewStrip.classList.remove('hidden');
+      if (badgesAndTipsGrid) badgesAndTipsGrid.classList.remove('hidden');
+      if (downloadCertificateBtn) downloadCertificateBtn.classList.remove('hidden');
+      if (submitLeaderboardBtn && !isDemo) submitLeaderboardBtn.classList.remove('hidden');
+    }
+
     // Grade Stamp & Badges
     const gradeStamp = document.getElementById('gradeStamp');
     if (result.is_cat === false) {
@@ -1207,7 +1249,7 @@ document.addEventListener('DOMContentLoaded', () => {
       gradeStamp.className = 'stamp text-rose-700 border-rose-700 text-lg font-black';
       if (submitLeaderboardBtn) {
         submitLeaderboardBtn.disabled = true;
-        submitLeaderboardBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        submitLeaderboardBtn.classList.add('hidden');
         submitLeaderboardBtn.title = result.rejection_reason || 'Audit Disqualified: Not an authentic feline loaf';
       }
     } else {
@@ -2357,13 +2399,34 @@ Certified by Loafed Inspection Engine`;
     refreshIcons();
   }
 
-  function openAuthModal(defaultMode = 'signin') {
+  function openAuthModal(defaultMode = 'signin', intent = 'general') {
     if (!authModal) return;
     setAuthMode(defaultMode);
     switchAuthView('main');
     if (authEmailInput) authEmailInput.value = '';
     if (authPasswordInput) authPasswordInput.value = '';
     if (authNameInput) authNameInput.value = '';
+
+    const isLeaderboardIntent = intent === 'leaderboard_submit' || (state.pendingLeaderboardIntent && state.currentResult && state.currentResult.is_cat !== false);
+    if (isLeaderboardIntent && state.currentResult) {
+      if (authModalTitle) authModalTitle.textContent = defaultMode === 'signup' ? 'Sign Up to Publish Loaf' : 'Sign In to Publish Loaf';
+      if (authModalSubtitle) {
+        authModalSubtitle.textContent = `Sign in or create an account to publish ${state.currentResult.cat_name || 'your cat'} to the public leaderboard!`;
+      }
+      if (authPendingLoafBadge) {
+        authPendingLoafBadge.textContent = `${state.currentResult.cat_name || 'Loaf'} • ${state.currentResult.overall_score || 0} ${state.currentResult.grade_letter || ''}`;
+        authPendingLoafBadge.classList.remove('hidden');
+      }
+    } else {
+      if (authModalTitle) authModalTitle.textContent = defaultMode === 'signup' ? 'Create Baker Account' : 'Sign In to Loafed AI';
+      if (authModalSubtitle) {
+        authModalSubtitle.textContent = defaultMode === 'signup' 
+          ? 'Join the cat loaf bakery club and register your loaves on the public leaderboard.'
+          : 'Publish certified cat loaves to the public leaderboard and earn bakery titles.';
+      }
+      if (authPendingLoafBadge) authPendingLoafBadge.classList.add('hidden');
+    }
+
     authModal.classList.remove('hidden');
     refreshIcons();
     setTimeout(() => {
@@ -2376,6 +2439,7 @@ Certified by Loafed Inspection Engine`;
     hideAuthNotice(authNotice);
     hideAuthNotice(authVerifyNotice);
     hideAuthNotice(authForgotNotice);
+    if (authPendingLoafBadge) authPendingLoafBadge.classList.add('hidden');
   }
 
   function applyAuthTokens(tokens) {
@@ -2395,6 +2459,14 @@ Certified by Loafed Inspection Engine`;
       title: 'Welcome Baker!',
       message: `Signed in as ${state.user ? state.user.name : 'Baker'}.`
     });
+
+    // Seamless auto-open submit modal if user signed in specifically to publish their loaf
+    if (state.pendingLeaderboardIntent && state.currentResult && state.currentResult.is_cat !== false) {
+      state.pendingLeaderboardIntent = false;
+      setTimeout(() => {
+        openSubmitModal();
+      }, 250);
+    }
   }
 
   // Leaderboard Modal Logic
@@ -3135,10 +3207,17 @@ Certified by Loafed Inspection Engine`;
         return;
       }
       if (!state.user) {
-        openAuthModal();
+        state.pendingLeaderboardIntent = true;
+        openAuthModal('signup', 'leaderboard_submit');
         return;
       }
       openSubmitModal();
+    });
+  }
+
+  if (disqualificationTryAgainBtn) {
+    disqualificationTryAgainBtn.addEventListener('click', () => {
+      collapseResultsSection(true);
     });
   }
   if (closeSubmitModalBtn) closeSubmitModalBtn.addEventListener('click', closeSubmitModal);
