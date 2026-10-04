@@ -403,15 +403,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Loading Cycle Messages (Technical & dryly analytical, zero emojis)
+  // Loading Cycle Messages (Lighthearted & witty cat bakery references, zero emojis)
   const auditPhrases = [
-    "Initializing orthographic projection tensors...",
-    "Scanning ventral surface for undercarriage paw concealment...",
-    "Calculating flank curvature and lateral drag coefficient...",
-    "Performing bilateral dorsal boule symmetry analysis...",
-    "Auditing pectoral limb tuck and ribcage alignment...",
-    "Cross-referencing coat pattern and toast pigmentation index...",
-    "Compiling final composite kinematics report..."
+    "Scanning undercarriage perimeter for illicit peet peek...",
+    "Auditing toe bean tuck integrity and concealed peet status...",
+    "Calculating aerodynamic drag of tail curl along flank...",
+    "Monitoring radar for Loaf Boat hazards (accidental oar deployment)...",
+    "Checking elbow tuck against strict chicken-wing regulations...",
+    "Measuring dough rise, boule volume, and carpet proofing contour...",
+    "Evaluating coat toastiness against artisanal bakery color charts...",
+    "Verifying whether subject has attempted legendary Face Loaf...",
+    "Consulting Chief Loaf Auditor for official honorary ranking..."
   ];
 
   let phraseInterval = null;
