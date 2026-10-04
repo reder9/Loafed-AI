@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Loafed — Feline Posture & Silhouette Certification</title>
   <meta name="description" content="Precision feline loaf grading system. Multi-angle computer vision evaluation of paw concealment, aerodynamic drag, and bilateral symmetry.">
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23d97706' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M3 11c0-4.4 3.6-8 8-8s8 3.6 8 8v7a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3v-7z'/><circle cx='8.5' cy='11.5' r='1.5'/><circle cx='15.5' cy='11.5' r='1.5'/></svg>">
+  <link rel="icon" type="image/png" href="/static/logo.png">
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -41,7 +41,7 @@
     <div class="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
       <div class="flex items-center gap-3">
         <div class="w-10 h-10 rounded-xl bg-orange-50 border border-orange-200/80 flex items-center justify-center text-orange-700 shadow-sm p-1">
-          <img src="/static/logo.svg" alt="Loafed AI Cat Loaf Logo" class="w-8 h-8 object-contain">
+          <img src="/static/logo.png" alt="Loafed AI Cat Loaf Logo" class="w-8 h-8 object-contain">
         </div>
         <div>
           <div class="flex items-center gap-2">
@@ -69,6 +69,16 @@
     
     <!-- Hero Header -->
     <div class="text-center max-w-2xl mx-auto mb-8">
+      <!-- Mascot Badge -->
+      <div class="flex justify-center mb-4">
+        <div class="relative group">
+          <div class="absolute -inset-1.5 bg-gradient-to-r from-orange-400/40 via-amber-300/30 to-orange-500/40 rounded-3xl blur-md opacity-60 group-hover:opacity-80 transition duration-300"></div>
+          <div class="relative w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-gradient-to-b from-orange-50/90 to-white border border-orange-200/80 p-2 shadow-sm flex items-center justify-center animate-float">
+            <img src="/static/logo.png" alt="Loafed AI Cat Loaf Mascot" class="w-full h-full object-contain filter drop-shadow-sm transition-transform hover:scale-105 duration-200">
+          </div>
+        </div>
+      </div>
+
       <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-stone-100 text-stone-700 text-xs font-semibold mb-3 border border-stone-200">
         <i data-lucide="cpu" class="w-3.5 h-3.5 text-orange-700"></i>
         <span>Multimodal AI Vision &bull; Powered by Google Gemini</span>

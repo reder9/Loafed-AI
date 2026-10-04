@@ -756,6 +756,10 @@ Certified by Loafed Inspection Engine`;
     });
   });
 
+  // Preload Mascot Emblem for Certificate
+  const mascotLogoImg = new Image();
+  mascotLogoImg.src = '/static/logo.png';
+
   // Certificate Download Generator (Canvas with clean professional styling, zero emojis)
   downloadCertificateBtn.addEventListener('click', () => {
     playTone('click');
@@ -786,6 +790,16 @@ Certified by Loafed Inspection Engine`;
     ctx.strokeStyle = '#d6cebe';
     ctx.lineWidth = 1;
     ctx.strokeRect(48, 48, w - 96, h - 96);
+
+    // Official Bureau Mascot Emblems in Header
+    if (mascotLogoImg.complete && mascotLogoImg.naturalWidth > 0) {
+      try {
+        ctx.drawImage(mascotLogoImg, 70, 70, 75, 65);
+        ctx.drawImage(mascotLogoImg, w - 145, 70, 75, 65);
+      } catch (e) {
+        // Skip silently if tainted canvas
+      }
+    }
 
     // Header Label
     ctx.fillStyle = '#78716c';
