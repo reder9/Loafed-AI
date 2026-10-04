@@ -1492,9 +1492,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    // Chime pleasant oven timer ding bell when baking completes
-    playOvenTimerDing();
-
     // Smooth scroll to the score summary card (or disqualification banner) first,
     // ensure the user has physically arrived and settled, then roll score & slam stamp!
     const scoreHeroCard = document.getElementById('scoreHeroCard');
@@ -1586,101 +1583,6 @@ document.addEventListener('DOMContentLoaded', () => {
     refreshIcons();
   }
 
-  // Synthesized Bakery Sound Engine (Web Audio API - Zero External Dependencies)
-  let audioCtx = null;
-  function getAudioContext() {
-    if (!audioCtx) {
-      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-      if (AudioContextClass) audioCtx = new AudioContextClass();
-    }
-    if (audioCtx && audioCtx.state === 'suspended') {
-      audioCtx.resume();
-    }
-    return audioCtx;
-  }
-
-  function isSoundMuted() {
-    try {
-      return localStorage.getItem('loafed_sound_muted') === 'true';
-    } catch (_) {
-      return false;
-    }
-  }
-
-  function playOvenTimerDing() {
-    if (isSoundMuted()) return;
-    try {
-      const ctx = getAudioContext();
-      if (!ctx) return;
-      const now = ctx.currentTime;
-      [1200, 1800].forEach((freq, idx) => {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(freq, now);
-        gain.gain.setValueAtTime(idx === 0 ? 0.22 : 0.12, now);
-        gain.gain.exponentialRampToValueAtTime(0.0001, now + 1.2);
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start(now);
-        osc.stop(now + 1.2);
-      });
-    } catch (_) {}
-  }
-
-  function playStampThud() {
-    if (isSoundMuted()) return;
-    try {
-      const ctx = getAudioContext();
-      if (!ctx) return;
-      const now = ctx.currentTime;
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'triangle';
-      osc.frequency.setValueAtTime(140, now);
-      osc.frequency.exponentialRampToValueAtTime(45, now + 0.18);
-      gain.gain.setValueAtTime(0.3, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start(now);
-      osc.stop(now + 0.18);
-    } catch (_) {}
-  }
-
-  function initSoundToggle() {
-    const soundToggleBtn = document.getElementById('soundToggleBtn');
-    const soundIcon = document.getElementById('soundIcon');
-    const soundText = document.getElementById('soundText');
-    if (!soundToggleBtn) return;
-
-    function updateSoundUI() {
-      const muted = isSoundMuted();
-      if (soundIcon) {
-        soundIcon.setAttribute('data-lucide', muted ? 'volume-x' : 'volume-2');
-      }
-      if (soundText) {
-        soundText.textContent = muted ? 'Muted' : 'Sound';
-      }
-      soundToggleBtn.title = muted ? 'Unmute bakery sound effects' : 'Mute bakery sound effects';
-      soundToggleBtn.setAttribute('aria-label', soundToggleBtn.title);
-      refreshIcons();
-    }
-
-    soundToggleBtn.addEventListener('click', () => {
-      const currentlyMuted = isSoundMuted();
-      try {
-        localStorage.setItem('loafed_sound_muted', currentlyMuted ? 'false' : 'true');
-      } catch (_) {}
-      updateSoundUI();
-      if (currentlyMuted) {
-        playOvenTimerDing();
-      }
-    });
-
-    updateSoundUI();
-  }
-
   function triggerStampSlam(result) {
     const gradeStamp = document.getElementById('gradeStamp');
     if (!gradeStamp) return;
@@ -1707,7 +1609,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Force reflow and re-add stamp-slam animation
     void gradeStamp.offsetWidth;
     gradeStamp.classList.add('stamp-slam');
-    playStampThud();
 
     // Subtle tactile haptic vibration feedback on supported mobile devices
     try {
@@ -2208,10 +2109,10 @@ Certified by Loafed Inspection Engine`;
     ctx.letterSpacing = '3.5px';
     ctx.fillText('INTERNATIONAL BUREAU OF FELINE POSTURE & KINEMATICS', w / 2, 80);
 
-    // Main Diploma Title
+    // Main Certificate Title
     ctx.fillStyle = '#1c1917';
     ctx.font = 'bold 34px Georgia, serif';
-    ctx.fillText('Official Diploma of Loaf Accreditation', w / 2, 122);
+    ctx.fillText('Official Certificate of Loaf Posture', w / 2, 122);
 
     // Subtitle
     ctx.fillStyle = '#78716c';
@@ -2398,40 +2299,37 @@ Certified by Loafed Inspection Engine`;
     // Callout Label
     ctx.fillStyle = '#c2410c';
     ctx.font = 'bold 11px -apple-system, BlinkMacSystemFont, sans-serif';
-    ctx.fillText('CHIEF AUDITOR FINDINGS & PURR-FECTION SUMMARY', 434, 550);
+    ctx.fillText('CHIEF AUDITOR FIELD NOTES', 434, 550);
 
     // Multi-line Adaptive Word-Wrapped Critique
     ctx.fillStyle = '#292524';
     const cleanCritique = (result.summary_critique || '').replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, '').trim();
     drawFittedCritique(ctx, `"${cleanCritique}"`, 434, 574, 680, 110);
 
-    // 6. Footer: Authentication Seal, Cursive Signature & Security Hash (y: 710 to 765)
-    // Left: Serial & Date
-    ctx.fillStyle = '#78716c';
-    ctx.font = 'bold 10px -apple-system, sans-serif';
+    // 6. Footer: Inspector Signature, Seal & Official Certification Serial
+    // Left: Serial & Date Stamp
     ctx.textAlign = 'left';
-    const dateStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    ctx.fillStyle = '#78716c';
+    ctx.font = 'bold 11px -apple-system, sans-serif';
+    const dateStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
     const hashStr = Math.abs((result.overall_score * 31) ^ (result.cat_name ? result.cat_name.length * 17 : 42)).toString(16).toUpperCase().padStart(4, '0');
-    ctx.fillText(`VERIFICATION ID: LF-2026-${result.grade_letter || 'A'}${hashStr}   •   CERTIFIED: ${dateStr}`, 68, 742);
+    ctx.fillText(`VERIFICATION ID: LF-2026-${result.grade_letter || 'A'}${hashStr}`, 68, 738);
     ctx.fillStyle = '#a8a29e';
     ctx.font = '10px -apple-system, sans-serif';
-    ctx.fillText('POWERED BY LOAFED MACHINE VISION KINEMATICS ENGINE', 68, 758);
+    ctx.fillText(`Certified on ${dateStr}`, 68, 755);
 
-    // Center: Attestation & Signature
+    // Center: Cursive Signature & Title
     ctx.textAlign = 'center';
-    ctx.fillStyle = '#78716c';
-    ctx.font = 'bold 9.5px -apple-system, sans-serif';
-    ctx.fillText('ATTESTED & CERTIFIED BY:', 640, 726);
-
     ctx.fillStyle = '#1c1917';
-    ctx.font = 'italic bold 17px Georgia, serif';
-    ctx.fillText('Dr. Oliver Pawsbury, Chief Crust Inspector', 640, 746);
+    ctx.font = 'italic bold 19px Georgia, serif';
+    ctx.fillText('Dr. Oliver Pawsbury', 640, 738);
+    ctx.fillStyle = '#78716c';
+    ctx.font = 'bold 10px -apple-system, BlinkMacSystemFont, sans-serif';
+    ctx.letterSpacing = '1px';
+    ctx.fillText('CHIEF CRUST INSPECTOR', 640, 755);
+    ctx.letterSpacing = '0px';
 
-    ctx.fillStyle = '#a8a29e';
-    ctx.font = '9px -apple-system, sans-serif';
-    ctx.fillText('Director of Feline Kinematics • Official Bureau of Standards', 640, 759);
-
-    // Right: Gold Embossed Seal
+    // Right: Official Gold Embossed Seal
     drawGoldEmbossedSeal(ctx, 1070, 736, 38);
 
     function drawFittedCritique(context, text, startX, startY, maxWidth, maxHeight) {
@@ -2492,7 +2390,7 @@ Certified by Loafed Inspection Engine`;
       const a = document.createElement('a');
       a.href = dataUrl;
       const safeName = (result.cat_name || 'subject').toLowerCase().replace(/[^a-z0-9]/g, '_');
-      a.download = `loaf_diploma_${safeName}.png`;
+      a.download = `loaf_certificate_${safeName}.png`;
       a.click();
     }
     return dataUrl;
@@ -2567,7 +2465,7 @@ Certified by Loafed Inspection Engine`;
 
     ctx.fillStyle = '#1c1917';
     ctx.font = '900 46px Georgia, serif';
-    ctx.fillText('OFFICIAL LOAF REPORT', w / 2, 255);
+    ctx.fillText('OFFICIAL LOAF CERTIFICATION', w / 2, 255);
 
     ctx.strokeStyle = '#c27803';
     ctx.lineWidth = 2;
@@ -2751,7 +2649,7 @@ Certified by Loafed Inspection Engine`;
     const dataUrl = await generateCertificate(result, false);
     if (certModalImage) certModalImage.src = dataUrl;
     if (certModalTitle) {
-      certModalTitle.textContent = `${result.cat_name || 'Feline'} — Official Loaf Diploma`;
+      certModalTitle.textContent = `${result.cat_name || 'Feline'} — Official Loaf Certificate`;
     }
     if (certificateModal) {
       certificateModal.classList.remove('hidden');
@@ -2779,8 +2677,8 @@ Certified by Loafed Inspection Engine`;
         await generateCertificate(activeModalCertResult, true);
         showToast({
           type: 'success',
-          title: 'Diploma Downloaded',
-          message: `Exported 1200x800 HD diploma for ${activeModalCertResult.cat_name}.`
+          title: 'Certificate Downloaded',
+          message: `Exported 1200x800 HD certificate for ${activeModalCertResult.cat_name}.`
         });
       }
     });
@@ -2807,7 +2705,7 @@ Certified by Loafed Inspection Engine`;
     });
   }
 
-  // Diploma Preview Buttons across benchmark cards
+  // Certificate Preview Buttons across benchmark cards
   document.querySelectorAll('.preview-cert-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
       const cat = e.currentTarget.getAttribute('data-cat');
@@ -4606,6 +4504,6 @@ Certified by Loafed Inspection Engine`;
   }
 
   updateHistoryBadge();
-  initSoundToggle();
+  try { localStorage.removeItem('loafed_sound_muted'); } catch (_) {}
   refreshIcons();
 });
