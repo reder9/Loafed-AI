@@ -1,8 +1,10 @@
 import boto3
 import urllib.request
 import time
+from package_deploy import package
 
 def deploy():
+    package()
     session = boto3.Session(profile_name='antigravity')
     amp = session.client('amplify', region_name='us-east-1')
     app_id = 'd14utztk41y058'
