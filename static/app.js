@@ -27,6 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Example preview & state preservation
     isExamplePreset: false,
     activePresetKey: null,
+    canSubmit: true,
     userSavedPhotos: [],
     userSavedCatName: '',
     pendingLeaderboardIntent: false
@@ -365,8 +366,43 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  const SAMPLE_FILENAMES = [
+    'buttercup_front', 'buttercup_side', 'buttercup_top',
+    'chonks_front', 'chonks_side', 'chonks_semi_front',
+    'flash_front', 'flash_side'
+  ];
+
+  const SAMPLE_HASH_HEXES = new Set([
+    '29da98c29f5869499aafc34c8e88189bdc9bb8beda548c226e5cd9ca0c9e3e85',
+    '4568a6c10e9b60596f8b73a33296764d1588140e08b0fd5974edbb3e67e0c5ca',
+    'd2480d9bb3eff46f4084e9264e30535d73d8ca58303a3fdc29d5ecda127e1bca',
+    '03e31ad8318cb8ace8e462bd8010e489ed236ed6f2af921bcb04103e610e1fa3',
+    'eaadea8fff7b013b611c699936281e1d126bc27d2bfe7bf8198a65896d8590ec',
+    '9a102c7c2c9ec2c848047e2d2a971fb46aa511649f070b3583daa6c2633ba3a7',
+    'df4bf53b6e0d69e3c8c064ed7a5acff5f5214596570a8a3283ac2cadf73b4f55',
+    'c059f4f9d9f6eb424c292135c938114335846500fae6a14b029c62ac8633fd47',
+    '933a9f36ef7b3821a74783a8c76e2d28f0a83c9b80d576bb639f2b1deee97cfb',
+    '20301653b8089a0c1b49baef72bad3d612634f5d7a710d8b09683d1f50d06b50',
+    '58e4732d0c104587f82c4751bace5a8cc8d1f737878e3934b68a266a0612c70b',
+    'dc2e47056d559c6f56053d7387145b2cc96dace39acec3bb375fb88325f1f0eb',
+    '0591e1137fd2a61b5abbc107e5d922a3d9a19227c8daf32ae8179f9c17225454',
+    'a7ea6c8bf8aa75ca0f0c9b4f234e084d4c8cda5284b524d049c6c7cbec0e4602',
+    '5636eab1ddf6655bead01cdf2d1103935e01b6d5aabdbfb2a92579803b02ce32'
+  ]);
+
+  async function calculateFileSha256(file) {
+    if (!window.crypto || !window.crypto.subtle) return null;
+    try {
+      const buffer = await file.arrayBuffer();
+      const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
+      return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+    } catch {
+      return null;
+    }
+  }
+
   // Multi-Photo Staging Manager (1 to 5 Photos)
-  async function addFiles(files) {
+  async function addFiles(files, isBenchmarkInternal = false) {
     if (!files || files.length === 0) return;
     const imageFiles = Array.from(files).filter(f => f.type.startsWith('image/'));
     if (imageFiles.length === 0) {
@@ -376,6 +412,57 @@ document.addEventListener('DOMContentLoaded', () => {
         message: 'Please select valid image files (JPG, PNG, WEBP).'
       });
       return;
+    }
+
+    // If user is uploading real photos while a benchmark preset was displayed, clear the preset
+    if (!isBenchmarkInternal && state.isExamplePreset) {
+      state.photos.forEach(p => URL.revokeObjectURL(p.previewUrl));
+      state.photos = [];
+      state.isExamplePreset = false;
+      state.activePresetKey = null;
+      state.gradeToken = null;
+      state.canSubmit = true;
+      resetBenchmarkButtons();
+      if (catNameInput) catNameInput.value = '';
+    }
+
+    let filesToInspect = imageFiles;
+
+    // Detect and reject any benchmark reference images attempted by the user
+    if (!isBenchmarkInternal) {
+      const passedFiles = [];
+      let hadSampleViolation = false;
+
+      for (const f of imageFiles) {
+        const lowerName = (f.name || '').toLowerCase();
+        const matchesName = SAMPLE_FILENAMES.some(s => lowerName.includes(s));
+        let matchesHash = false;
+        if (!matchesName) {
+          const fileHash = await calculateFileSha256(f);
+          if (fileHash && SAMPLE_HASH_HEXES.has(fileHash)) {
+            matchesHash = true;
+          }
+        }
+        if (matchesName || matchesHash) {
+          hadSampleViolation = true;
+        } else {
+          passedFiles.push(f);
+        }
+      }
+
+      if (hadSampleViolation) {
+        showToast({
+          type: 'warning',
+          title: 'Benchmark Cat Detected',
+          message: 'Example reference cats (Buttercup, Chonks, Flash) cannot be uploaded. Please upload original photos of your own cat!'
+        });
+        if (passedFiles.length === 0) {
+          updateSubmitButton();
+          return;
+        }
+      }
+      filesToInspect = passedFiles;
+      state.canSubmit = true;
     }
 
     const currentCount = state.photos.length;
@@ -389,7 +476,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    let toProcess = imageFiles;
+    let toProcess = filesToInspect;
     if (toProcess.length > available) {
       toProcess = toProcess.slice(0, available);
       showToast({
@@ -481,6 +568,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (idx !== -1) {
       URL.revokeObjectURL(state.photos[idx].previewUrl);
       state.photos.splice(idx, 1);
+      if (state.photos.length === 0) {
+        state.isExamplePreset = false;
+        state.activePresetKey = null;
+        state.canSubmit = true;
+      }
       selectBestThumbnail();
       syncLegacySlots();
       renderStagedPhotos();
@@ -492,6 +584,9 @@ document.addEventListener('DOMContentLoaded', () => {
     state.photos.forEach(p => URL.revokeObjectURL(p.previewUrl));
     state.photos = [];
     state.primaryPhotoIndex = 0;
+    state.isExamplePreset = false;
+    state.activePresetKey = null;
+    state.canSubmit = true;
     syncLegacySlots();
     if (photosInput) photosInput.value = '';
     renderStagedPhotos();
@@ -642,6 +737,16 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function updateSubmitButton() {
+    if (state.isExamplePreset || state.canSubmit === false) {
+      gradeLoafBtn.disabled = true;
+      gradeLoafBtn.className = 'w-full sm:w-auto px-8 py-3.5 rounded-xl font-bold text-sm text-stone-400 bg-stone-200 cursor-not-allowed shadow-none transition-all flex items-center justify-center gap-2 btn-tactile';
+      gradeLoafBtn.title = 'Example reference cats cannot be submitted or evaluated. Please upload photos of your own cat!';
+      photoCountBadge.textContent = 'Reference Benchmark Loaded (Upload your cat to inspect)';
+      photoCountBadge.className = 'font-semibold text-stone-600 bg-stone-100 px-2.5 py-0.5 rounded border border-stone-200';
+      return;
+    }
+
+    gradeLoafBtn.title = 'Grade and certify cat loaf';
     const count = state.photos.length;
     if (count === 0) {
       gradeLoafBtn.disabled = true;
@@ -1069,20 +1174,22 @@ document.addEventListener('DOMContentLoaded', () => {
         preset.images.map(img => loadPresetImage(img.url, img.filename))
       );
 
-      await addFiles(files);
+      await addFiles(files, true);
       state.isExamplePreset = true;
       state.activePresetKey = catKey;
+      state.canSubmit = false;
       state.currentResult = preset.result;
       state.gradeToken = null;
       state.submittedPhotoBlob = null;
 
+      updateSubmitButton();
       setActiveBenchmarkButton(catKey);
       renderResults(preset.result, false);
 
       showToast({
-        type: 'success',
-        title: `${preset.name} Staged & Inspected`,
-        message: `Simulated inspection loaded: ${preset.result.overall_score} ${preset.result.grade_letter} (${preset.result.loaf_rank}).`
+        type: 'info',
+        title: `${preset.name} (Benchmark Reference)`,
+        message: `Reference scorecard loaded: ${preset.result.overall_score} ${preset.result.grade_letter} (${preset.result.loaf_rank}). Benchmark cats cannot be graded or submitted.`
       });
     } catch (e) {
       console.error('Failed to load benchmark preset', e);
@@ -1350,6 +1457,14 @@ document.addEventListener('DOMContentLoaded', () => {
   // Submit & Grade
   gradeLoafBtn.addEventListener('click', async () => {
     if (isGradingActive) return;
+    if (state.isExamplePreset || state.canSubmit === false) {
+      showToast({
+        type: 'warning',
+        title: 'Benchmark Loaf Active',
+        message: 'Benchmark example cats cannot be evaluated or submitted. Please upload photos of your own cat!'
+      });
+      return;
+    }
     if (state.photos.length === 0) {
       showToast({
         type: 'warning',
@@ -1362,6 +1477,7 @@ document.addEventListener('DOMContentLoaded', () => {
     isGradingActive = true;
     state.isExamplePreset = false;
     state.activePresetKey = null;
+    state.canSubmit = true;
     state.userSavedPhotos = [];
     state.userSavedCatName = '';
     resetBenchmarkButtons();
@@ -1425,6 +1541,7 @@ document.addEventListener('DOMContentLoaded', () => {
       stopLoadingAnimation(() => {
         state.currentResult = data.result;
         state.gradeToken = data.grade_token || null;
+        state.canSubmit = (data.can_submit !== false) && !data.demo_mode;
         if (data.best_thumbnail_index !== undefined && data.best_thumbnail_index !== null) {
           if (data.best_thumbnail_index >= 0 && data.best_thumbnail_index < state.photos.length) {
             if (state.photos[data.best_thumbnail_index].angleType !== 'top') {
@@ -1501,7 +1618,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (oarBadge) oarBadge.classList.add('hidden');
 
     // Configure Example Preset vs User Inspection UX
-    if (state.isExamplePreset) {
+    if (state.isExamplePreset || state.canSubmit === false || isDemoMode) {
       if (exampleLoafBanner) {
         exampleLoafBanner.classList.remove('hidden');
         if (exampleCatBadge) {
@@ -1576,7 +1693,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (downloadCertificateBtn) downloadCertificateBtn.classList.remove('hidden');
       if (downloadStoryCardBtn) downloadStoryCardBtn.classList.remove('hidden');
       if (submitLeaderboardBtn) {
-        if (!isDemoMode && !state.isExamplePreset) {
+        if (!isDemoMode && !state.isExamplePreset && state.canSubmit !== false) {
           submitLeaderboardBtn.classList.remove('hidden');
         } else {
           submitLeaderboardBtn.classList.add('hidden');
@@ -3913,6 +4030,14 @@ Certified by Loafed Inspection Engine`;
 
   function openSubmitModal() {
     if (!state.currentResult || !submitModal) return;
+    if (state.isExamplePreset || state.canSubmit === false) {
+      showToast({
+        type: 'warning',
+        title: 'Benchmark Reference',
+        message: 'Benchmark example cats cannot be submitted to the leaderboard. You can only submit a cat you uploaded yourself!'
+      });
+      return;
+    }
 
     if (state.submittedEntryId) {
       const shareUrl = `${window.location.origin}/leaderboard?loaf=${encodeURIComponent(state.submittedEntryId)}`;
@@ -4010,6 +4135,14 @@ Certified by Loafed Inspection Engine`;
         return;
       }
 
+      if (state.isExamplePreset || state.canSubmit === false) {
+        showSubmitNotice('Benchmark example cats cannot be submitted to the leaderboard. You can only submit a cat you uploaded yourself.');
+        confirmSubmitLeaderboardBtn.disabled = false;
+        confirmSubmitLeaderboardBtn.innerHTML = '<i data-lucide="check" class="w-4 h-4"></i><span>Confirm & Publish</span>';
+        refreshIcons();
+        return;
+      }
+
       const validation = getSubmitFormValidation();
       if (!validation.valid) {
         showSubmitNotice(validation.error);
@@ -4030,25 +4163,12 @@ Certified by Loafed Inspection Engine`;
         }
 
         if (!photoFile) {
-          const sampleImgSrc = submitModalThumbnail.src || '/samples/buttercup_front.jpg';
-          const imgResp = await fetch(sampleImgSrc);
-          const blob = await imgResp.blob();
-          photoFile = new File([blob], 'loaf.jpg', { type: blob.type || 'image/jpeg' });
+          throw new Error('An authentic user-uploaded cat photo is required for leaderboard submission.');
         }
 
         let gradeToken = state.gradeToken;
         if (!gradeToken) {
-          const formData = new FormData();
-          formData.append('cat_name', validation.catName);
-          formData.append('images', photoFile);
-          const gRes = await fetch('/api/grade', { method: 'POST', body: formData });
-          if (gRes.ok) {
-            const gData = await gRes.json();
-            gradeToken = gData.grade_token;
-            state.gradeToken = gradeToken;
-          } else {
-            throw new Error('Could not verify grade signature token.');
-          }
+          throw new Error('A verified inspection grade token is required. Please evaluate your cat first.');
         }
 
         const submitForm = new FormData();
@@ -4534,6 +4654,14 @@ Certified by Loafed Inspection Engine`;
     submitLeaderboardBtn.addEventListener('click', () => {
       if (!state.currentResult) {
         showToast({ type: 'warning', title: 'No Loaf Graded', message: 'Please grade a cat loaf before submitting to the leaderboard.' });
+        return;
+      }
+      if (state.isExamplePreset || state.canSubmit === false) {
+        showToast({
+          type: 'warning',
+          title: 'Benchmark Reference',
+          message: 'Benchmark example cats cannot be submitted to the leaderboard. You can only submit a cat you uploaded yourself!'
+        });
         return;
       }
       if (state.currentResult.is_cat === false) {

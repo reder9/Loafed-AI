@@ -134,6 +134,25 @@ ALLOWED_IMAGE_FORMATS = {"JPEG": "image/jpeg", "PNG": "image/png", "WEBP": "imag
 MAX_CAT_NAME_LENGTH = 40
 Image.MAX_IMAGE_PIXELS = 100_000_000     # decompression-bomb guard (Pillow errors above 2x this)
 
+# Cryptographic hashes of official benchmark reference cats (Buttercup, Chonks, Flash)
+SAMPLE_IMAGE_HASHES = {
+    '29da98c29f5869499aafc34c8e88189bdc9bb8beda548c226e5cd9ca0c9e3e85', # buttercup_front.jpg
+    '4568a6c10e9b60596f8b73a33296764d1588140e08b0fd5974edbb3e67e0c5ca', # buttercup_front.webp
+    'd2480d9bb3eff46f4084e9264e30535d73d8ca58303a3fdc29d5ecda127e1bca', # buttercup_side.jpg
+    '03e31ad8318cb8ace8e462bd8010e489ed236ed6f2af921bcb04103e610e1fa3', # buttercup_side.webp
+    'eaadea8fff7b013b611c699936281e1d126bc27d2bfe7bf8198a65896d8590ec', # buttercup_top.jpg
+    '9a102c7c2c9ec2c848047e2d2a971fb46aa511649f070b3583daa6c2633ba3a7', # buttercup_top.webp
+    'df4bf53b6e0d69e3c8c064ed7a5acff5f5214596570a8a3283ac2cadf73b4f55', # chonks_front.jpg
+    'c059f4f9d9f6eb424c292135c938114335846500fae6a14b029c62ac8633fd47', # chonks_front.webp
+    '933a9f36ef7b3821a74783a8c76e2d28f0a83c9b80d576bb639f2b1deee97cfb', # chonks_side.jpg
+    '20301653b8089a0c1b49baef72bad3d612634f5d7a710d8b09683d1f50d06b50', # chonks_side.webp
+    '58e4732d0c104587f82c4751bace5a8cc8d1f737878e3934b68a266a0612c70b', # flash_front.jpg
+    'dc2e47056d559c6f56053d7387145b2cc96dace39acec3bb375fb88325f1f0eb', # flash_front.webp
+    '0591e1137fd2a61b5abbc107e5d922a3d9a19227c8daf32ae8179f9c17225454', # flash_side.jpg
+    'a7ea6c8bf8aa75ca0f0c9b4f234e084d4c8cda5284b524d049c6c7cbec0e4602', # flash_side.webp
+    '5636eab1ddf6655bead01cdf2d1103935e01b6d5aabdbfb2a92579803b02ce32', # chonks_semi_front.jpg
+}
+
 
 # Comprehensive Profanity and Offensive Language Filter Patterns
 LEET_MAP = str.maketrans({
@@ -499,7 +518,8 @@ def generate_grade_token(
     result_data: dict,
     image_hash: Optional[str] = None,
     image_hashes: Optional[List[str]] = None,
-    best_thumbnail_index: Optional[int] = 0
+    best_thumbnail_index: Optional[int] = 0,
+    can_submit: bool = True
 ) -> str:
     hashes_list = image_hashes or ([image_hash] if image_hash else [])
     payload = {
@@ -523,6 +543,7 @@ def generate_grade_token(
         "image_sha256": image_hash,
         "image_hashes": hashes_list,
         "best_thumbnail_index": int(best_thumbnail_index if best_thumbnail_index is not None else 0),
+        "can_submit": bool(can_submit),
         "ts": int(time.time()),
         "salt": uuid.uuid4().hex[:12]
     }
@@ -1160,26 +1181,34 @@ async def grade_loaf(
     if not submitted_images:
         raise HTTPException(status_code=400, detail="Please upload between 1 and 5 cat photos.")
 
+    # Guard against uploading or grading benchmark reference cats
+    submitted_hashes = [hashlib.sha256(img[1]).hexdigest() for img in submitted_images]
+    if any(h in SAMPLE_IMAGE_HASHES for h in submitted_hashes):
+        raise HTTPException(
+            status_code=400,
+            detail="Benchmark example cats (Buttercup, Chonks, Flash) cannot be uploaded or submitted for evaluation. You can only evaluate cats you photographed yourself!"
+        )
+
     # If no API key is provided, check if this matches our sample preset or provide demo analysis
     if not keys_to_try:
         logger.info("No Gemini API key supplied. Checking for demo fallback.")
-        # If user tested Buttercup sample, return cached analysis with their cat name if provided
+        # Demo analysis fallback
         result = dict(PRESET_BUTTERCUP)
         if cat_name:
             result["cat_name"] = cat_name
-        demo_hashes = [hashlib.sha256(img[1]).hexdigest() for img in submitted_images]
-        demo_image_hash = demo_hashes[0] if demo_hashes else None
+        demo_image_hash = submitted_hashes[0] if submitted_hashes else None
         grade_token = generate_grade_token(
             result,
             image_hash=demo_image_hash,
-            image_hashes=demo_hashes,
-            best_thumbnail_index=0
+            image_hashes=submitted_hashes,
+            best_thumbnail_index=0,
+            can_submit=False
         )
         return JSONResponse(content={
             "result": result,
             "grade_token": grade_token,
             "best_thumbnail_index": 0,
-            "can_submit": True,
+            "can_submit": False,
             "demo_mode": True,
             "message": "Graded using Demo Calibration Mode. Sample loaf benchmarks are pre-inspected to demonstrate our aerodynamic loaf scoring engine."
         })
@@ -2023,6 +2052,11 @@ async def submit_to_leaderboard(
 
     # Validate HMAC score token
     score_data = verify_grade_token(grade_token)
+    if score_data.get("can_submit") is False:
+        raise HTTPException(
+            status_code=400,
+            detail="Benchmark and example cats cannot be submitted to the leaderboard. You can only submit a cat you photographed and uploaded yourself!"
+        )
 
     # Validate and sanitize required Cat's Name and Baker Display Name
     raw_cat_name = (cat_name or "").strip() or score_data.get("cat_name")
@@ -2070,6 +2104,11 @@ async def submit_to_leaderboard(
         allowed_hashes.update(score_data["image_hashes"])
 
     uploaded_hashes = [hashlib.sha256(c).hexdigest() for c, _ in validated_images]
+    if any(h in SAMPLE_IMAGE_HASHES for h in uploaded_hashes):
+        raise HTTPException(
+            status_code=400,
+            detail="Benchmark and example cats cannot be submitted to the leaderboard. You can only submit a cat you photographed and uploaded yourself!"
+        )
     if allowed_hashes and not any(h in allowed_hashes for h in uploaded_hashes):
         logger.warning(
             f"Image hash mismatch on leaderboard submission! Allowed: {allowed_hashes}, Uploaded: {uploaded_hashes}"
