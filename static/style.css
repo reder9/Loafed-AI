@@ -157,6 +157,10 @@ body {
 }
 
 /* RederSoft Cartoony Physical Cat Stamp Applicator System */
+#stampStationWrapper > :not(#gradeStamp) {
+  display: none !important;
+}
+
 .stamp-station-wrapper {
   position: relative;
   display: inline-flex;
@@ -1288,6 +1292,30 @@ body.user-logged-in #rollSubmitBakerTagBtn {
   background: linear-gradient(135deg, #ea580c 0%, #d97706 50%, #c2410c 100%) !important;
   box-shadow: 0 6px 20px rgba(180, 83, 9, 0.45) !important;
   transform: translateY(-1px);
+}
+
+.loaf-cert-download-btn {
+  background: linear-gradient(135deg, #d97706 0%, #ea580c 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid #c2410c !important;
+  box-shadow: 0 4px 14px rgba(194, 65, 12, 0.3) !important;
+}
+
+.loaf-cert-download-btn:hover {
+  background: linear-gradient(135deg, #b45309 0%, #c2410c 100%) !important;
+  box-shadow: 0 6px 18px rgba(194, 65, 12, 0.4) !important;
+}
+
+#badgesContainer {
+  width: 100%;
+  justify-content: center;
+  align-content: center;
+  gap: 0.75rem;
+}
+
+#badgesContainer > * {
+  max-width: 100%;
+  text-align: center;
 }
 
 .btn-download-story {

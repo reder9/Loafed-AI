@@ -411,6 +411,7 @@ document.addEventListener('DOMContentLoaded', () => {
     ctx.textAlign = 'center';
     ctx.letterSpacing = '3.5px';
     ctx.fillText('INTERNATIONAL BUREAU OF FELINE POSTURE & KINEMATICS', w / 2, 80);
+    ctx.letterSpacing = '0px';
 
     // Main Certificate Title
     ctx.fillStyle = '#1c1917';
