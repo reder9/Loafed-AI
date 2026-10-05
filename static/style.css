@@ -1231,6 +1231,35 @@ button.hidden,
     margin-right: 0.25rem;
   }
 }
+
+/* ==========================================================================
+   Benchmark Showcase Gallery - Responsive Card Buttons
+   ========================================================================== */
+.benchmark-card {
+  min-width: 0 !important;
+  overflow: hidden !important;
+}
+
+.preview-cert-btn {
+  min-width: 0 !important;
+}
+
+.preview-cert-btn .cert-btn-full {
+  display: inline;
+}
+
+.preview-cert-btn .cert-btn-short {
+  display: none;
+}
+
+@media (min-width: 640px) {
+  .preview-cert-btn .cert-btn-full {
+    display: none;
+  }
+  .preview-cert-btn .cert-btn-short {
+    display: inline;
+  }
+}
 .auth-tab-btn.active {
   background-color: #ffffff !important;
   color: #1c1917 !important;

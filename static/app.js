@@ -1319,7 +1319,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <i data-lucide="sparkles" class="w-3.5 h-3.5 text-orange-700 shrink-0"></i>
         <span>Inspect</span>
       `;
-      btn.className = 'load-benchmark-btn flex-1 min-h-[44px] py-2 px-3 rounded-xl bg-orange-50 hover:bg-orange-100 text-orange-950 text-xs font-bold border border-orange-200 transition-all flex items-center justify-center gap-1.5 shadow-2xs active:scale-95 whitespace-nowrap btn-tactile';
+      btn.className = 'load-benchmark-btn flex-1 min-h-[40px] py-1.5 px-2.5 rounded-xl bg-orange-50 hover:bg-orange-100 text-orange-950 text-xs font-bold border border-orange-200 transition-all flex items-center justify-center gap-1.5 shadow-2xs active:scale-95 whitespace-nowrap btn-tactile';
     });
     refreshIcons();
   }
@@ -1334,7 +1334,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <i data-lucide="chevron-up" class="w-3.5 h-3.5 text-white shrink-0"></i>
           <span>Collapse</span>
         `;
-        btn.className = 'load-benchmark-btn flex-1 min-h-[44px] py-2 px-3 rounded-xl bg-gradient-to-r from-orange-600 via-amber-600 to-orange-700 hover:from-orange-700 hover:to-amber-700 text-white text-xs font-black border border-transparent transition-all flex items-center justify-center gap-1.5 shadow-sm active:scale-95 whitespace-nowrap shimmer-btn btn-tactile';
+        btn.className = 'load-benchmark-btn flex-1 min-h-[40px] py-1.5 px-2.5 rounded-xl bg-gradient-to-r from-orange-600 via-amber-600 to-orange-700 hover:from-orange-700 hover:to-amber-700 text-white text-xs font-black border border-transparent transition-all flex items-center justify-center gap-1.5 shadow-sm active:scale-95 whitespace-nowrap shimmer-btn btn-tactile';
 
         if (card) {
           card.classList.remove('border-orange-200/90', 'bg-white/95');
@@ -1347,7 +1347,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <i data-lucide="sparkles" class="w-3.5 h-3.5 text-orange-700 shrink-0"></i>
           <span>Inspect</span>
         `;
-        btn.className = 'load-benchmark-btn flex-1 min-h-[44px] py-2 px-3 rounded-xl bg-orange-50 hover:bg-orange-100 text-orange-950 text-xs font-bold border border-orange-200 transition-all flex items-center justify-center gap-1.5 shadow-2xs active:scale-95 whitespace-nowrap btn-tactile';
+        btn.className = 'load-benchmark-btn flex-1 min-h-[40px] py-1.5 px-2.5 rounded-xl bg-orange-50 hover:bg-orange-100 text-orange-950 text-xs font-bold border border-orange-200 transition-all flex items-center justify-center gap-1.5 shadow-2xs active:scale-95 whitespace-nowrap btn-tactile';
 
         if (card) {
           card.classList.remove('ring-2', 'ring-orange-500', 'border-orange-500', 'bg-orange-50/30', 'shadow-md');
