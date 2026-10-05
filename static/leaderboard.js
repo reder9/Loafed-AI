@@ -1979,7 +1979,7 @@ document.addEventListener('DOMContentLoaded', () => {
           const confirmed = await showConfirmModal({
             title: 'Delete Loaf Submission?',
             subtitle: 'Leaderboard Removal',
-            message: `Are you sure you want to permanently delete "${name}" from the leaderboard?`,
+            message: `Delete "${name}" permanently? Its scorecard and stored photo will be deleted, and the loaf will disappear from the public leaderboard.`,
             confirmText: 'Delete Submission',
             confirmIcon: 'trash-2',
             isDanger: true

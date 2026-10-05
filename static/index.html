@@ -668,8 +668,101 @@
             <!-- Cat Details & Telemetry -->
             <div class="scorecard-details-wrap text-center sm:text-left">
               <div class="flex items-center gap-2.5 mb-2 justify-center sm:justify-start flex-wrap">
-                <img id="catCertificationStamp" src="/static/cat-stamp.svg" alt="" aria-hidden="true" class="cat-certification-stamp" />
-                <span id="gradeStamp" class="stamp text-orange-800 border-orange-800 text-lg opacity-0">A+</span>
+                <!-- Cartoony Cat Stamp Applicator Station -->
+                <div class="stamp-station-wrapper relative inline-flex items-center gap-2.5" id="stampStationWrapper">
+                  <!-- Cartoony Cat Stamper Tool (Descends, presses down, and lifts away) -->
+                  <div id="catStamperTool" class="cat-stamper-tool pointer-events-none" aria-hidden="true">
+                    <svg viewBox="0 0 100 125" class="w-full h-full drop-shadow-md overflow-visible">
+                      <defs>
+                        <linearGradient id="stamperWoodGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" stop-color="#fbbf24" />
+                          <stop offset="35%" stop-color="#f59e0b" />
+                          <stop offset="70%" stop-color="#d97706" />
+                          <stop offset="100%" stop-color="#92400e" />
+                        </linearGradient>
+                        <linearGradient id="stamperStemGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                          <stop offset="0%" stop-color="#b45309" />
+                          <stop offset="30%" stop-color="#f59e0b" />
+                          <stop offset="70%" stop-color="#d97706" />
+                          <stop offset="100%" stop-color="#78350f" />
+                        </linearGradient>
+                        <linearGradient id="stamperBrassGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                          <stop offset="0%" stop-color="#ca8a04" />
+                          <stop offset="25%" stop-color="#fef08a" />
+                          <stop offset="60%" stop-color="#eab308" />
+                          <stop offset="100%" stop-color="#854d0e" />
+                        </linearGradient>
+                        <linearGradient id="stamperRubberGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                          <stop offset="0%" stop-color="#9a3412" />
+                          <stop offset="30%" stop-color="#ea580c" />
+                          <stop offset="70%" stop-color="#c2410c" />
+                          <stop offset="100%" stop-color="#7c2d12" />
+                        </linearGradient>
+                      </defs>
+
+                      <!-- Carved Cat Ears on Wooden Handle Knob -->
+                      <polygon points="27,30 18,10 38,20" fill="#d97706" stroke="#78350f" stroke-width="2.5" stroke-linejoin="round" />
+                      <polygon points="27,27 21,14 35,21" fill="#fef3c7" />
+                      <polygon points="73,30 82,10 62,20" fill="#d97706" stroke="#78350f" stroke-width="2.5" stroke-linejoin="round" />
+                      <polygon points="73,27 79,14 65,21" fill="#fef3c7" />
+
+                      <!-- Spherical Wooden Cat Loaf Handle Grip -->
+                      <ellipse cx="50" cy="36" rx="27" ry="23" fill="url(#stamperWoodGrad)" stroke="#78350f" stroke-width="2.5" />
+                      <!-- Varnish Luster Shine Streak -->
+                      <path d="M 31 24 C 36 19 46 17 56 17" stroke="#ffffff" stroke-width="3" stroke-linecap="round" fill="none" opacity="0.6" />
+
+                      <!-- Happy Carved Cat Face -->
+                      <path d="M 36 34 Q 40 30 44 34" stroke="#78350f" stroke-width="2.5" stroke-linecap="round" fill="none" />
+                      <path d="M 56 34 Q 60 30 64 34" stroke="#78350f" stroke-width="2.5" stroke-linecap="round" fill="none" />
+                      <polygon points="50,38 47,35 53,35" fill="#f43f5e" />
+                      <path d="M 46 39 Q 50 42 50 40 Q 50 42 54 39" stroke="#78350f" stroke-width="2" stroke-linecap="round" fill="none" />
+                      <!-- Whiskers -->
+                      <line x1="28" y1="36" x2="20" y2="35" stroke="#78350f" stroke-width="1.8" stroke-linecap="round" />
+                      <line x1="28" y1="40" x2="21" y2="42" stroke="#78350f" stroke-width="1.8" stroke-linecap="round" />
+                      <line x1="72" y1="36" x2="80" y2="35" stroke="#78350f" stroke-width="1.8" stroke-linecap="round" />
+                      <line x1="72" y1="40" x2="79" y2="42" stroke="#78350f" stroke-width="1.8" stroke-linecap="round" />
+                      <!-- Blushing Cheeks -->
+                      <ellipse cx="32" cy="41" rx="4" ry="2.2" fill="#fca5a5" opacity="0.65" />
+                      <ellipse cx="68" cy="41" rx="4" ry="2.2" fill="#fca5a5" opacity="0.65" />
+
+                      <!-- Tucked Loaf Front Paws -->
+                      <ellipse cx="42" cy="53" rx="5.5" ry="4" fill="#fef3c7" stroke="#78350f" stroke-width="1.8" />
+                      <ellipse cx="58" cy="53" rx="5.5" ry="4" fill="#fef3c7" stroke="#78350f" stroke-width="1.8" />
+
+                      <!-- Turned Wood Spindle Neck -->
+                      <path d="M 37 54 C 37 66 33 73 27 79 L 73 79 C 67 73 63 66 63 54 Z" fill="url(#stamperStemGrad)" stroke="#78350f" stroke-width="2.2" />
+
+                      <!-- Gleaming Brass Collar Ring -->
+                      <rect x="23" y="79" width="54" height="9" rx="2" fill="url(#stamperBrassGrad)" stroke="#854d0e" stroke-width="1.8" />
+                      <rect x="36" y="80" width="7" height="7" rx="1" fill="#ffffff" opacity="0.75" />
+
+                      <!-- Flared Wooden Stamp Base -->
+                      <path d="M 18 92 C 18 87 24 87 28 87 L 72 87 C 76 87 82 87 82 92 L 85 101 C 85 105 78 108 50 108 C 22 108 15 105 15 101 Z" fill="#78350f" stroke="#451a03" stroke-width="2" />
+
+                      <!-- Rubber Cushion Stamp Pad with Fresh Wet Ink -->
+                      <path d="M 16 103 C 16 101 26 100 50 100 C 74 100 84 101 84 103 L 84 112 C 84 117 72 119 50 119 C 28 119 16 117 16 112 Z" fill="url(#stamperRubberGrad)" stroke="#9a3412" stroke-width="2.2" />
+                      <!-- Wet Ink Rim Sheen -->
+                      <ellipse cx="50" cy="113" rx="27" ry="3.2" fill="#ffedd5" opacity="0.45" />
+                    </svg>
+                  </div>
+
+                  <!-- Impact Shockwave Ring -->
+                  <div id="stampShockwaveRing" class="stamp-shockwave-ring pointer-events-none" aria-hidden="true"></div>
+
+                  <!-- Cartoon Ink Splash Specks / Sparks -->
+                  <div id="stampParticlesCluster" class="stamp-particles-cluster pointer-events-none" aria-hidden="true">
+                    <span class="stamp-ink-dot p-tl"></span>
+                    <span class="stamp-ink-dot p-tr"></span>
+                    <span class="stamp-ink-dot p-bl"></span>
+                    <span class="stamp-ink-dot p-br"></span>
+                  </div>
+
+                  <!-- Stamped Cat Certification Seal -->
+                  <img id="catCertificationStamp" src="/static/cat-stamp.svg" alt="" aria-hidden="true" class="cat-certification-stamp" />
+
+                  <!-- Stamped Grade Badge -->
+                  <span id="gradeStamp" class="stamp text-orange-800 border-orange-800 text-lg opacity-0">A+</span>
+                </div>
                 <span id="multiAngleBadge" class="hidden text-xs font-extrabold bg-gradient-to-r from-orange-100 to-amber-100 text-orange-950 px-3 py-1 rounded-lg border border-orange-300 flex items-center gap-1.5 shadow-2xs">
                   <i data-lucide="shield-check" class="w-3.5 h-3.5 text-orange-700"></i>
                   <span>+5 Multi-Angle Bonus</span>

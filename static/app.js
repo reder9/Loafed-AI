@@ -1839,7 +1839,16 @@ document.addEventListener('DOMContentLoaded', () => {
       gradeStamp.style.opacity = '0';
     }
     const catCertificationStamp = document.getElementById('catCertificationStamp');
-    if (catCertificationStamp) catCertificationStamp.classList.remove('cat-certification-stamp-slam');
+    if (catCertificationStamp) {
+      catCertificationStamp.classList.remove('cat-certification-stamp-slam');
+      catCertificationStamp.style.opacity = '0';
+    }
+    const catStamperTool = document.getElementById('catStamperTool');
+    if (catStamperTool) catStamperTool.classList.remove('cat-stamper-slamming');
+    const stampShockwaveRing = document.getElementById('stampShockwaveRing');
+    if (stampShockwaveRing) stampShockwaveRing.classList.remove('stamp-shockwave-active');
+    const stampParticlesCluster = document.getElementById('stampParticlesCluster');
+    if (stampParticlesCluster) stampParticlesCluster.classList.remove('stamp-particles-active');
 
     // Hide badges until stamp impact
     const multiAngleBadge = document.getElementById('multiAngleBadge');
@@ -2095,10 +2104,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const gradeStamp = document.getElementById('gradeStamp');
     if (!gradeStamp) return;
     const catCertificationStamp = document.getElementById('catCertificationStamp');
+    const catStamperTool = document.getElementById('catStamperTool');
+    const stampShockwaveRing = document.getElementById('stampShockwaveRing');
+    const stampParticlesCluster = document.getElementById('stampParticlesCluster');
 
+    // Reset all animation states
     gradeStamp.classList.remove('stamp-slam');
-    gradeStamp.style.opacity = '1';
+    gradeStamp.style.opacity = '0';
+    if (catCertificationStamp) {
+      catCertificationStamp.classList.remove('cat-certification-stamp-slam');
+      catCertificationStamp.style.opacity = '0';
+    }
+    if (catStamperTool) catStamperTool.classList.remove('cat-stamper-slamming');
+    if (stampShockwaveRing) stampShockwaveRing.classList.remove('stamp-shockwave-active');
+    if (stampParticlesCluster) stampParticlesCluster.classList.remove('stamp-particles-active');
 
+    // Configure grade text and styling
     if (result.is_cat === false) {
       gradeStamp.textContent = 'DQ';
       gradeStamp.className = 'stamp text-rose-700 border-rose-700 text-lg font-black';
@@ -2115,22 +2136,31 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    // Force reflow and re-add stamp-slam animation
+    // Force reflow for seamless re-triggering
     void gradeStamp.offsetWidth;
+    if (catStamperTool) void catStamperTool.offsetWidth;
+
+    // Trigger physical cat stamper descent & press
+    if (catStamperTool) catStamperTool.classList.add('cat-stamper-slamming');
+    if (stampShockwaveRing) stampShockwaveRing.classList.add('stamp-shockwave-active');
+    if (stampParticlesCluster) stampParticlesCluster.classList.add('stamp-particles-active');
+
+    // Synchronously reveal stamped ink mark
     gradeStamp.classList.add('stamp-slam');
     if (catCertificationStamp) {
-      void catCertificationStamp.offsetWidth;
       catCertificationStamp.classList.add('cat-certification-stamp-slam');
     }
 
-    // Subtle tactile haptic vibration feedback on supported mobile devices
-    try {
-      if (typeof navigator !== 'undefined' && navigator.vibrate) {
-        navigator.vibrate([25, 30, 45]);
-      }
-    } catch (_) {}
+    // Tactile haptic vibration timed right at rubber squash impact (~200ms)
+    setTimeout(() => {
+      try {
+        if (typeof navigator !== 'undefined' && navigator.vibrate) {
+          navigator.vibrate([28, 35, 45]);
+        }
+      } catch (_) {}
+    }, 200);
 
-    // Reveal multi-angle and oar badges smoothly after impact
+    // Reveal multi-angle and oar badges smoothly after impact settles (~550ms)
     setTimeout(() => {
       const multiAngleBadge = document.getElementById('multiAngleBadge');
       if (multiAngleBadge) {
@@ -2149,7 +2179,7 @@ document.addEventListener('DOMContentLoaded', () => {
           oarBadge.classList.add('hidden');
         }
       }
-    }, 200);
+    }, 550);
   }
 
   function animateScore(target, onComplete = null) {
@@ -2272,6 +2302,17 @@ document.addEventListener('DOMContentLoaded', () => {
       gradeStamp.classList.remove('stamp-slam');
       gradeStamp.style.opacity = '0';
     }
+    const catCertificationStamp = document.getElementById('catCertificationStamp');
+    if (catCertificationStamp) {
+      catCertificationStamp.classList.remove('cat-certification-stamp-slam');
+      catCertificationStamp.style.opacity = '0';
+    }
+    const catStamperTool = document.getElementById('catStamperTool');
+    if (catStamperTool) catStamperTool.classList.remove('cat-stamper-slamming');
+    const stampShockwaveRing = document.getElementById('stampShockwaveRing');
+    if (stampShockwaveRing) stampShockwaveRing.classList.remove('stamp-shockwave-active');
+    const stampParticlesCluster = document.getElementById('stampParticlesCluster');
+    if (stampParticlesCluster) stampParticlesCluster.classList.remove('stamp-particles-active');
     if (scroll) {
       scrollToSection(inspectorBay);
     }
@@ -3727,9 +3768,24 @@ Certified by Loafed Inspection Engine`;
     });
 
     historyListContainer.querySelectorAll('.delete-history-entry-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
+      btn.addEventListener('click', async (e) => {
         e.stopPropagation();
         const id = e.currentTarget.getAttribute('data-id');
+        const entry = history.find(h => h.id === id);
+        if (!entry) return;
+        const catName = entry.cat_name || entry.result?.cat_name || 'this cat';
+        const isPublished = Boolean(entry.submitted_entry_id);
+        const confirmed = await showConfirmModal({
+          title: 'Delete Saved Inspection?',
+          subtitle: isPublished ? 'Saved Inspection Only' : 'Remove Saved Inspection',
+          message: isPublished
+            ? `Delete the saved inspection for "${catName}" from this browser? Its published leaderboard entry and photo will remain. Use the trash button in My Loaves to remove that entry from the public leaderboard.`
+            : `Delete the saved inspection for "${catName}" from this browser? This removes its saved scorecard and locally stored photos.`,
+          confirmText: 'Delete Inspection',
+          confirmIcon: 'trash-2',
+          isDanger: true
+        });
+        if (!confirmed) return;
         const updated = history.filter(h => h.id !== id);
         localStorage.setItem('loafed_history', JSON.stringify(updated));
         deleteInspectionFromIndexedDb(id).catch(() => {});
@@ -4341,7 +4397,7 @@ Certified by Loafed Inspection Engine`;
           const confirmed = await showConfirmModal({
             title: 'Remove Loaf Submission?',
             subtitle: 'Leaderboard Removal',
-            message: `Are you sure you want to remove "${name}" from the public leaderboard?`,
+            message: `Remove "${name}" permanently? Its scorecard and stored photo will be deleted, and the loaf will disappear from the public leaderboard.`,
             confirmText: 'Remove Loaf',
             confirmIcon: 'trash-2',
             isDanger: true
