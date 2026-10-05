@@ -1833,7 +1833,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <span>${placeTitle}</span>
           </div>
           <div class="pedestal-photo-frame">
-            <img src="${thumb}" alt="${catName}" loading="lazy">
+            <img src="${thumb}" alt="${catName}" loading="lazy" decoding="async">
             <span class="pedestal-stamp">${score} ${grade}</span>
           </div>
           <div class="w-full">
@@ -1907,22 +1907,22 @@ document.addEventListener('DOMContentLoaded', () => {
       let actionBtns = '';
       if (isMine) {
         actionBtns = `
-          <div class="flex items-center gap-1 shrink-0 ml-1.5" onclick="event.stopPropagation()">
-            <button class="share-loaf-btn p-2 rounded-xl text-stone-400 hover:text-orange-600 hover:bg-orange-50 transition-colors" data-id="${entry.entry_id}" data-name="${catName}" data-score="${score}" data-grade="${gradeLetter}" aria-label="Share ${catName} loaf link" title="Share link to this cat loaf">
+          <div class="flex items-center gap-1 shrink-0" onclick="event.stopPropagation()">
+            <button class="share-loaf-btn p-1.5 sm:p-2 rounded-xl text-stone-400 hover:text-orange-600 hover:bg-orange-50 transition-colors" data-id="${entry.entry_id}" data-name="${catName}" data-score="${score}" data-grade="${gradeLetter}" aria-label="Share ${catName} loaf link" title="Share link to this cat loaf">
               <i data-lucide="share-2" class="w-4 h-4 text-orange-600"></i>
             </button>
-            <button class="delete-loaf-btn p-2 rounded-xl text-stone-400 hover:text-red-600 hover:bg-red-50 transition-colors" data-id="${entry.entry_id}" data-name="${catName}" aria-label="Delete ${catName} submission" title="Delete submission">
+            <button class="delete-loaf-btn p-1.5 sm:p-2 rounded-xl text-stone-400 hover:text-red-600 hover:bg-red-50 transition-colors" data-id="${entry.entry_id}" data-name="${catName}" aria-label="Delete ${catName} submission" title="Delete submission">
               <i data-lucide="trash-2" class="w-4 h-4"></i>
             </button>
           </div>
         `;
       } else {
         actionBtns = `
-          <div class="flex items-center gap-1 shrink-0 ml-1.5" onclick="event.stopPropagation()">
-            <button class="share-loaf-btn p-2 rounded-xl text-stone-400 hover:text-orange-600 hover:bg-orange-50 transition-colors" data-id="${entry.entry_id}" data-name="${catName}" data-score="${score}" data-grade="${gradeLetter}" aria-label="Share ${catName} loaf link" title="Share link to this cat loaf">
+          <div class="flex items-center gap-1 shrink-0" onclick="event.stopPropagation()">
+            <button class="share-loaf-btn p-1.5 sm:p-2 rounded-xl text-stone-400 hover:text-orange-600 hover:bg-orange-50 transition-colors" data-id="${entry.entry_id}" data-name="${catName}" data-score="${score}" data-grade="${gradeLetter}" aria-label="Share ${catName} loaf link" title="Share link to this cat loaf">
               <i data-lucide="share-2" class="w-4 h-4 text-orange-600"></i>
             </button>
-            <button class="report-loaf-btn p-2 rounded-xl text-stone-300 hover:text-amber-700 hover:bg-orange-50 transition-colors" data-id="${entry.entry_id}" data-score="${score}" data-name="${catName}" aria-label="Report ${catName} submission" title="Report submission as inappropriate or non-cat">
+            <button class="report-loaf-btn p-1.5 sm:p-2 rounded-xl text-stone-300 hover:text-amber-700 hover:bg-orange-50 transition-colors" data-id="${entry.entry_id}" data-score="${score}" data-name="${catName}" aria-label="Report ${catName} submission" title="Report submission as inappropriate or non-cat">
               <i data-lucide="flag" class="w-4 h-4"></i>
             </button>
           </div>
@@ -1930,28 +1930,28 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       return `
-        <div id="loaf-row-${entry.entry_id}" class="leaderboard-entry-row p-3.5 sm:p-4 rounded-2xl bg-white border border-orange-200/90 hover:border-amber-400 shadow-2xs hover:shadow-xs transition-all flex items-center gap-3.5 sm:gap-4 group cursor-pointer" onclick="window.loafedOpenLoafDetails('${entry.entry_id}')" title="Click to view full inspection scorecard for ${catName}">
+        <div id="loaf-row-${entry.entry_id}" class="leaderboard-entry-row p-3 sm:p-4 rounded-2xl bg-white border border-orange-200/90 hover:border-amber-400 shadow-2xs hover:shadow-xs transition-all flex items-center gap-2.5 sm:gap-4 group cursor-pointer" onclick="window.loafedOpenLoafDetails('${entry.entry_id}')" title="Click to view full inspection scorecard for ${catName}">
           <div class="shrink-0 flex items-center justify-center">
             ${rankBadge}
           </div>
-          <div class="relative w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border border-orange-200/80 bg-orange-50 shrink-0">
-            <img src="${thumb}" alt="${catName}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200">
+          <div class="leaderboard-photo-frame">
+            <img src="${thumb}" alt="${catName}" class="leaderboard-photo-img" loading="lazy" decoding="async">
           </div>
           <div class="flex-1 min-w-0">
-            <div class="flex items-center justify-between gap-2">
-              <h3 class="font-extrabold text-sm sm:text-base text-stone-900 truncate group-hover:text-orange-950 transition-colors">${catName}</h3>
-              <span class="stamp text-xs font-black text-orange-700 bg-white border-orange-700 shrink-0">${score} ${gradeLetter}</span>
-            </div>
-            <div class="flex items-center gap-2 text-xs text-stone-600 mt-0.5 flex-wrap">
+            <h3 class="font-extrabold text-sm sm:text-base text-stone-900 truncate group-hover:text-orange-950 transition-colors">${catName}</h3>
+            <div class="flex items-center gap-1.5 sm:gap-2 text-xs text-stone-600 mt-0.5 flex-wrap">
               <span class="text-orange-950 font-bold truncate">${loafRank}</span>
               <span class="hidden sm:inline text-stone-300">&bull;</span>
-              <span class="text-stone-500 text-[11px] truncate">${bread}</span>
+              <span class="text-stone-500 text-[11px] truncate hidden sm:inline">${bread}</span>
             </div>
-            <div class="text-[11px] text-stone-600 font-medium mt-1 truncate">
+            <div class="text-[11px] text-stone-600 font-medium mt-0.5 truncate">
               Baked by <span class="font-bold text-stone-800">${bakerName}</span>
             </div>
           </div>
-          ${actionBtns}
+          <div class="shrink-0 flex flex-col sm:flex-row items-end sm:items-center gap-1.5 sm:gap-3">
+            <span class="stamp text-xs font-black text-orange-700 bg-white border-orange-700 shrink-0">${score} ${gradeLetter}</span>
+            ${actionBtns}
+          </div>
         </div>
       `;
     }).join('');

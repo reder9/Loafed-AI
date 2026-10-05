@@ -4298,7 +4298,7 @@ Certified by Loafed Inspection Engine`;
           <div class="shrink-0 flex items-center justify-center">
             ${rankBadge}
           </div>
-          <img src="${thumb}" alt="${catName}" class="w-12 h-12 rounded-xl object-cover border border-orange-200/80 bg-orange-50 shrink-0">
+          <img src="${thumb}" alt="${catName}" class="w-12 h-12 rounded-xl object-cover border border-orange-200/80 bg-orange-50 shrink-0 leaderboard-photo-img" loading="lazy" decoding="async">
           <div class="flex-1 min-w-0">
             <div class="flex items-center justify-between gap-1">
               <h4 class="font-extrabold text-xs sm:text-sm text-stone-900 truncate">${catName}</h4>
