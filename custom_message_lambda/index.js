@@ -1,18 +1,22 @@
 // RederSoft - AWS Cognito Custom Message Lambda Trigger
 // Multi-tenant email notification dispatcher supporting Loafed AI and Kalon Beauty Atelier
 
-const LOAFED_CLIENT_ID = '9qibinq77f26bat64unru8q77';
+const LOAFED_CLIENT_IDS = ['9qibinq77f26bat64unru8q77', '76eqq0ir3782t01unag505400b'];
 const KALON_CLIENT_ID = '5gkqhnchdcmd20oko23q9jkgca';
 
 exports.handler = async (event) => {
-  console.log('CustomMessage triggerSource:', event.triggerSource);
-  console.log('clientMetadata:', JSON.stringify(event.request.clientMetadata || {}));
-  console.log('callerContext:', JSON.stringify(event.callerContext || {}));
-
-  const clientMetadata = event.request.clientMetadata || {};
+  const clientMetadata = event.request?.clientMetadata || {};
   const clientId = event.callerContext?.clientId;
+  // Never log the full Cognito event: it can contain email addresses, codes,
+  // request metadata, and provider details. Keep operational routing context only.
+  console.log(JSON.stringify({
+    event: 'cognito_custom_message_received',
+    triggerSource: event.triggerSource || 'unknown',
+    clientId: clientId || 'unknown',
+    app: clientMetadata.app || clientMetadata.slug || clientMetadata.tenant || 'unknown'
+  }));
 
-  const isLoafed = clientId === LOAFED_CLIENT_ID ||
+  const isLoafed = LOAFED_CLIENT_IDS.includes(clientId) ||
                    clientMetadata.app === 'loafed' ||
                    clientMetadata.slug === 'loafed';
 
@@ -22,14 +26,21 @@ exports.handler = async (event) => {
                         clientMetadata.slug === 'kalon-beauty';
 
   if (isLoafed) {
+    console.log(JSON.stringify({ event: 'cognito_custom_message_routed', tenant: 'loafed' }));
     return handleLoafedMessage(event);
   }
 
   if (isKalonBeauty) {
+    console.log(JSON.stringify({ event: 'cognito_custom_message_routed', tenant: 'kalon-beauty' }));
     return handleKalonBeautyMessage(event);
   }
 
   // Fallback: If neither matches, return default event unmodified
+  console.warn(JSON.stringify({
+    event: 'cognito_custom_message_unmatched_client',
+    triggerSource: event.triggerSource || 'unknown',
+    clientId: clientId || 'unknown'
+  }));
   return event;
 };
 

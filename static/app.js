@@ -138,6 +138,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const submitDisplayNameInput = document.getElementById('submitDisplayNameInput');
   const rollSubmitBakerTagBtn = document.getElementById('rollSubmitBakerTagBtn');
   const submitModalNotice = document.getElementById('submitModalNotice');
+  const submitModalValidationHint = document.getElementById('submitModalValidationHint');
   const submitConsentCheckbox = document.getElementById('submitConsentCheckbox');
   const submitModalFormView = document.getElementById('submitModalFormView');
   const submitSuccessView = document.getElementById('submitSuccessView');
@@ -4788,10 +4789,24 @@ Certified by Loafed Inspection Engine`;
       submitModalCatName.textContent = catName || 'Cat Name';
     }
 
-    const { valid } = getSubmitFormValidation();
+    const validation = getSubmitFormValidation();
     const hasPhoto = Boolean(state.submittedPhotoBlob || (state.photos && state.photos.length > 0 && state.photos[0].file));
+    let blockingReason = validation.error;
+    if (!blockingReason && !hasPhoto) {
+      blockingReason = 'Attach the inspected cat photo before publishing.';
+    }
     if (confirmSubmitLeaderboardBtn) {
-      confirmSubmitLeaderboardBtn.disabled = !valid || !hasPhoto;
+      confirmSubmitLeaderboardBtn.disabled = Boolean(blockingReason);
+      confirmSubmitLeaderboardBtn.title = blockingReason || 'Ready to publish this certified loaf.';
+      confirmSubmitLeaderboardBtn.setAttribute('aria-describedby', 'submitModalValidationHint');
+    }
+    if (submitModalValidationHint) {
+      submitModalValidationHint.textContent = blockingReason
+        ? `Why publishing is unavailable: ${blockingReason}`
+        : 'Ready to publish. Your photo, cat name, score, and baker name will be stored for the public leaderboard.';
+      submitModalValidationHint.className = blockingReason
+        ? 'mb-3 text-[11px] leading-relaxed text-amber-800'
+        : 'mb-3 text-[11px] leading-relaxed text-emerald-700';
     }
   }
 

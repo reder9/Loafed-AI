@@ -56,6 +56,10 @@ python run.py
 The application will start immediately at:
 **[http://localhost:8000](http://localhost:8000)**
 
+### Logging and troubleshooting
+
+The backend emits structured, correlation-friendly logs. Every request receives an `X-Request-ID`; successful requests are logged at `DEBUG`, client failures at `WARNING`, and server failures or unhandled exceptions at `ERROR` with a stack trace. Set `LOG_LEVEL=DEBUG` temporarily when investigating request flow or provider failover, then return it to `INFO` to avoid noisy production logs. Credentials, passwords, tokens, full Cognito events, email addresses, IP addresses, and complete image hashes are intentionally excluded or redacted from operational logs.
+
 ---
 
 ## Gemini API Key Setup

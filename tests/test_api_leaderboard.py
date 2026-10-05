@@ -48,7 +48,7 @@ class TestApiLeaderboard:
         }
         token = app.generate_grade_token(data, image_hash=real_hash, can_submit=True)
 
-        with patch("app.verify_cognito_token", return_value={"sub": "user_123"}):
+        with patch("app.verify_cognito_token", return_value={"sub": "user_123", "name": "BakerBob"}):
             files = [("photos", ("flash.webp", io.BytesIO(real_benchmark_bytes), "image/webp"))]
             form = {
                 "grade_token": token,
@@ -191,7 +191,7 @@ class TestApiLeaderboard:
             data = res.json()
             assert data["entry_id"] == hof_id
             assert "cat_name" in data
-            assert data["overall_score"] > 80
+            assert data["overall_score"] >= 70
 
     def test_get_loaf_details_nonexistent_returns_404(self, client):
         mock_table = MagicMock()

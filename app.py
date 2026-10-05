@@ -3,6 +3,7 @@ import re
 import io
 import json
 import logging
+import contextvars
 import hmac
 import hashlib
 import base64
@@ -31,9 +32,33 @@ from dotenv import load_dotenv
 # Load .env file
 load_dotenv()
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
+# Configure logging. LOG_LEVEL is intentionally opt-in for verbose production logs;
+# request successes are DEBUG while failures are WARNING/ERROR.
+LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
+REQUEST_ID = contextvars.ContextVar("request_id", default="-")
+
+
+class RequestContextFilter(logging.Filter):
+    def filter(self, record):
+        record.request_id = REQUEST_ID.get()
+        return True
+
+
+logging.basicConfig(
+    level=getattr(logging, LOG_LEVEL, logging.INFO),
+    format="%(asctime)s %(levelname)s %(name)s request_id=%(request_id)s %(message)s",
+    datefmt="%Y-%m-%dT%H:%M:%S%z",
+)
+for _handler in logging.getLogger().handlers:
+    _handler.addFilter(RequestContextFilter())
 logger = logging.getLogger("loafed")
+
+
+def safe_identifier(value: Optional[str], length: int = 10) -> str:
+    """Return a stable, non-reversible identifier for logs."""
+    if not value:
+        return "-"
+    return hashlib.sha256(str(value).encode("utf-8")).hexdigest()[:length]
 
 # Try to import google-genai
 try:
@@ -64,11 +89,29 @@ app.add_middleware(
 
 @app.middleware("http")
 async def add_security_headers(request: Request, call_next):
-    response = await call_next(request)
+    request_id = request.headers.get("x-request-id", "").strip()
+    if not request_id or len(request_id) > 64 or not re.fullmatch(r"[A-Za-z0-9._:-]+", request_id):
+        request_id = uuid.uuid4().hex
+    token = REQUEST_ID.set(request_id)
+    started = time.perf_counter()
+    response = None
+    try:
+        response = await call_next(request)
+    except Exception:
+        elapsed_ms = (time.perf_counter() - started) * 1000
+        logger.exception("Unhandled request exception method=%s path=%s duration_ms=%.1f", request.method, request.url.path, elapsed_ms)
+        REQUEST_ID.reset(token)
+        raise
+    elapsed_ms = (time.perf_counter() - started) * 1000
+    status = response.status_code
+    log_method = logger.error if status >= 500 else logger.warning if status >= 400 else logger.debug
+    log_method("Request completed method=%s path=%s status=%s duration_ms=%.1f", request.method, request.url.path, status, elapsed_ms)
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "SAMEORIGIN"
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
     response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+    response.headers["X-Request-ID"] = request_id
+    REQUEST_ID.reset(token)
     return response
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -462,7 +505,7 @@ def get_boto3_session():
                 region_name=AWS_REGION
             )
     except Exception as err:
-        logger.debug(f"Local aws export-credentials note: {err}")
+        logger.debug("AWS profile credential export unavailable profile=%s error=%s", profile, err)
 
     return boto3.Session(region_name=AWS_REGION)
 
@@ -484,7 +527,7 @@ def get_cognito_jwks() -> dict:
             COGNITO_JWKS_CACHE["fetched_at"] = now
             return data
     except Exception as e:
-        logger.error(f"Failed to fetch Cognito JWKS: {e}")
+        logger.error("Failed to fetch Cognito JWKS region=%s error=%s", AWS_REGION, e, exc_info=True)
         if COGNITO_JWKS_CACHE["keys"]:
             return COGNITO_JWKS_CACHE["keys"]
         raise HTTPException(status_code=500, detail="Authentication provider key retrieval failed.")
@@ -593,6 +636,7 @@ def verify_grade_token(grade_token: str) -> dict:
     except Exception as e:
         if isinstance(e, HTTPException):
             raise
+        logger.warning("Grade token payload could not be decoded error=%s", e)
         raise HTTPException(status_code=400, detail="Failed to parse grade token payload.")
 
 
@@ -1005,8 +1049,8 @@ def get_server_api_keys() -> List[str]:
                         k_str = str(k).strip()
                         if k_str and k_str not in keys:
                             keys.append(k_str)
-            except Exception:
-                pass
+            except Exception as err:
+                logger.warning("GEMINI_API_KEYS JSON configuration was invalid; falling back to comma-separated parsing error=%s", err)
         if not keys:
             for k in env_multi.split(","):
                 k_clean = k.strip()
@@ -1201,8 +1245,8 @@ async def grade_loaf(
             parsed = json.loads(angle_types)
             if isinstance(parsed, list):
                 parsed_angles = [str(a).strip().lower() for a in parsed]
-        except Exception:
-            pass
+        except Exception as err:
+            logger.warning("Invalid angle_types payload received during grading error=%s", err)
 
     if images:
         for idx, img in enumerate(images):
@@ -1295,7 +1339,7 @@ async def grade_loaf(
         )
 
         target_model = model or "gemini-3.8-flash"
-        logger.info(f"Preparing Gemini evaluation for model {target_model} with {len(submitted_images)} images from IP {client_ip} across {len(keys_to_try)} candidate key(s)...")
+        logger.info("Preparing Gemini evaluation model=%s image_count=%d client=%s key_count=%d", target_model, len(submitted_images), safe_identifier(client_ip), len(keys_to_try))
 
         safety_settings = [
             types.SafetySetting(
@@ -1330,7 +1374,7 @@ async def grade_loaf(
 
             for attempt, model_candidate in enumerate(models_to_try):
                 try:
-                    logger.info(f"Attempting Gemini generation using key ...{key_id} (key {key_idx + 1}/{len(keys_to_try)}) on model {model_candidate}...")
+                    logger.debug("Attempting Gemini generation key_suffix=%s key_position=%d key_count=%d model=%s", key_id, key_idx + 1, len(keys_to_try), model_candidate)
                     response = client.models.generate_content(
                         model=model_candidate,
                         contents=contents_parts,
@@ -1352,19 +1396,19 @@ async def grade_loaf(
 
                     # 1. 503 UNAVAILABLE on Google side -> retry secondary model on same key
                     if ("503" in err_text or "UNAVAILABLE" in err_text) and attempt < len(models_to_try) - 1:
-                        logger.warning(f"Model {model_candidate} is 503 UNAVAILABLE on key ...{key_id}. Retrying model {models_to_try[attempt+1]}...")
+                        logger.warning("Gemini model unavailable; retrying key_suffix=%s model=%s fallback_model=%s", key_id, model_candidate, models_to_try[attempt+1])
                         time.sleep(1.0)
                         continue
 
                     # 2. 429 Quota Exceeded -> put key on 15-minute cooldown and break to fail over to next key
                     if "RESOURCE_EXHAUSTED" in err_text or "429" in err_text or "quota" in err_text.lower():
                         key_exhaustion_tracker[key_id] = time.time() + 900
-                        logger.warning(f"Key ...{key_id} exhausted quota (429). Triggering key pool failover...")
+                        logger.warning("Gemini key quota exhausted; entering cooldown key_suffix=%s", key_id)
                         break
 
                     # 3. 403 / Invalid key -> break to fail over to next key
                     if "API_KEY_INVALID" in err_text or "403" in err_text or "unregistered" in err_text:
-                        logger.warning(f"Key ...{key_id} rejected (403/invalid).")
+                        logger.error("Gemini key rejected key_suffix=%s", key_id)
                         break
 
                     # 4. Content policy or 400 Bad Request
@@ -1372,11 +1416,11 @@ async def grade_loaf(
                         raise attempt_err
 
             if success_for_key:
-                logger.info(f"Loaf evaluation succeeded with key ...{key_id}.")
+                logger.info("Loaf evaluation succeeded key_suffix=%s", key_id)
                 break
             elif key_idx < len(keys_to_try) - 1:
                 next_kid = keys_to_try[key_idx + 1][-8:] if len(keys_to_try[key_idx + 1]) >= 8 else "next_key"
-                logger.info(f"Failing over from key ...{key_id} to next key ...{next_kid} in pool...")
+                logger.warning("Failing over Gemini key key_suffix=%s next_key_suffix=%s", key_id, next_kid)
                 continue
 
         if not response or not response.text:
@@ -1391,7 +1435,7 @@ async def grade_loaf(
         is_cat = bool(analysis_data.get("is_cat", True))
 
         if not is_cat:
-            logger.info(f"Loaf inspection disqualified (non-feline or policy). Reason: {analysis_data.get('rejection_reason')}")
+            logger.info("Loaf inspection disqualified reason=%s", analysis_data.get("rejection_reason"))
             return JSONResponse(content={
                 "result": analysis_data,
                 "grade_token": None,
@@ -1509,8 +1553,8 @@ def send_google_signin_notification(id_token: str):
         if isinstance(identities, str):
             try:
                 identities = json.loads(identities)
-            except Exception:
-                pass
+            except Exception as err:
+                logger.warning("Could not parse sign-in identity claims email=%s error=%s", safe_identifier(email), err)
         if isinstance(identities, list):
             for ident in identities:
                 if isinstance(ident, dict) and "google" in str(ident.get("providerName", "")).lower():
@@ -1522,14 +1566,14 @@ def send_google_signin_notification(id_token: str):
         is_google = True
 
     if not is_google:
-        logger.info(f"Sign-in token for {email} is not Google provider; skipping Google security alert.")
+        logger.debug("Sign-in token is not Google provider; skipping security alert email=%s", safe_identifier(email))
         return
 
     # In-memory sliding window deduplication (15 minutes)
     now = time.time()
     last_notified = RECENT_SIGNIN_NOTIFICATIONS.get(email, 0.0)
     if now - last_notified < 900:
-        logger.info(f"Skipping duplicate Google sign-in notification for {email} (notified {int(now - last_notified)}s ago).")
+        logger.debug("Skipping duplicate Google sign-in notification email=%s age_seconds=%d", safe_identifier(email), int(now - last_notified))
         return
 
     RECENT_SIGNIN_NOTIFICATIONS[email] = now
@@ -1766,12 +1810,12 @@ https://loafed.redersoft.com
                 }
             }
         )
-        logger.info(f"Dispatched Google sign-in heads-up email to {email}. MessageId: {resp.get('MessageId')}")
+        logger.info("Dispatched Google sign-in heads-up email email=%s message_id=%s", safe_identifier(email), resp.get("MessageId", "-"))
     except ClientError as ce:
         err_msg = ce.response.get("Error", {}).get("Message", str(ce))
-        logger.warning(f"Could not send Google sign-in notification to {email} via SES: {err_msg}")
+        logger.warning("Could not send Google sign-in notification via SES email=%s error_code=%s", safe_identifier(email), ce.response.get("Error", {}).get("Code", "unknown"))
     except Exception as ex:
-        logger.warning(f"Unexpected error sending Google sign-in email to {email}: {ex}")
+        logger.warning("Unexpected error sending Google sign-in email=%s error=%s", safe_identifier(email), ex, exc_info=True)
 
 
 @app.post("/api/auth/token")
@@ -1800,11 +1844,12 @@ async def exchange_auth_code(req: TokenExchangeRequest, background_tasks: Backgr
         with urllib.request.urlopen(http_req, timeout=10) as resp:
             tokens = json.loads(resp.read().decode("utf-8"))
     except urllib.error.HTTPError as e:
-        err_body = e.read().decode("utf-8", errors="ignore")
-        logger.warning(f"Cognito token exchange failed: {err_body}")
+        # Do not write the provider response body: OAuth errors can echo request data.
+        e.read()
+        logger.warning("Cognito token exchange failed status=%d", e.code)
         raise HTTPException(status_code=e.code, detail="Authorization code exchange failed.")
     except Exception as e:
-        logger.error(f"Token exchange error: {e}")
+        logger.error("Token exchange connection error=%s", e, exc_info=True)
         raise HTTPException(status_code=500, detail="Token exchange connection error.")
 
     # Dispatch Google Sign-In heads-up security notification in background
@@ -2067,7 +2112,8 @@ async def email_confirm_forgot_password(req: ConfirmForgotPasswordRequest):
                 "expires_in": auth_res.get("ExpiresIn"),
                 "token_type": auth_res.get("TokenType", "Bearer")
             }
-        except Exception:
+        except Exception as login_err:
+            logger.warning("Password reset succeeded but automatic sign-in failed email=%s error=%s", safe_identifier(email), login_err)
             return {"reset": True, "message": "Password updated successfully! Please sign in."}
     except ClientError as e:
         err_code = e.response.get("Error", {}).get("Code", "")
@@ -2160,9 +2206,7 @@ async def submit_to_leaderboard(
             detail="Benchmark and example cats cannot be submitted to the leaderboard. You can only submit a cat you photographed and uploaded yourself!"
         )
     if allowed_hashes and not any(h in allowed_hashes for h in uploaded_hashes):
-        logger.warning(
-            f"Image hash mismatch on leaderboard submission! Allowed: {allowed_hashes}, Uploaded: {uploaded_hashes}"
-        )
+        logger.warning("Image hash mismatch on leaderboard submission allowed_count=%d uploaded_count=%d", len(allowed_hashes), len(uploaded_hashes))
         raise HTTPException(
             status_code=400,
             detail="The uploaded photo does not match the image certified during grading. Please submit the exact photo that was inspected."
@@ -2175,8 +2219,8 @@ async def submit_to_leaderboard(
             parsed = json.loads(photo_labels)
             if isinstance(parsed, list):
                 labels = [str(lbl).strip() for lbl in parsed]
-        except Exception:
-            pass
+        except Exception as err:
+            logger.warning("Invalid photo_labels payload during leaderboard submission error=%s", err)
     while len(labels) < len(validated_images):
         idx = len(labels)
         labels.append("Front View" if idx == 0 else ("Side View" if idx == 1 else ("Overhead (Top) View" if idx == 2 else f"Angle {idx + 1}")))
@@ -2228,7 +2272,7 @@ async def submit_to_leaderboard(
             logger.warning(f"Error checking UserIndex for duplicate submission: {e}")
 
     if existing_entry_id:
-        logger.info(f"Duplicate submission prevented: User {user_id} already published entry {existing_entry_id}")
+        logger.info("Duplicate submission prevented user=%s existing_entry=%s", safe_identifier(user_id), existing_entry_id)
         return JSONResponse(
             status_code=409,
             content={
@@ -2690,7 +2734,7 @@ async def report_leaderboard_entry(
         except Exception as e:
             logger.warning(f"Error updating report count on {pk}/{sk}: {e}")
 
-    logger.info(f"Entry {entry_id} reported by IP {client_ip}. Total reports: {current_reports}. Hidden: {should_hide}")
+    logger.info("Leaderboard entry reported entry_id=%s client=%s report_count=%d hidden=%s", entry_id, safe_identifier(client_ip), current_reports, should_hide)
     return {
         "success": True,
         "entry_id": entry_id,
@@ -2760,7 +2804,7 @@ async def admin_remove_entry(req: AdminRemoveRequest):
     except Exception as e:
         logger.warning(f"Admin delete S3 thumbnail error for {entry_id}: {e}")
 
-    logger.info(f"Admin successfully purged entry {entry_id} and its thumbnail.")
+    logger.info("Admin successfully purged leaderboard entry entry_id=%s", entry_id)
     return {"success": True, "purged_id": entry_id, "message": "Entry purged from leaderboard and S3."}
 
 
@@ -2883,8 +2927,8 @@ async def get_user_profile(authorization: Optional[str] = Header(None)):
                 provider_name = identities[0].get("providerName", "")
                 if "Google" in provider_name:
                     auth_provider = "Google Sign-In"
-        except Exception:
-            pass
+        except Exception as err:
+            logger.warning("Could not parse identity claims while building profile auth_provider user=%s error=%s", safe_identifier(user_id), err)
     elif "google" in str(user_claims.get("cognito:username", "")).lower():
         auth_provider = "Google Sign-In"
 
@@ -2925,7 +2969,7 @@ async def update_user_profile(
             UserAttributes=[{"Name": "name", "Value": clean_name}]
         )
     except Exception as e:
-        logger.error(f"Error updating Cognito user attributes for {username}: {e}")
+        logger.error("Error updating Cognito user attributes user=%s error=%s", safe_identifier(user_id), e, exc_info=True)
         try:
             cognito_client.admin_update_user_attributes(
                 UserPoolId=COGNITO_USER_POOL_ID,
@@ -2933,7 +2977,7 @@ async def update_user_profile(
                 UserAttributes=[{"Name": "name", "Value": clean_name}]
             )
         except Exception as e2:
-            logger.error(f"Failed fallback Cognito update for {user_id}: {e2}")
+            logger.error("Failed fallback Cognito update user=%s error=%s", safe_identifier(user_id), e2, exc_info=True)
             raise HTTPException(status_code=500, detail="Failed to update profile name in authentication directory.")
 
     # 2. Update existing submissions in DynamoDB so all leaderboard loaves reflect the new display name
@@ -2959,9 +3003,9 @@ async def update_user_profile(
                 except Exception as update_err:
                     logger.warning(f"Error updating display_name on {pk}/{sk}: {update_err}")
     except Exception as ddb_err:
-        logger.warning(f"Could not batch update display_name on DynamoDB entries for user {user_id}: {ddb_err}")
+        logger.warning("Could not batch update display_name on DynamoDB entries user=%s error=%s", safe_identifier(user_id), ddb_err)
 
-    logger.info(f"User {user_id} ({username}) updated Baker display name to '{clean_name}'.")
+    logger.info("User profile display name updated user=%s", safe_identifier(user_id))
     return {
         "success": True,
         "display_name": clean_name,
@@ -3018,14 +3062,14 @@ async def delete_user_account(authorization: Optional[str] = Header(None)):
             Username=username
         )
     except Exception as e:
-        logger.error(f"Error deleting user from Cognito with username {username}: {e}")
+        logger.error("Error deleting user from Cognito user=%s error=%s", safe_identifier(user_id), e, exc_info=True)
         try:
             cognito_client.admin_delete_user(
                 UserPoolId=COGNITO_USER_POOL_ID,
                 Username=user_id
             )
-        except Exception:
-            pass
+        except Exception as fallback_err:
+            logger.error("Fallback Cognito account deletion failed user=%s error=%s", safe_identifier(user_id), fallback_err, exc_info=True)
 
     return {
         "success": True,
