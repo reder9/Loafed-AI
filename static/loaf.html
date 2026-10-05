@@ -34,11 +34,50 @@
   <!-- Google Fonts Preconnect & Optimized Async Loading -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"></noscript>
+
+  <!-- Preload Critical Header Mascot Asset -->
+  <link rel="preload" as="image" href="/static/logo.webp" type="image/webp" fetchpriority="high">
 
   <!-- Core Styles -->
   <link rel="stylesheet" href="/static/tailwind.min.css">
-  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/style.min.css">
+
+  <!-- Structured Data (JSON-LD) for Search Engines -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "ItemPage",
+    "name": "Official Cat Loaf Scorecard",
+    "url": "https://loafed.redersoft.com/loaf",
+    "description": "Certified cat loaf posture audit, aerodynamic drag coefficient telemetry, and official score breakdown.",
+    "breadcrumb": {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://loafed.redersoft.com/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Leaderboard",
+          "item": "https://loafed.redersoft.com/leaderboard"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "Scorecard",
+          "item": "https://loafed.redersoft.com/loaf"
+        }
+      ]
+    }
+  }
+  </script>
 
   <!-- Self-Hosted Lucide Icons -->
   <script src="/static/lucide.min.js" defer></script>
@@ -58,7 +97,10 @@
       <!-- Center: Mascot Brand -->
       <a href="/" class="flex items-center gap-2 group min-w-0" aria-label="Loafed AI Home">
         <div class="w-9 h-9 rounded-xl bg-orange-100/80 border border-orange-300 flex items-center justify-center text-orange-700 shadow-xs p-1 transition-transform group-hover:scale-105 shrink-0">
-          <img src="/static/logo.png" alt="Loafed AI Mascot" width="32" height="32" class="w-7 h-7 object-contain">
+          <picture>
+            <source srcset="/static/logo.webp" type="image/webp">
+            <img src="/static/logo.png" alt="Loafed AI Mascot" width="32" height="32" class="w-7 h-7 object-contain">
+          </picture>
         </div>
         <div class="hidden sm:flex flex-col text-left">
           <span class="font-serif font-black text-base text-stone-900 tracking-tight leading-none group-hover:text-orange-600 transition-colors">Loafed<span class="text-orange-600 font-sans font-extrabold text-sm ml-0.5">AI</span></span>
@@ -203,7 +245,7 @@
           <!-- Photo Container & Angle Buttons -->
           <div class="sm:col-span-5 flex flex-col gap-2.5">
             <div id="loafPhotoContainer" class="relative rounded-2xl overflow-hidden border border-orange-200/90 bg-white shadow-2xs aspect-square group cursor-pointer" title="Click or tap to enlarge photo">
-              <img id="loafPhoto" src="/static/logo.png" alt="Audited Cat Loaf Portrait" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ortho-photo-img">
+              <img id="loafPhoto" src="/static/logo.webp" alt="Audited Cat Loaf Portrait" width="600" height="600" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ortho-photo-img">
               <div class="absolute bottom-2.5 right-2.5 px-2.5 py-1 rounded-lg bg-stone-950/70 text-white text-[10px] font-bold flex items-center gap-1 backdrop-blur-xs shadow-xs opacity-90 group-hover:opacity-100 transition-opacity">
                 <i data-lucide="zoom-in" class="w-3.5 h-3.5"></i>
                 <span>Enlarge</span>
@@ -387,7 +429,7 @@
             </div>
           </div>
           
-          <button id="downloadCertBtn" type="button" class="w-full sm:w-auto min-h-[44px] px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white font-bold text-xs shadow-sm flex items-center justify-center gap-2 shrink-0 transition-all active:scale-95 shimmer-btn btn-tactile cursor-pointer" title="Download High-Resolution Certificate">
+          <button id="downloadCertBtn" type="button" class="w-full sm:w-auto min-h-[44px] px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white font-bold text-xs shadow-sm flex items-center justify-center gap-2 shrink-0 transition-all active:scale-95 shimmer-btn btn-tactile cursor-pointer" aria-label="Download Official Certificate" title="Download High-Resolution Certificate">
             <i data-lucide="download" class="w-4 h-4"></i>
             <span>Download Certificate</span>
           </button>
@@ -396,8 +438,8 @@
         <!-- Shareable Link & Social Action Bar -->
         <div class="pt-2 border-t border-orange-100 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div class="flex items-center gap-2 w-full sm:w-auto flex-1">
-            <input type="text" id="loafShareUrlInput" readonly class="w-full px-3 py-2 rounded-xl bg-stone-100 border border-stone-200 text-xs font-mono text-stone-600 select-all outline-none" title="Share URL">
-            <button id="copyShareUrlBtn" type="button" class="min-h-[40px] px-3.5 py-2 rounded-xl bg-orange-100 hover:bg-orange-200 text-orange-950 font-bold text-xs flex items-center gap-1.5 shrink-0 transition-colors btn-tactile cursor-pointer" title="Copy shareable link to clipboard">
+            <input type="text" id="loafShareUrlInput" readonly class="w-full px-3 py-2 rounded-xl bg-stone-100 border border-stone-200 text-xs font-mono text-stone-600 select-all outline-none" aria-label="Shareable scorecard link" title="Share URL">
+            <button id="copyShareUrlBtn" type="button" class="min-h-[40px] px-3.5 py-2 rounded-xl bg-orange-100 hover:bg-orange-200 text-orange-950 font-bold text-xs flex items-center gap-1.5 shrink-0 transition-colors btn-tactile cursor-pointer" aria-label="Copy shareable link" title="Copy shareable link to clipboard">
               <i data-lucide="copy" class="w-4 h-4 text-orange-700"></i>
               <span>Copy Link</span>
             </button>
@@ -439,7 +481,10 @@
   <footer class="mt-auto border-t border-orange-200/80 bg-white/70 py-8 text-center text-xs text-stone-500">
     <div class="max-w-4xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
       <div class="flex items-center gap-2">
-        <img src="/static/logo.png" alt="Loafed AI Logo" width="20" height="20" class="w-5 h-5 object-contain">
+        <picture>
+          <source srcset="/static/logo.webp" type="image/webp">
+          <img src="/static/logo.png" alt="Loafed AI Logo" width="20" height="20" class="w-5 h-5 object-contain">
+        </picture>
         <span class="font-bold text-stone-700">Loafed AI</span>
         <span>&bull;</span>
         <span>A free novelty experiment by <a href="https://redersoft.com" target="_blank" rel="noopener noreferrer" class="text-orange-700 font-semibold underline">RederSoft</a></span>
@@ -463,7 +508,7 @@
         </button>
       </div>
       <div class="flex items-center justify-center bg-stone-100 rounded-xl overflow-hidden max-h-[70vh]">
-        <img id="lightboxImage" src="/static/logo.png" alt="Enlarged Loaf Photo" class="max-w-full max-h-[70vh] object-contain">
+        <img id="lightboxImage" src="/static/logo.webp" alt="Enlarged Loaf Photo" class="max-w-full max-h-[70vh] object-contain">
       </div>
     </div>
   </div>
