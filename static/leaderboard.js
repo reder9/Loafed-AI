@@ -179,6 +179,33 @@ document.addEventListener('DOMContentLoaded', () => {
   const cancelDeleteAccountBtn = document.getElementById('cancelDeleteAccountBtn');
   const confirmDeleteAccountBtn = document.getElementById('confirmDeleteAccountBtn');
 
+  // Custom Stylized Modals
+  const reportModal = document.getElementById('reportModal');
+  const closeReportModalBtn = document.getElementById('closeReportModalBtn');
+  const cancelReportModalBtn = document.getElementById('cancelReportModalBtn');
+  const reportModalForm = document.getElementById('reportModalForm');
+  const reportEntryId = document.getElementById('reportEntryId');
+  const reportEntryScore = document.getElementById('reportEntryScore');
+  const reportModalTargetTitle = document.getElementById('reportModalTargetTitle');
+  const submitReportModalBtn = document.getElementById('submitReportModalBtn');
+
+  const confirmActionModal = document.getElementById('confirmActionModal');
+  const confirmActionModalTitle = document.getElementById('confirmActionModalTitle');
+  const confirmActionModalSubtitle = document.getElementById('confirmActionModalSubtitle');
+  const confirmActionModalMessage = document.getElementById('confirmActionModalMessage');
+  const confirmActionBtnText = document.getElementById('confirmActionBtnText');
+  const confirmActionBtnIcon = document.getElementById('confirmActionBtnIcon');
+  const okConfirmActionModalBtn = document.getElementById('okConfirmActionModalBtn');
+  const cancelConfirmActionModalBtn = document.getElementById('cancelConfirmActionModalBtn');
+
+  const copyLinkModal = document.getElementById('copyLinkModal');
+  const closeCopyLinkModalBtn = document.getElementById('closeCopyLinkModalBtn');
+  const dismissCopyLinkModalBtn = document.getElementById('dismissCopyLinkModalBtn');
+  const copyLinkModalInput = document.getElementById('copyLinkModalInput');
+  const copyLinkModalCopyBtn = document.getElementById('copyLinkModalCopyBtn');
+  const copyLinkModalCopyBtnText = document.getElementById('copyLinkModalCopyBtnText');
+  const copyLinkModalCatName = document.getElementById('copyLinkModalCatName');
+
   const photoLightboxModal = document.getElementById('photoLightboxModal');
   const lightboxCatName = document.getElementById('lightboxCatName');
   const lightboxImage = document.getElementById('lightboxImage');
@@ -227,6 +254,187 @@ document.addEventListener('DOMContentLoaded', () => {
   const loafDetailsShareUrlInput = document.getElementById('loafDetailsShareUrlInput');
   const copyLoafShareUrlBtn = document.getElementById('copyLoafShareUrlBtn');
   const modalNativeShareBtn = document.getElementById('modalNativeShareBtn');
+
+  // Stylized Confirmation Dialog (Replaces native browser confirm())
+  let pendingConfirmResolve = null;
+
+  function showConfirmModal({ title, subtitle, message, confirmText = 'Confirm', confirmIcon = 'trash-2', isDanger = true } = {}) {
+    return new Promise((resolve) => {
+      pendingConfirmResolve = resolve;
+      if (!confirmActionModal) {
+        resolve(false);
+        return;
+      }
+      if (confirmActionModalTitle) confirmActionModalTitle.textContent = title || 'Confirm Action';
+      if (confirmActionModalSubtitle) confirmActionModalSubtitle.textContent = subtitle || (isDanger ? 'Irreversible Action' : 'Notice');
+      if (confirmActionModalMessage) confirmActionModalMessage.textContent = message || 'Are you sure you want to proceed with this action?';
+      if (confirmActionBtnText) confirmActionBtnText.textContent = confirmText;
+      if (confirmActionBtnIcon && confirmIcon) confirmActionBtnIcon.setAttribute('data-lucide', confirmIcon);
+
+      if (okConfirmActionModalBtn) {
+        if (isDanger) {
+          okConfirmActionModalBtn.className = 'min-h-[42px] px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer active:scale-95';
+        } else {
+          okConfirmActionModalBtn.className = 'min-h-[42px] px-4 py-2 rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer active:scale-95';
+        }
+      }
+
+      confirmActionModal.classList.remove('hidden');
+      refreshIcons();
+    });
+  }
+
+  function closeConfirmModal(result = false) {
+    if (confirmActionModal) confirmActionModal.classList.add('hidden');
+    if (pendingConfirmResolve) {
+      pendingConfirmResolve(result);
+      pendingConfirmResolve = null;
+    }
+  }
+
+  if (cancelConfirmActionModalBtn) cancelConfirmActionModalBtn.addEventListener('click', () => closeConfirmModal(false));
+  if (okConfirmActionModalBtn) okConfirmActionModalBtn.addEventListener('click', () => closeConfirmModal(true));
+  if (confirmActionModal) {
+    confirmActionModal.addEventListener('click', (e) => {
+      if (e.target === confirmActionModal) closeConfirmModal(false);
+    });
+  }
+
+  // Stylized Report Modal (Replaces native browser confirm())
+  function openReportModal(id, score, catName) {
+    if (!reportModal) return;
+    if (reportEntryId) reportEntryId.value = id || '';
+    if (reportEntryScore) reportEntryScore.value = (score !== undefined && score !== null) ? score : '';
+    if (reportModalTargetTitle) {
+      reportModalTargetTitle.textContent = catName ? `Reporting "${catName}"` : 'Loafed Community Integrity';
+    }
+    const defaultRadio = reportModal.querySelector('input[name="reportReasonOption"]');
+    if (defaultRadio) defaultRadio.checked = true;
+    reportModal.classList.remove('hidden');
+    refreshIcons();
+  }
+
+  function closeReportModal() {
+    if (reportModal) reportModal.classList.add('hidden');
+  }
+
+  if (closeReportModalBtn) closeReportModalBtn.addEventListener('click', closeReportModal);
+  if (cancelReportModalBtn) cancelReportModalBtn.addEventListener('click', closeReportModal);
+  if (reportModal) {
+    reportModal.addEventListener('click', (e) => {
+      if (e.target === reportModal) closeReportModal();
+    });
+  }
+
+  if (reportModalForm) {
+    reportModalForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = reportEntryId ? reportEntryId.value.trim() : '';
+      const score = reportEntryScore ? reportEntryScore.value.trim() : '';
+      const reasonEl = reportModalForm.querySelector('input[name="reportReasonOption"]:checked');
+      const reason = reasonEl ? reasonEl.value : 'Not an authentic cat loaf';
+
+      if (!id) {
+        closeReportModal();
+        return;
+      }
+
+      if (submitReportModalBtn) {
+        submitReportModalBtn.disabled = true;
+        submitReportModalBtn.innerHTML = '<i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i><span>Submitting...</span>';
+        refreshIcons();
+      }
+
+      try {
+        const headers = { 'Content-Type': 'application/json' };
+        if (state.idToken) headers['Authorization'] = `Bearer ${state.idToken}`;
+        const res = await fetch('/api/leaderboard/report', {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({
+            entry_id: id,
+            score: score ? parseInt(score, 10) : undefined,
+            reason
+          })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok) {
+          closeReportModal();
+          showToast({
+            type: 'success',
+            title: 'Report Submitted',
+            message: 'Thank you for helping keep Loafed authentic and family friendly!'
+          });
+          loadLeaderboard(state.period);
+        } else {
+          showToast({
+            type: 'error',
+            title: 'Report Error',
+            message: data.detail || 'Could not submit report.'
+          });
+        }
+      } catch (err) {
+        showToast({
+          type: 'error',
+          title: 'Report Error',
+          message: err.message || 'An error occurred while submitting report.'
+        });
+      } finally {
+        if (submitReportModalBtn) {
+          submitReportModalBtn.disabled = false;
+          submitReportModalBtn.innerHTML = '<i data-lucide="flag" class="w-3.5 h-3.5"></i><span>Submit Report</span>';
+          refreshIcons();
+        }
+      }
+    });
+  }
+
+  // Stylized Copy Link Modal (Replaces native browser prompt())
+  function openCopyLinkModal(shareUrl, catName) {
+    if (!copyLinkModal) return;
+    if (copyLinkModalInput) copyLinkModalInput.value = shareUrl;
+    if (copyLinkModalCatName) copyLinkModalCatName.textContent = catName ? `Shareable link for ${catName}` : 'Shareable Link';
+    if (copyLinkModalCopyBtnText) copyLinkModalCopyBtnText.textContent = 'Copy';
+    copyLinkModal.classList.remove('hidden');
+    refreshIcons();
+    if (copyLinkModalInput) {
+      setTimeout(() => {
+        copyLinkModalInput.focus();
+        copyLinkModalInput.select();
+      }, 50);
+    }
+  }
+
+  function closeCopyLinkModal() {
+    if (copyLinkModal) copyLinkModal.classList.add('hidden');
+  }
+
+  if (closeCopyLinkModalBtn) closeCopyLinkModalBtn.addEventListener('click', closeCopyLinkModal);
+  if (dismissCopyLinkModalBtn) dismissCopyLinkModalBtn.addEventListener('click', closeCopyLinkModal);
+  if (copyLinkModal) {
+    copyLinkModal.addEventListener('click', (e) => {
+      if (e.target === copyLinkModal) closeCopyLinkModal();
+    });
+  }
+
+  if (copyLinkModalCopyBtn && copyLinkModalInput) {
+    copyLinkModalCopyBtn.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(copyLinkModalInput.value);
+        if (copyLinkModalCopyBtnText) copyLinkModalCopyBtnText.textContent = 'Copied!';
+        showToast({
+          type: 'success',
+          title: 'Link Copied',
+          message: 'Shareable loaf link copied to clipboard!'
+        });
+        setTimeout(() => {
+          if (copyLinkModalCopyBtnText) copyLinkModalCopyBtnText.textContent = 'Copy';
+        }, 2000);
+      } catch (_) {
+        copyLinkModalInput.select();
+      }
+    });
+  }
 
   // Display Name Safety Filters & Gamertag Generator
   const CLIENT_PROFANITY_REGEX = /\b(?:fuck|fck|shit|bitch|asshole|bastard|dick|pussy|cunt|cock|nigger|nigga|faggot|retard|whore|slut|twat|wanker|prick|penis|vagina|tit|tits|boob|boobs|nazi|hitler)\b/i;
@@ -1461,7 +1669,7 @@ document.addEventListener('DOMContentLoaded', () => {
         message: `Shareable link for ${catName || 'this loaf'} copied to clipboard!`
       });
     } catch (_) {
-      prompt('Copy shareable loaf link:', shareUrl);
+      openCopyLinkModal(shareUrl, catName);
     }
   }
   window.loafedShareLoaf = shareLoafLink;
@@ -1473,8 +1681,12 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && loafDetailsModal && !loafDetailsModal.classList.contains('hidden')) {
-      closeLoafDetails();
+    if (e.key === 'Escape') {
+      if (loafDetailsModal && !loafDetailsModal.classList.contains('hidden')) closeLoafDetails();
+      if (reportModal && !reportModal.classList.contains('hidden')) closeReportModal();
+      if (confirmActionModal && !confirmActionModal.classList.contains('hidden')) closeConfirmModal(false);
+      if (copyLinkModal && !copyLinkModal.classList.contains('hidden')) closeCopyLinkModal();
+      if (photoLightboxModal && !photoLightboxModal.classList.contains('hidden')) closePhotoLightbox();
     }
   });
 
@@ -1675,7 +1887,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <button class="share-loaf-btn p-2 rounded-xl text-stone-400 hover:text-orange-600 hover:bg-orange-50 transition-colors" data-id="${entry.entry_id}" data-name="${catName}" data-score="${score}" data-grade="${gradeLetter}" aria-label="Share ${catName} loaf link" title="Share link to this cat loaf">
               <i data-lucide="share-2" class="w-4 h-4 text-orange-600"></i>
             </button>
-            <button class="delete-loaf-btn p-2 rounded-xl text-stone-400 hover:text-red-600 hover:bg-red-50 transition-colors" data-id="${entry.entry_id}" aria-label="Delete ${catName} submission" title="Delete submission">
+            <button class="delete-loaf-btn p-2 rounded-xl text-stone-400 hover:text-red-600 hover:bg-red-50 transition-colors" data-id="${entry.entry_id}" data-name="${catName}" aria-label="Delete ${catName} submission" title="Delete submission">
               <i data-lucide="trash-2" class="w-4 h-4"></i>
             </button>
           </div>
@@ -1686,7 +1898,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <button class="share-loaf-btn p-2 rounded-xl text-stone-400 hover:text-orange-600 hover:bg-orange-50 transition-colors" data-id="${entry.entry_id}" data-name="${catName}" data-score="${score}" data-grade="${gradeLetter}" aria-label="Share ${catName} loaf link" title="Share link to this cat loaf">
               <i data-lucide="share-2" class="w-4 h-4 text-orange-600"></i>
             </button>
-            <button class="report-loaf-btn p-2 rounded-xl text-stone-300 hover:text-amber-700 hover:bg-orange-50 transition-colors" data-id="${entry.entry_id}" data-score="${score}" aria-label="Report ${catName} submission" title="Report submission as inappropriate or non-cat">
+            <button class="report-loaf-btn p-2 rounded-xl text-stone-300 hover:text-amber-700 hover:bg-orange-50 transition-colors" data-id="${entry.entry_id}" data-score="${score}" data-name="${catName}" aria-label="Report ${catName} submission" title="Report submission as inappropriate or non-cat">
               <i data-lucide="flag" class="w-4 h-4"></i>
             </button>
           </div>
@@ -1736,9 +1948,19 @@ document.addEventListener('DOMContentLoaded', () => {
     if (isMine) {
       leaderboardEntriesList.querySelectorAll('.delete-loaf-btn').forEach(btn => {
         btn.addEventListener('click', async (e) => {
+          e.stopPropagation();
           const id = e.currentTarget.getAttribute('data-id');
+          const name = e.currentTarget.getAttribute('data-name') || 'this loaf';
           if (!id) return;
-          if (!confirm('Are you sure you want to permanently delete this cat loaf from the leaderboard?')) return;
+          const confirmed = await showConfirmModal({
+            title: 'Delete Loaf Submission?',
+            subtitle: 'Leaderboard Removal',
+            message: `Are you sure you want to permanently delete "${name}" from the leaderboard?`,
+            confirmText: 'Delete Submission',
+            confirmIcon: 'trash-2',
+            isDanger: true
+          });
+          if (!confirmed) return;
           try {
             const res = await fetch(`/api/leaderboard/entry/${id}`, {
               method: 'DELETE',
@@ -1757,29 +1979,13 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     } else {
       leaderboardEntriesList.querySelectorAll('.report-loaf-btn').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
           const id = e.currentTarget.getAttribute('data-id');
           const score = e.currentTarget.getAttribute('data-score');
+          const name = e.currentTarget.getAttribute('data-name');
           if (!id) return;
-          if (!confirm('Report this submission as inappropriate or not an authentic cat loaf? Our moderators will review it.')) return;
-          try {
-            const headers = { 'Content-Type': 'application/json' };
-            if (state.idToken) headers['Authorization'] = `Bearer ${state.idToken}`;
-            const res = await fetch('/api/leaderboard/report', {
-              method: 'POST',
-              headers,
-              body: JSON.stringify({ entry_id: id, score: parseInt(score, 10) })
-            });
-            const data = await res.json();
-            if (res.ok) {
-              showToast({ type: 'success', title: 'Report Submitted', message: 'Thank you for helping keep Loafed family friendly!' });
-              loadLeaderboard(state.period);
-            } else {
-              showToast({ type: 'error', title: 'Report Error', message: data.detail || 'Could not submit report.' });
-            }
-          } catch (err) {
-            showToast({ type: 'error', title: 'Report Error', message: err.message });
-          }
+          openReportModal(id, score, name);
         });
       });
     }

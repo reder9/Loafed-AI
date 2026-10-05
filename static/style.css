@@ -1428,7 +1428,10 @@ img, video, canvas {
   #profileModal .bakery-card,
   #deleteAccountModal .bakery-card,
   #sampleCertModal .bakery-card,
-  #submitLeaderboardModal .bakery-card {
+  #submitLeaderboardModal .bakery-card,
+  #reportModal .bakery-card,
+  #confirmActionModal .bakery-card,
+  #copyLinkModal .bakery-card {
     max-height: 92vh;
     overflow-y: auto;
     width: 100%;

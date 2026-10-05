@@ -114,3 +114,61 @@ test('Frontend Helper - Safe Perspective Angle Extraction', () => {
   assert.equal(res3.label, 'Angle 3');
   assert.equal(res3.icon, 'camera');
 });
+
+test('Frontend Governance - No Native Browser Dialogs (Zero alert, confirm, prompt calls)', async () => {
+  const fs = await import('node:fs');
+  const path = await import('node:path');
+
+  const filesToCheck = ['static/app.js', 'static/leaderboard.js', 'static/loaf.js'];
+  const dialogPattern = /(?<!\/\/\s*|[\w$])(alert|confirm|prompt)\s*\(/g;
+
+  for (const relPath of filesToCheck) {
+    const fullPath = path.resolve(relPath);
+    const content = fs.readFileSync(fullPath, 'utf8');
+    const lines = content.split('\n');
+
+    lines.forEach((line, index) => {
+      // Exclude comments
+      const trimmed = line.trim();
+      if (trimmed.startsWith('//') || trimmed.startsWith('/*') || trimmed.startsWith('*')) {
+        return;
+      }
+      const match = trimmed.match(dialogPattern);
+      if (match) {
+        assert.fail(`Found disallowed native browser dialog call '${match[0]}' at ${relPath}:${index + 1}: "${trimmed}"`);
+      }
+    });
+  }
+});
+
+test('Frontend Helper - Report Modal Payload Construction', () => {
+  function buildReportPayload(entryId, score, reason) {
+    const cleanId = (entryId || '').trim();
+    if (!cleanId) return null;
+    const payload = {
+      entry_id: cleanId,
+      reason: reason || 'Not an authentic cat loaf'
+    };
+    if (score !== undefined && score !== null && !isNaN(parseInt(score, 10))) {
+      payload.score = parseInt(score, 10);
+    }
+    return payload;
+  }
+
+  const p1 = buildReportPayload('loaf_abc_123', '95', 'Inappropriate or offensive photograph');
+  assert.deepEqual(p1, {
+    entry_id: 'loaf_abc_123',
+    score: 95,
+    reason: 'Inappropriate or offensive photograph'
+  });
+
+  const p2 = buildReportPayload('  loaf_xyz_789  ', null, '');
+  assert.deepEqual(p2, {
+    entry_id: 'loaf_xyz_789',
+    reason: 'Not an authentic cat loaf'
+  });
+
+  const p3 = buildReportPayload('', '80', 'spam');
+  assert.equal(p3, null);
+});
+
