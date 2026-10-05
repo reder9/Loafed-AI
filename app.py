@@ -137,19 +137,26 @@ Image.MAX_IMAGE_PIXELS = 100_000_000     # decompression-bomb guard (Pillow erro
 # Cryptographic hashes of official benchmark reference cats (Buttercup, Chonks, Flash)
 SAMPLE_IMAGE_HASHES = {
     '29da98c29f5869499aafc34c8e88189bdc9bb8beda548c226e5cd9ca0c9e3e85', # buttercup_front.jpg
-    '4568a6c10e9b60596f8b73a33296764d1588140e08b0fd5974edbb3e67e0c5ca', # buttercup_front.webp
+    '4568a6c10e9b60596f8b73a33296764d1588140e08b0fd5974edbb3e67e0c5ca', # buttercup_front.webp (original)
+    '311ed24074b8673ff8fbdfdce6dc94c8b6e30cc30f8ade87e04bcd9121fb26fc', # buttercup_front.webp (optimized)
     'd2480d9bb3eff46f4084e9264e30535d73d8ca58303a3fdc29d5ecda127e1bca', # buttercup_side.jpg
-    '03e31ad8318cb8ace8e462bd8010e489ed236ed6f2af921bcb04103e610e1fa3', # buttercup_side.webp
+    '03e31ad8318cb8ace8e462bd8010e489ed236ed6f2af921bcb04103e610e1fa3', # buttercup_side.webp (original)
+    'f3a83667cd57412ae0635971e8536bd9f61d2625f11a15df0fc5e0e0acbe280b', # buttercup_side.webp (optimized)
     'eaadea8fff7b013b611c699936281e1d126bc27d2bfe7bf8198a65896d8590ec', # buttercup_top.jpg
-    '9a102c7c2c9ec2c848047e2d2a971fb46aa511649f070b3583daa6c2633ba3a7', # buttercup_top.webp
+    '9a102c7c2c9ec2c848047e2d2a971fb46aa511649f070b3583daa6c2633ba3a7', # buttercup_top.webp (original)
+    'a16d404f3b2f3bb9d7facdb7528155ba46af66868a0dba9af0daf3ce5d2113e5', # buttercup_top.webp (optimized)
     'df4bf53b6e0d69e3c8c064ed7a5acff5f5214596570a8a3283ac2cadf73b4f55', # chonks_front.jpg
-    'c059f4f9d9f6eb424c292135c938114335846500fae6a14b029c62ac8633fd47', # chonks_front.webp
+    'c059f4f9d9f6eb424c292135c938114335846500fae6a14b029c62ac8633fd47', # chonks_front.webp (original)
+    'd1367ef1885837f412ccd3634f11c9b7a9f7cacf861603cdfee2eaf4ecdef022', # chonks_front.webp (optimized)
     '933a9f36ef7b3821a74783a8c76e2d28f0a83c9b80d576bb639f2b1deee97cfb', # chonks_side.jpg
-    '20301653b8089a0c1b49baef72bad3d612634f5d7a710d8b09683d1f50d06b50', # chonks_side.webp
+    '20301653b8089a0c1b49baef72bad3d612634f5d7a710d8b09683d1f50d06b50', # chonks_side.webp (original)
+    '2a2831452d60ecab48edb75722ac9dcc574138d55f356f7afde15ee8f30f1fd5', # chonks_side.webp (optimized)
     '58e4732d0c104587f82c4751bace5a8cc8d1f737878e3934b68a266a0612c70b', # flash_front.jpg
-    'dc2e47056d559c6f56053d7387145b2cc96dace39acec3bb375fb88325f1f0eb', # flash_front.webp
+    'dc2e47056d559c6f56053d7387145b2cc96dace39acec3bb375fb88325f1f0eb', # flash_front.webp (original)
+    'bf629deb780446b177168753125a00f027143e8487e8af5815f393662ec81f81', # flash_front.webp (optimized)
     '0591e1137fd2a61b5abbc107e5d922a3d9a19227c8daf32ae8179f9c17225454', # flash_side.jpg
-    'a7ea6c8bf8aa75ca0f0c9b4f234e084d4c8cda5284b524d049c6c7cbec0e4602', # flash_side.webp
+    'a7ea6c8bf8aa75ca0f0c9b4f234e084d4c8cda5284b524d049c6c7cbec0e4602', # flash_side.webp (original)
+    'd046a7d8548902f6c819503ff10e51256a60144b8da48438ee76f9bb5c2495c9', # flash_side.webp (optimized)
     '5636eab1ddf6655bead01cdf2d1103935e01b6d5aabdbfb2a92579803b02ce32', # chonks_semi_front.jpg
 }
 
@@ -253,6 +260,13 @@ def is_profane(text: str) -> bool:
     for cp in COMPILED_WORD_PATTERNS:
         if cp.search(text):
             return True
+
+    # 1b. Check camelCase joined compound words (e.g. FuckBaker, ShitCat)
+    camel_spaced = re.sub(r'([a-z])([A-Z])', r'\1 \2', text)
+    if camel_spaced != text:
+        for cp in COMPILED_WORD_PATTERNS:
+            if cp.search(camel_spaced):
+                return True
 
     # 2. Severe substring check
     for sp in COMPILED_SEVERE_PATTERNS:
@@ -982,6 +996,15 @@ def get_server_api_keys() -> List[str]:
             k_clean = k.strip()
             if k_clean and k_clean not in keys:
                 keys.append(k_clean)
+
+    # 3. Check GEMINI_API_KEY_SECONDARY / GEMINI_API_KEY_2 (explicit fallback keys)
+    for env_name in ["GEMINI_API_KEY_SECONDARY", "GEMINI_API_KEY_2"]:
+        env_sec = os.getenv(env_name, "").strip()
+        if env_sec:
+            for k in env_sec.split(","):
+                k_clean = k.strip()
+                if k_clean and k_clean not in keys:
+                    keys.append(k_clean)
 
     return keys
 
@@ -2367,6 +2390,26 @@ async def get_loaf_details(entry_id: str):
                 item = items[0]
         except Exception as e:
             logger.warning(f"DynamoDB scan fallback error for {entry_id}: {e}")
+
+    if not item and entry_id in ("hof_buttercup", "hof_chonks", "hof_flash"):
+        preset_map = {
+            "hof_buttercup": (PRESET_BUTTERCUP, "/static/samples/buttercup_front.webp", "Buttercup", "RederSoft Bakery"),
+            "hof_chonks": (PRESET_CHONKS, "/static/samples/chonks_front.webp", "Chonks", "Master Bakery"),
+            "hof_flash": (PRESET_FLASH, "/static/samples/flash_front.webp", "Flash", "Aero Bureau")
+        }
+        p_data, p_thumb, p_cat, p_baker = preset_map[entry_id]
+        item = {
+            "entry_id": entry_id,
+            "cat_name": p_cat,
+            "display_name": p_baker,
+            "overall_score": p_data["overall_score"],
+            "grade_letter": p_data["grade_letter"],
+            "loaf_rank": p_data["loaf_rank"],
+            "bread_classification": p_data["bread_classification"],
+            "summary_critique": p_data["summary_critique"],
+            "thumbnail_url": p_thumb,
+            "created_at": "2026-10-01T00:00:00Z"
+        }
 
     if not item or item.get("is_hidden") is True or int(item.get("report_count", 0)) >= 3:
         raise HTTPException(status_code=404, detail="Cat loaf not found or has been removed.")

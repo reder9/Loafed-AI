@@ -23,4 +23,6 @@ build/
 *.egg-info/
 deploy.zip
 lighthouse_*.json
+.coverage
+.pytest_cache/
 
