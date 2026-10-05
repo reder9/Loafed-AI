@@ -1522,3 +1522,45 @@ img, video, canvas {
   backface-visibility: hidden;
   transform: translateZ(0);
 }
+
+/* ==========================================================================
+   Loaf Details Modal Sleek Loading Bar & Interactive Card Press
+   ========================================================================== */
+.loaf-loading-bar-sweep {
+  width: 45%;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: 9999px;
+  animation: loaf-bar-sweep 1.35s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+@keyframes loaf-bar-sweep {
+  0% {
+    left: -45%;
+    width: 25%;
+  }
+  50% {
+    width: 55%;
+  }
+  100% {
+    left: 100%;
+    width: 25%;
+  }
+}
+
+.pedestal-card {
+  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.18s ease;
+}
+
+.pedestal-card:active {
+  transform: scale(0.975);
+}
+
+.leaderboard-entry-row {
+  transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.leaderboard-entry-row:active {
+  transform: scale(0.99);
+}

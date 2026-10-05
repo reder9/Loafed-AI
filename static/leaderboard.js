@@ -1192,6 +1192,21 @@ document.addEventListener('DOMContentLoaded', () => {
     loafDetailsModal.classList.remove('hidden');
     if (loafDetailsLoading) loafDetailsLoading.classList.remove('hidden');
     if (loafDetailsContent) loafDetailsContent.classList.add('hidden');
+    const topProgress = document.getElementById('loafDetailsTopProgress');
+    if (topProgress) topProgress.classList.remove('hidden');
+
+    // Pre-populate known entry metadata immediately for instant visual feedback
+    const cachedEntry = Array.isArray(state.entries) ? state.entries.find(e => e.entry_id === entryId) : null;
+    if (cachedEntry) {
+      if (loafDetailsCatName) loafDetailsCatName.textContent = cachedEntry.cat_name || 'Anonymous Loaf';
+      if (loafDetailsBakerName) loafDetailsBakerName.textContent = cachedEntry.display_name || 'Anonymous Baker';
+      if (loafDetailsScoreStamp) loafDetailsScoreStamp.textContent = `${cachedEntry.overall_score || 0} ${cachedEntry.grade_letter || ''}`;
+      if (loafDetailsRank) loafDetailsRank.textContent = cachedEntry.loaf_rank || 'Artisan Loaf';
+      if (loafDetailsPhoto && cachedEntry.thumbnail_url) {
+        loafDetailsPhoto.src = cachedEntry.thumbnail_url;
+        loafDetailsPhoto.alt = `${cachedEntry.cat_name || 'Cat'} Loaf Photo`;
+      }
+    }
     refreshIcons();
 
     try {
@@ -1367,7 +1382,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Show content
       if (loafDetailsLoading) loafDetailsLoading.classList.add('hidden');
-      if (loafDetailsContent) loafDetailsContent.classList.remove('hidden');
+      if (loafDetailsContent) {
+        loafDetailsContent.classList.remove('hidden');
+        loafDetailsContent.classList.add('animate-in', 'fade-in', 'duration-200');
+      }
+      const topProgressDone = document.getElementById('loafDetailsTopProgress');
+      if (topProgressDone) topProgressDone.classList.add('hidden');
       refreshIcons();
 
       // Highlight matching row if visible in current list
@@ -1385,7 +1405,12 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function closeLoafDetails() {
+    activeLoafDetail = null;
     if (loafDetailsModal) loafDetailsModal.classList.add('hidden');
+    const topProgress = document.getElementById('loafDetailsTopProgress');
+    if (topProgress) topProgress.classList.add('hidden');
+    if (loafDetailsLoading) loafDetailsLoading.classList.remove('hidden');
+    if (loafDetailsContent) loafDetailsContent.classList.add('hidden');
     // Clear URL param without reloading
     const newUrl = new URL(window.location);
     if (newUrl.searchParams.has('loaf')) {

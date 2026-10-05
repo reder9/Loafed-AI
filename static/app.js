@@ -1146,6 +1146,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const preset = BENCHMARK_PRESETS[catKey];
     if (!preset) return;
 
+    const clickedBtn = document.querySelector(`.load-benchmark-btn[data-cat="${catKey}"]`);
+    if (clickedBtn) {
+      clickedBtn.innerHTML = `
+        <i data-lucide="loader-2" class="w-3.5 h-3.5 text-orange-600 animate-spin"></i>
+        <span>Loading...</span>
+      `;
+      refreshIcons();
+    }
+
     try {
       // If user had staged photos that were NOT from an example preset, preserve them!
       if (!state.isExamplePreset && state.photos.length > 0) {
@@ -1193,6 +1202,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     } catch (e) {
       console.error('Failed to load benchmark preset', e);
+      resetBenchmarkButtons();
       showToast({
         type: 'error',
         title: 'Preset Load Error',
