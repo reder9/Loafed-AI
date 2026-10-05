@@ -1567,7 +1567,11 @@ document.addEventListener('DOMContentLoaded', () => {
           state.submittedPhotoBlob = state.photos[0].file;
         }
         renderResults(data.result, data.demo_mode);
-        saveLoafToHistory(data.result);
+        saveLoafToHistory(data.result, {
+          gradeToken: data.grade_token || null,
+          canSubmit: (data.can_submit !== false) && !data.demo_mode,
+          primaryPhotoIndex: state.primaryPhotoIndex
+        });
         if (data.demo_mode && data.message) {
           showToast({
             type: 'info',
@@ -3047,7 +3051,7 @@ Certified by Loafed Inspection Engine`;
     });
   }
 
-  // Local History Manager (0 login required, stored locally in browser)
+  // Local History & Photo Cache Manager (0 login required, stored locally in browser)
   const historyBadgeCount = document.getElementById('historyBadgeCount');
   const historyModal = document.getElementById('historyModal');
   const openHistoryBtn = document.getElementById('openHistoryBtn');
@@ -3055,6 +3059,90 @@ Certified by Loafed Inspection Engine`;
   const dismissHistoryBtn = document.getElementById('dismissHistoryBtn');
   const clearAllHistoryBtn = document.getElementById('clearAllHistoryBtn');
   const historyListContainer = document.getElementById('historyListContainer');
+
+  const IDB_NAME = 'loafed_cache_db';
+  const IDB_VERSION = 1;
+  const IDB_STORE = 'inspections';
+
+  function openIndexedDb() {
+    return new Promise((resolve, reject) => {
+      if (typeof window === 'undefined' || !window.indexedDB) {
+        return reject(new Error('IndexedDB not supported'));
+      }
+      const req = window.indexedDB.open(IDB_NAME, IDB_VERSION);
+      req.onupgradeneeded = (e) => {
+        const db = e.target.result;
+        if (!db.objectStoreNames.contains(IDB_STORE)) {
+          db.createObjectStore(IDB_STORE, { keyPath: 'id' });
+        }
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error || new Error('Failed to open IndexedDB'));
+    });
+  }
+
+  async function saveInspectionToIndexedDb(record) {
+    try {
+      const db = await openIndexedDb();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(IDB_STORE, 'readwrite');
+        const store = tx.objectStore(IDB_STORE);
+        const req = store.put(record);
+        req.onsuccess = () => resolve(true);
+        req.onerror = () => reject(req.error);
+      });
+    } catch (err) {
+      console.warn('Could not save inspection photos to IndexedDB cache:', err);
+      return false;
+    }
+  }
+
+  async function getInspectionFromIndexedDb(id) {
+    try {
+      const db = await openIndexedDb();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(IDB_STORE, 'readonly');
+        const store = tx.objectStore(IDB_STORE);
+        const req = store.get(id);
+        req.onsuccess = () => resolve(req.result || null);
+        req.onerror = () => reject(req.error);
+      });
+    } catch (err) {
+      console.warn('Could not retrieve inspection photos from IndexedDB:', err);
+      return null;
+    }
+  }
+
+  async function deleteInspectionFromIndexedDb(id) {
+    try {
+      const db = await openIndexedDb();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(IDB_STORE, 'readwrite');
+        const store = tx.objectStore(IDB_STORE);
+        const req = store.delete(id);
+        req.onsuccess = () => resolve(true);
+        req.onerror = () => reject(req.error);
+      });
+    } catch (err) {
+      console.warn('Could not delete inspection from IndexedDB:', err);
+      return false;
+    }
+  }
+
+  async function clearAllInspectionsFromIndexedDb() {
+    try {
+      const db = await openIndexedDb();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(IDB_STORE, 'readwrite');
+        const store = tx.objectStore(IDB_STORE);
+        const req = store.clear();
+        req.onsuccess = () => resolve(true);
+        req.onerror = () => reject(req.error);
+      });
+    } catch (_) {
+      return false;
+    }
+  }
 
   function getSavedHistory() {
     try {
@@ -3071,12 +3159,16 @@ Certified by Loafed Inspection Engine`;
     }
   }
 
-  function saveLoafToHistory(result) {
+  async function saveLoafToHistory(result, options = {}) {
     if (!result) return;
     try {
-      const history = getSavedHistory();
+      const id = Date.now().toString();
+      const gradeToken = options.gradeToken || state.gradeToken || null;
+      const canSubmit = (options.canSubmit !== undefined) ? options.canSubmit : (state.canSubmit !== false && !state.isExamplePreset);
+      const primaryPhotoIndex = (options.primaryPhotoIndex !== undefined) ? options.primaryPhotoIndex : (state.primaryPhotoIndex || 0);
+
       const entry = {
-        id: Date.now().toString(),
+        id: id,
         cat_name: result.cat_name || 'Anonymous Subject',
         overall_score: result.overall_score || 0,
         grade_letter: result.grade_letter || 'N/A',
@@ -3084,10 +3176,61 @@ Certified by Loafed Inspection Engine`;
         bread_classification: result.bread_classification || 'Standard Loaf',
         summary_critique: result.summary_critique || '',
         timestamp: new Date().toISOString(),
-        result: result
+        result: result,
+        grade_token: gradeToken,
+        can_submit: canSubmit,
+        primary_photo_index: primaryPhotoIndex,
+        has_cached_photos: false
       };
+
+      // Persist authentic photos to IndexedDB so user can submit or view later with 100% integrity
+      if (!state.isExamplePreset && Array.isArray(state.photos) && state.photos.length > 0) {
+        try {
+          const photoRecords = [];
+          for (let i = 0; i < state.photos.length; i++) {
+            const p = state.photos[i];
+            let blob = p.file;
+            if (!blob && p.previewUrl) {
+              try {
+                const res = await fetch(p.previewUrl);
+                blob = await res.blob();
+              } catch (_) {}
+            }
+            if (blob) {
+              photoRecords.push({
+                blob: blob,
+                name: p.name || `photo_${i + 1}.jpg`,
+                type: blob.type || 'image/jpeg',
+                angleType: p.angleType || 'front'
+              });
+            }
+          }
+
+          if (photoRecords.length > 0) {
+            await saveInspectionToIndexedDb({
+              id: id,
+              result: result,
+              grade_token: gradeToken,
+              can_submit: canSubmit,
+              primary_photo_index: primaryPhotoIndex,
+              timestamp: entry.timestamp,
+              photos: photoRecords
+            });
+            entry.has_cached_photos = true;
+          }
+        } catch (dbErr) {
+          console.warn('IndexedDB photo cache failed (continuing with localStorage metadata):', dbErr);
+        }
+      }
+
+      const history = getSavedHistory();
       history.unshift(entry);
-      if (history.length > 30) history.length = 30;
+      if (history.length > 30) {
+        const removed = history.splice(30);
+        removed.forEach(r => {
+          if (r.id) deleteInspectionFromIndexedDb(r.id).catch(() => {});
+        });
+      }
       localStorage.setItem('loafed_history', JSON.stringify(history));
       updateHistoryBadge();
     } catch (e) {
@@ -3141,6 +3284,10 @@ Certified by Loafed Inspection Engine`;
         minute: '2-digit'
       });
 
+      const photoTag = item.has_cached_photos
+        ? '<span class="inline-flex items-center gap-1 text-[9px] bg-orange-100 text-orange-800 font-semibold px-1.5 py-0.5 rounded border border-orange-200"><i data-lucide="camera" class="w-2.5 h-2.5"></i>Photos Cached</span>'
+        : '';
+
       return `
         <div class="p-3.5 rounded-xl border border-orange-200/90 bg-orange-50/40 hover:bg-orange-50/80 transition-colors flex items-center justify-between gap-3 shadow-2xs" data-id="${item.id}">
           <div class="flex items-center gap-3 min-w-0">
@@ -3149,7 +3296,10 @@ Certified by Loafed Inspection Engine`;
               <span class="text-[9px] font-bold text-orange-900/60 leading-none">${item.grade_letter}</span>
             </div>
             <div class="min-w-0">
-              <div class="text-xs font-bold text-stone-900 truncate">${item.cat_name}</div>
+              <div class="text-xs font-bold text-stone-900 truncate flex items-center gap-1.5">
+                <span class="truncate">${item.cat_name}</span>
+                ${photoTag}
+              </div>
               <div class="text-[11px] text-stone-600 truncate">${item.loaf_rank} &bull; ${item.bread_classification}</div>
               <div class="text-[10px] text-stone-400 mt-0.5">${formattedDate}</div>
             </div>
@@ -3169,19 +3319,72 @@ Certified by Loafed Inspection Engine`;
     refreshIcons();
 
     historyListContainer.querySelectorAll('.view-history-entry-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
+      btn.addEventListener('click', async (e) => {
         const id = e.currentTarget.getAttribute('data-id');
         const entry = history.find(h => h.id === id);
-        if (entry && entry.result) {
-          state.currentResult = entry.result;
-          historyModal.classList.add('hidden');
-          renderResults(entry.result, false);
-          showToast({
-            type: 'info',
-            title: 'Report Loaded',
-            message: `Loaded past inspection report for ${entry.cat_name}.`
-          });
+        if (!entry) return;
+
+        // Clean up previously active preview URLs to prevent memory leaks
+        state.photos.forEach(p => {
+          if (p.previewUrl) URL.revokeObjectURL(p.previewUrl);
+        });
+        state.photos = [];
+        state.userSavedPhotos = [];
+
+        // Clear preset indicators
+        state.isExamplePreset = false;
+        state.activePresetKey = null;
+
+        // Try to load full inspection with photos from IndexedDB
+        let fullRecord = null;
+        try {
+          fullRecord = await getInspectionFromIndexedDb(id);
+        } catch (dbErr) {
+          console.warn('Could not read from IndexedDB:', dbErr);
         }
+
+        const resultToRender = (fullRecord && fullRecord.result) || entry.result;
+        state.currentResult = resultToRender;
+        state.gradeToken = (fullRecord && fullRecord.grade_token) || entry.grade_token || null;
+        state.canSubmit = fullRecord ? (fullRecord.can_submit !== false) : (entry.can_submit !== false);
+        state.primaryPhotoIndex = (fullRecord && fullRecord.primary_photo_index !== undefined)
+          ? fullRecord.primary_photo_index
+          : (entry.primary_photo_index || 0);
+        state.submittedEntryId = entry.submitted_entry_id || null;
+
+        // Restore photos if available in fullRecord
+        if (fullRecord && Array.isArray(fullRecord.photos) && fullRecord.photos.length > 0) {
+          state.photos = fullRecord.photos.map((p, idx) => {
+            const blob = p.blob;
+            const file = blob instanceof File ? blob : new File([blob], p.name || `photo_${idx + 1}.jpg`, { type: p.type || blob.type || 'image/jpeg' });
+            return {
+              id: `cached_${id}_${idx}`,
+              file: file,
+              name: p.name || file.name,
+              angleType: p.angleType || (idx === 0 ? 'front' : (idx === 1 ? 'side' : (idx === 2 ? 'top' : 'angle'))),
+              previewUrl: URL.createObjectURL(file)
+            };
+          });
+
+          const pIdx = (state.primaryPhotoIndex >= 0 && state.primaryPhotoIndex < state.photos.length) ? state.primaryPhotoIndex : 0;
+          state.submittedPhotoBlob = state.photos[pIdx].file;
+        } else {
+          state.submittedPhotoBlob = null;
+        }
+
+        if (catNameInput && entry.result && entry.result.cat_name) {
+          catNameInput.value = entry.result.cat_name;
+        }
+
+        historyModal.classList.add('hidden');
+        renderResults(resultToRender, false);
+        updateSubmitButton();
+
+        showToast({
+          type: 'info',
+          title: 'Report Loaded',
+          message: `Loaded saved inspection for ${entry.cat_name || 'your cat'}.`
+        });
       });
     });
 
@@ -3191,6 +3394,7 @@ Certified by Loafed Inspection Engine`;
         const id = e.currentTarget.getAttribute('data-id');
         const updated = history.filter(h => h.id !== id);
         localStorage.setItem('loafed_history', JSON.stringify(updated));
+        deleteInspectionFromIndexedDb(id).catch(() => {});
         updateHistoryBadge();
         renderHistoryModal();
       });
@@ -3220,6 +3424,7 @@ Certified by Loafed Inspection Engine`;
   if (clearAllHistoryBtn) {
     clearAllHistoryBtn.addEventListener('click', () => {
       localStorage.removeItem('loafed_history');
+      clearAllInspectionsFromIndexedDb();
       updateHistoryBadge();
       renderHistoryModal();
       showToast({
@@ -4173,12 +4378,30 @@ Certified by Loafed Inspection Engine`;
         }
 
         if (!photoFile) {
-          throw new Error('An authentic user-uploaded cat photo is required for leaderboard submission.');
+          throw new Error('The original photo file is not stored in your local browser cache for this past inspection. To publish to the leaderboard, please re-upload and inspect your cat in the inspector bay.');
         }
 
         let gradeToken = state.gradeToken;
         if (!gradeToken) {
-          throw new Error('A verified inspection grade token is required. Please evaluate your cat first.');
+          throw new Error('A verified inspection grade token is required. Please re-run inspection to generate a valid certification token.');
+        }
+
+        // Validate token age client-side to prevent unexpected network roundtrips
+        if (gradeToken.includes('.')) {
+          try {
+            const rawPayload = gradeToken.split('.')[0];
+            const tokenData = JSON.parse(atob(rawPayload.replace(/-/g, '+').replace(/_/g, '/')));
+            if (tokenData && tokenData.ts) {
+              const ageSeconds = (Date.now() / 1000) - tokenData.ts;
+              if (ageSeconds > 86400) {
+                throw new Error('Leaderboard certification tokens expire after 24 hours. Please run a quick re-inspection of your cat to submit.');
+              }
+            }
+          } catch (tokErr) {
+            if (tokErr.message && tokErr.message.includes('expire')) {
+              throw tokErr;
+            }
+          }
         }
 
         const submitForm = new FormData();
@@ -4230,6 +4453,12 @@ Certified by Loafed Inspection Engine`;
           if (!saved.includes(subData.entry_id)) {
             saved.push(subData.entry_id);
             localStorage.setItem('loafed_my_submissions', JSON.stringify(saved));
+          }
+          const history = JSON.parse(localStorage.getItem('loafed_history') || '[]');
+          const target = history.find(h => h.result && (h.result.cat_name === validation.catName || h.cat_name === validation.catName));
+          if (target) {
+            target.submitted_entry_id = subData.entry_id;
+            localStorage.setItem('loafed_history', JSON.stringify(history));
           }
         } catch (_) {}
 
@@ -4678,6 +4907,34 @@ Certified by Loafed Inspection Engine`;
         openDisqualificationModal(state.currentResult.rejection_reason);
         return;
       }
+
+      // Check if photo is missing (e.g. legacy history entry where photos were not saved in IndexedDB)
+      const hasPhoto = Boolean(state.submittedPhotoBlob || (state.photos && state.photos.length > 0 && state.photos[0].file));
+      if (!hasPhoto) {
+        showToast({
+          type: 'warning',
+          title: 'Photo File Required',
+          message: 'The original photo is not stored in your browser cache for this past inspection. Please re-upload your cat\'s photo to publish to the leaderboard.'
+        });
+        return;
+      }
+
+      // Check if grade token is expired (> 24 hours)
+      if (state.gradeToken && state.gradeToken.includes('.')) {
+        try {
+          const rawPayload = state.gradeToken.split('.')[0];
+          const tokenData = JSON.parse(atob(rawPayload.replace(/-/g, '+').replace(/_/g, '/')));
+          if (tokenData && tokenData.ts && (Date.now() / 1000 - tokenData.ts > 86400)) {
+            showToast({
+              type: 'warning',
+              title: 'Inspection Expired',
+              message: 'Leaderboard certification tokens expire after 24 hours. Please run a quick re-inspection of your cat to submit.'
+            });
+            return;
+          }
+        } catch (_) {}
+      }
+
       if (!state.user) {
         state.pendingLeaderboardIntent = true;
         openAuthModal('signup', 'leaderboard_submit');
