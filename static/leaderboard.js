@@ -1186,7 +1186,12 @@ document.addEventListener('DOMContentLoaded', () => {
     return dataUrl;
   }
 
-  async function openLoafDetails(entryId) {
+  function openLoafDetails(entryId) {
+    if (!entryId) return;
+    window.location.href = `/loaf?id=${encodeURIComponent(entryId)}`;
+  }
+
+  async function openLoafDetailsModal(entryId) {
     if (!loafDetailsModal || !entryId) return;
 
     loafDetailsModal.classList.remove('hidden');
@@ -1422,7 +1427,7 @@ document.addEventListener('DOMContentLoaded', () => {
   window.loafedOpenLoafDetails = openLoafDetails;
 
   async function shareLoafLink(entryId, catName, score, grade) {
-    const shareUrl = `${window.location.origin}/leaderboard?loaf=${encodeURIComponent(entryId)}`;
+    const shareUrl = `${window.location.origin}/loaf?id=${encodeURIComponent(entryId)}`;
     const shareData = {
       title: `${catName || 'Cat Loaf'} — Loafed AI Certified Feline`,
       text: `Check out ${catName || 'this cat loaf'} audited by Loafed AI with a verified score of ${score || ''} ${grade || ''}!`,
@@ -2388,9 +2393,10 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Check if a specific loaf was linked in the URL
-  const requestedLoaf = initialParams.get('loaf');
+  const requestedLoaf = initialParams.get('loaf') || initialParams.get('id');
   if (requestedLoaf) {
-    openLoafDetails(requestedLoaf);
+    window.location.replace(`/loaf?id=${encodeURIComponent(requestedLoaf)}`);
+    return;
   }
 
   refreshIcons();

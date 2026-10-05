@@ -2904,6 +2904,12 @@ async def serve_index():
 async def serve_leaderboard():
     return FileResponse(str(STATIC_DIR / "leaderboard.html"))
 
+@app.get("/loaf")
+@app.get("/loaf.html")
+@app.get("/loaf/{entry_id}")
+async def serve_loaf_page(entry_id: Optional[str] = None):
+    return FileResponse(str(STATIC_DIR / "loaf.html"))
+
 @app.get("/robots.txt", response_class=PlainTextResponse)
 async def serve_robots():
     robots_file = STATIC_DIR / "robots.txt"

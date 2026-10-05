@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#fff8ee">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+
+  <title>Official Cat Loaf Scorecard — Loafed AI</title>
+  <meta name="description" content="View the certified cat loaf posture inspection, aerodynamic drag telemetry, and 4-pillar scores audited by Loafed AI computer vision.">
+  <link rel="canonical" href="https://loafed.redersoft.com/loaf">
+  <link rel="manifest" href="/static/manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="32x32" href="/static/icon-192.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/static/icon-192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="/static/icon-512.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png">
+
+  <!-- Open Graph / Social Sharing -->
+  <meta property="og:type" content="website">
+  <meta id="ogUrl" property="og:url" content="https://loafed.redersoft.com/loaf">
+  <meta id="ogTitle" property="og:title" content="Certified Cat Loaf Inspection Scorecard — Loafed AI">
+  <meta id="ogDescription" property="og:description" content="Certified feline loaf audit results, aerodynamic drag analysis, and official posture score breakdown.">
+  <meta id="ogImage" property="og:image" content="https://loafed.redersoft.com/static/logo.png">
+  <meta property="og:site_name" content="Loafed AI">
+
+  <!-- Twitter Cards -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta id="twitterTitle" name="twitter:title" content="Certified Cat Loaf Inspection Scorecard — Loafed AI">
+  <meta id="twitterDescription" name="twitter:description" content="Certified feline loaf audit results, aerodynamic drag analysis, and official posture score breakdown.">
+  <meta id="twitterImage" name="twitter:image" content="https://loafed.redersoft.com/static/logo.png">
+
+  <!-- Google Fonts Preconnect & Optimized Async Loading -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+
+  <!-- Core Styles -->
+  <link rel="stylesheet" href="/static/tailwind.min.css">
+  <link rel="stylesheet" href="/static/style.css">
+
+  <!-- Self-Hosted Lucide Icons -->
+  <script src="/static/lucide.min.js" defer></script>
+</head>
+<body class="text-stone-800 antialiased selection:bg-orange-200 selection:text-orange-900 pb-16 min-h-screen flex flex-col">
+
+  <!-- Sticky Top Navigation Header -->
+  <header class="border-b border-orange-200/80 bg-[#fffbf5]/95 backdrop-blur-md sticky top-0 z-40 shadow-xs shadow-orange-500/5">
+    <div class="max-w-4xl mx-auto px-3 sm:px-6 h-16 flex items-center justify-between gap-2">
+      <!-- Left: Back to Leaderboard -->
+      <a href="/leaderboard" id="backToLeaderboardBtn" class="min-h-[40px] px-3 py-1.5 rounded-xl bg-orange-100/70 hover:bg-orange-200/80 text-orange-950 font-bold text-xs flex items-center gap-1.5 transition-all active:scale-95 border border-orange-200/80 shrink-0" aria-label="Return to leaderboard">
+        <i data-lucide="arrow-left" class="w-4 h-4 text-orange-700"></i>
+        <span class="hidden xs:inline">Leaderboard</span>
+        <span class="xs:hidden">Back</span>
+      </a>
+
+      <!-- Center: Mascot Brand -->
+      <a href="/" class="flex items-center gap-2 group min-w-0" aria-label="Loafed AI Home">
+        <div class="w-9 h-9 rounded-xl bg-orange-100/80 border border-orange-300 flex items-center justify-center text-orange-700 shadow-xs p-1 transition-transform group-hover:scale-105 shrink-0">
+          <img src="/static/logo.png" alt="Loafed AI Mascot" width="32" height="32" class="w-7 h-7 object-contain">
+        </div>
+        <div class="hidden sm:flex flex-col text-left">
+          <span class="font-serif font-black text-base text-stone-900 tracking-tight leading-none group-hover:text-orange-600 transition-colors">Loafed<span class="text-orange-600 font-sans font-extrabold text-sm ml-0.5">AI</span></span>
+          <span class="text-[10px] font-bold text-orange-900/70 tracking-widest uppercase mt-0.5">Scorecard</span>
+        </div>
+      </a>
+
+      <!-- Right: Action Buttons (Share & Grade Cat) -->
+      <div class="flex items-center gap-2 shrink-0">
+        <button id="headerShareBtn" type="button" class="min-h-[40px] px-3 sm:px-3.5 py-1.5 rounded-xl bg-white hover:bg-orange-50 text-stone-700 hover:text-orange-900 font-bold text-xs border border-orange-200/90 shadow-2xs flex items-center gap-1.5 transition-all active:scale-95" aria-label="Share this cat loaf scorecard" title="Share Scorecard">
+          <i data-lucide="share-2" class="w-4 h-4 text-orange-600"></i>
+          <span class="hidden sm:inline">Share</span>
+        </button>
+
+        <a href="/" class="min-h-[40px] px-3 sm:px-4 py-1.5 rounded-xl bg-gradient-to-r from-orange-600 via-amber-600 to-orange-700 hover:from-orange-700 hover:to-amber-700 text-white font-bold text-xs shadow-xs flex items-center gap-1.5 transition-all active:scale-95 shimmer-btn btn-tactile" aria-label="Grade your cat loaf">
+          <i data-lucide="camera" class="w-4 h-4"></i>
+          <span class="hidden xs:inline">Grade Cat</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Sleek Animated Gradient Loading Bar across Header Bottom -->
+    <div id="loafTopProgress" class="absolute bottom-0 left-0 right-0 h-1 overflow-hidden bg-orange-100/70 hidden">
+      <div class="loaf-loading-bar-sweep h-full bg-gradient-to-r from-orange-500 via-amber-400 to-orange-600 shadow-xs"></div>
+    </div>
+  </header>
+
+  <!-- Main Standalone Scorecard Container -->
+  <main class="flex-1 max-w-3xl w-full mx-auto px-3 sm:px-6 pt-5 pb-12">
+
+    <!-- Loading Shimmer State Skeleton -->
+    <div id="loafLoadingState" class="space-y-5 animate-pulse">
+      <div class="text-center py-6">
+        <div class="relative w-12 h-12 mx-auto mb-3 flex items-center justify-center">
+          <div class="absolute inset-0 rounded-full border-2 border-orange-200 border-t-orange-600 animate-spin"></div>
+          <div class="w-8 h-8 rounded-full bg-orange-50 flex items-center justify-center text-orange-600 shadow-2xs">
+            <i data-lucide="sparkles" class="w-4 h-4"></i>
+          </div>
+        </div>
+        <h2 class="text-base font-black text-stone-900 tracking-tight">Retrieving Official Loaf Inspection...</h2>
+        <p class="text-xs text-stone-500 mt-1">Auditing paw concealment, flank wrap &amp; aerodynamic drag</p>
+      </div>
+
+      <!-- Shimmer Scorecard Skeleton -->
+      <div class="bakery-card p-5 sm:p-7 bg-white border border-orange-200/90 shadow-sm space-y-5">
+        <div class="flex items-start justify-between gap-4 pb-4 border-b border-orange-100">
+          <div class="space-y-2 flex-1">
+            <div class="h-4 w-32 bg-orange-100 rounded-full"></div>
+            <div class="h-8 w-56 bg-orange-200/70 rounded-xl"></div>
+            <div class="h-3.5 w-40 bg-stone-100 rounded-full"></div>
+          </div>
+          <div class="w-20 h-10 bg-orange-100 rounded-xl shrink-0"></div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-12 gap-5 p-4 rounded-2xl bg-orange-50/50 border border-orange-100">
+          <div class="sm:col-span-5">
+            <div class="aspect-square w-full rounded-2xl bg-orange-100/70"></div>
+          </div>
+          <div class="sm:col-span-7 space-y-3">
+            <div class="h-5 w-48 bg-orange-200/70 rounded-md"></div>
+            <div class="h-16 w-full bg-white rounded-xl border border-orange-100"></div>
+            <div class="h-8 w-36 bg-orange-100/60 rounded-lg"></div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+          <div class="h-24 bg-orange-50/40 rounded-xl border border-orange-100"></div>
+          <div class="h-24 bg-orange-50/40 rounded-xl border border-orange-100"></div>
+          <div class="h-24 bg-orange-50/40 rounded-xl border border-orange-100"></div>
+          <div class="h-24 bg-orange-50/40 rounded-xl border border-orange-100"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Error / Not Found State -->
+    <div id="loafErrorState" class="hidden py-16 text-center">
+      <div class="bakery-card max-w-md mx-auto p-8 bg-white border border-orange-200 shadow-md">
+        <div class="w-14 h-14 rounded-2xl bg-orange-100 border border-orange-200 text-orange-600 flex items-center justify-center mx-auto mb-4 shadow-2xs">
+          <i data-lucide="search-x" class="w-7 h-7"></i>
+        </div>
+        <h2 class="text-lg font-black text-stone-900 tracking-tight">Cat Loaf Not Found</h2>
+        <p id="loafErrorMessage" class="text-xs text-stone-600 mt-2 leading-relaxed">
+          The requested loaf evaluation may have been removed or does not exist in our certified registry.
+        </p>
+        <div class="pt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
+          <a href="/leaderboard" class="w-full sm:w-auto min-h-[42px] px-5 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-bold text-xs shadow-xs transition-all active:scale-95 flex items-center justify-center gap-1.5 shimmer-btn btn-tactile">
+            <i data-lucide="trophy" class="w-4 h-4"></i>
+            <span>View Leaderboard</span>
+          </a>
+          <a href="/" class="w-full sm:w-auto min-h-[42px] px-5 py-2.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs transition-colors flex items-center justify-center gap-1.5">
+            <i data-lucide="camera" class="w-4 h-4 text-orange-600"></i>
+            <span>Grade a Cat</span>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loaded Standalone Scorecard Content -->
+    <div id="loafContent" class="hidden space-y-6">
+
+      <!-- Breadcrumbs & Quick Rank -->
+      <div class="flex items-center justify-between text-xs text-stone-500 pb-1">
+        <nav aria-label="Breadcrumb" class="flex items-center gap-1.5">
+          <a href="/leaderboard" class="hover:text-orange-700 transition-colors font-medium">Leaderboard</a>
+          <span>/</span>
+          <span id="loafBreadcrumbCat" class="font-bold text-stone-800">Cat Name</span>
+        </nav>
+        <span class="inline-flex items-center gap-1 text-[11px] text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+          <i data-lucide="check-circle-2" class="w-3 h-3 text-emerald-600"></i>
+          <span>Official Verification</span>
+        </span>
+      </div>
+
+      <!-- Main Inspection Card -->
+      <div class="bakery-card p-4 sm:p-7 bg-white border border-orange-200/90 shadow-sm space-y-6 relative overflow-hidden">
+
+        <!-- Header Row: Verification ID, Cat Name, Baker, Score Stamp -->
+        <div class="flex items-start justify-between gap-4 pb-4 border-b border-orange-100">
+          <div>
+            <div class="flex items-center gap-2 flex-wrap mb-1.5">
+              <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-orange-100 text-orange-950 font-black text-[10px] border border-orange-300 shadow-2xs">
+                <i data-lucide="award" class="w-3 h-3 text-orange-600"></i>
+                <span id="loafVerificationId">LF-2026-VERIFIED</span>
+              </span>
+              <span id="loafDate" class="text-[11px] text-stone-600 font-semibold">Certified Oct 2026</span>
+            </div>
+            <h1 id="loafCatName" class="text-2xl sm:text-3xl font-black text-stone-900 tracking-tight leading-tight">Cat Name</h1>
+            <p class="text-xs text-stone-500 mt-1">
+              Baked &amp; Entered by <span id="loafBakerName" class="font-bold text-stone-800">Baker Name</span>
+            </p>
+          </div>
+
+          <!-- Rubber Stamp Score Pill -->
+          <div class="shrink-0 flex flex-col items-end">
+            <span id="loafScoreStamp" class="stamp text-base sm:text-lg font-black text-orange-700 bg-orange-50/50 border-orange-700 shadow-xs">98 A+</span>
+          </div>
+        </div>
+
+        <!-- Hero: Multi-Angle Cat Portrait & Chief Inspector Critique -->
+        <div class="grid grid-cols-1 sm:grid-cols-12 gap-5 items-start bg-orange-50/40 p-3.5 sm:p-5 rounded-2xl border border-orange-200/80">
+          
+          <!-- Photo Container & Angle Buttons -->
+          <div class="sm:col-span-5 flex flex-col gap-2.5">
+            <div id="loafPhotoContainer" class="relative rounded-2xl overflow-hidden border border-orange-200/90 bg-white shadow-2xs aspect-square group cursor-pointer" title="Click or tap to enlarge photo">
+              <img id="loafPhoto" src="/static/logo.png" alt="Audited Cat Loaf Portrait" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ortho-photo-img">
+              <div class="absolute bottom-2.5 right-2.5 px-2.5 py-1 rounded-lg bg-stone-950/70 text-white text-[10px] font-bold flex items-center gap-1 backdrop-blur-xs shadow-xs opacity-90 group-hover:opacity-100 transition-opacity">
+                <i data-lucide="zoom-in" class="w-3.5 h-3.5"></i>
+                <span>Enlarge</span>
+              </div>
+            </div>
+
+            <!-- Angles Selector Strip (Active when multiple photos exist) -->
+            <div id="loafAnglesStrip" class="hidden flex flex-col gap-1.5 p-2 bg-white/95 rounded-xl border border-orange-200/80 shadow-2xs">
+              <div class="flex items-center justify-between px-0.5">
+                <span class="text-[10px] font-extrabold uppercase tracking-wider text-orange-950 flex items-center gap-1">
+                  <i data-lucide="camera" class="w-3 h-3 text-orange-600"></i>
+                  <span>Audited Angles</span>
+                </span>
+                <span class="text-[10px] text-stone-500 font-semibold">Tap to inspect</span>
+              </div>
+              <div id="loafAnglesButtons" class="flex items-center gap-1.5 overflow-x-auto py-0.5 scrollbar-thin">
+                <!-- Dynamically populated buttons -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Loaf Rank, Bread Classification, & Critique -->
+          <div class="sm:col-span-7 flex flex-col justify-between h-full space-y-3.5">
+            <div>
+              <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-white border border-orange-200 text-orange-950 font-black text-xs shadow-2xs mb-2">
+                <i data-lucide="crown" class="w-3.5 h-3.5 text-amber-500"></i>
+                <span id="loafRank">Grandmaster Artisan Loaf</span>
+              </div>
+
+              <div class="text-xs font-bold text-stone-600 mb-2.5">
+                Classification: <span id="loafBread" class="text-orange-900 font-black text-xs sm:text-sm">Double-Toasted Golden Brioche</span>
+              </div>
+
+              <!-- Chief Auditor Field Notes -->
+              <div class="p-3.5 bg-white/95 rounded-xl border border-orange-200/80 shadow-2xs">
+                <div class="flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-wider text-orange-900 mb-1.5">
+                  <i data-lucide="scroll" class="w-3.5 h-3.5 text-orange-600"></i>
+                  <span>Chief Auditor Field Notes</span>
+                </div>
+                <p id="loafCritique" class="text-xs text-stone-700 leading-relaxed italic">
+                  Cat demonstrates exemplary perimeter compacting and bilateral dough symmetry.
+                </p>
+              </div>
+            </div>
+
+            <!-- Kinematic Telemetry Badges (Drag HUD) -->
+            <div class="flex items-center gap-2 flex-wrap text-xs pt-1">
+              <span id="loafDragBadge" class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white border border-stone-200 text-stone-700 font-semibold shadow-2xs">
+                <i data-lucide="wind" class="w-3.5 h-3.5 text-orange-600"></i>
+                <span>Drag: <strong id="loafDragVal" class="text-stone-900 font-mono">0.03</strong> Cd</span>
+              </span>
+              <span id="loafOarBadge" class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white border border-stone-200 text-stone-700 font-semibold shadow-2xs">
+                <i data-lucide="compass" class="w-3.5 h-3.5 text-orange-600"></i>
+                <span id="loafOarText">Flush Perimeter</span>
+              </span>
+              <span id="loafAngleBonusBadge" class="hidden inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-amber-50 border border-amber-200 text-amber-900 font-semibold shadow-2xs">
+                <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-600"></i>
+                <span id="loafAngleBonusText">+5 Multi-Angle Bonus</span>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4-Pillars Kinematic Telemetry Breakdown -->
+        <div class="space-y-3">
+          <div class="flex items-center justify-between pb-1">
+            <div class="flex items-center gap-2">
+              <i data-lucide="binary" class="w-4 h-4 text-orange-600"></i>
+              <h2 class="text-xs font-black uppercase tracking-wider text-stone-900">Official Loaf Score Breakdown</h2>
+            </div>
+            <span class="text-[11px] text-stone-500">100-Point Kinematic Audit</span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <!-- 1. Paw Tuck Concealment -->
+            <div class="p-3.5 rounded-xl bg-white border border-orange-200/90 shadow-2xs flex flex-col justify-between space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-extrabold text-stone-800 flex items-center gap-1.5">
+                  <i data-lucide="footprints" class="w-3.5 h-3.5 text-orange-600"></i>
+                  <span>Paw Tuck Concealment</span>
+                </span>
+                <span id="loafPawScore" class="text-xs font-black text-orange-700 font-mono">25/25</span>
+              </div>
+              <!-- Progress Bar -->
+              <div class="w-full bg-orange-100/70 h-2 rounded-full overflow-hidden">
+                <div id="loafPawBar" class="h-full bg-gradient-to-r from-orange-500 to-amber-500 rounded-full transition-all duration-500" style="width: 100%;"></div>
+              </div>
+              <p id="loafPawStatus" class="text-[11px] font-bold text-orange-950">100% Peet Stealth</p>
+              <p id="loafPawCritique" class="text-[11px] text-stone-600 leading-relaxed">No visible paws detected under carriage perimeter.</p>
+            </div>
+
+            <!-- 2. Tail Tuck & Flank Wrap -->
+            <div class="p-3.5 rounded-xl bg-white border border-orange-200/90 shadow-2xs flex flex-col justify-between space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-extrabold text-stone-800 flex items-center gap-1.5">
+                  <i data-lucide="sparkle" class="w-3.5 h-3.5 text-orange-600"></i>
+                  <span>Tail Tuck &amp; Flank Wrap</span>
+                </span>
+                <span id="loafTailScore" class="text-xs font-black text-orange-700 font-mono">24/25</span>
+              </div>
+              <!-- Progress Bar -->
+              <div class="w-full bg-orange-100/70 h-2 rounded-full overflow-hidden">
+                <div id="loafTailBar" class="h-full bg-gradient-to-r from-orange-500 to-amber-500 rounded-full transition-all duration-500" style="width: 96%;"></div>
+              </div>
+              <p id="loafTailStatus" class="text-[11px] font-bold text-orange-950">Zero Drag Flank Wrap</p>
+              <p id="loafTailCritique" class="text-[11px] text-stone-600 leading-relaxed">Tail flush along haunch line minimizing drag.</p>
+            </div>
+
+            <!-- 3. Elbow Form & Compactness -->
+            <div class="p-3.5 rounded-xl bg-white border border-orange-200/90 shadow-2xs flex flex-col justify-between space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-extrabold text-stone-800 flex items-center gap-1.5">
+                  <i data-lucide="shield" class="w-3.5 h-3.5 text-orange-600"></i>
+                  <span>Elbow Form &amp; Compactness</span>
+                </span>
+                <span id="loafElbowScore" class="text-xs font-black text-orange-700 font-mono">24/25</span>
+              </div>
+              <!-- Progress Bar -->
+              <div class="w-full bg-orange-100/70 h-2 rounded-full overflow-hidden">
+                <div id="loafElbowBar" class="h-full bg-gradient-to-r from-orange-500 to-amber-500 rounded-full transition-all duration-500" style="width: 96%;"></div>
+              </div>
+              <p id="loafElbowStatus" class="text-[11px] font-bold text-orange-950">Tight Dough Fold</p>
+              <p id="loafElbowCritique" class="text-[11px] text-stone-600 leading-relaxed">No flare or chicken-wing protrusion.</p>
+            </div>
+
+            <!-- 4. Crust Symmetry & Toast -->
+            <div class="p-3.5 rounded-xl bg-white border border-orange-200/90 shadow-2xs flex flex-col justify-between space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-extrabold text-stone-800 flex items-center gap-1.5">
+                  <i data-lucide="sun" class="w-3.5 h-3.5 text-orange-600"></i>
+                  <span>Crust Symmetry &amp; Toast</span>
+                </span>
+                <span id="loafCrustScore" class="text-xs font-black text-orange-700 font-mono">25/25</span>
+              </div>
+              <!-- Progress Bar -->
+              <div class="w-full bg-orange-100/70 h-2 rounded-full overflow-hidden">
+                <div id="loafCrustBar" class="h-full bg-gradient-to-r from-orange-500 to-amber-500 rounded-full transition-all duration-500" style="width: 100%;"></div>
+              </div>
+              <p id="loafCrustStatus" class="text-[11px] font-bold text-orange-950">Bilateral Boule Symmetry</p>
+              <p id="loafCrustCritique" class="text-[11px] text-stone-600 leading-relaxed">Even golden bake across dorsal coat spine.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Awarded Honor Badges & Demerits -->
+        <div class="p-4 bg-orange-50/50 rounded-2xl border border-orange-200/80 space-y-2">
+          <div class="text-[11px] font-black uppercase tracking-wider text-orange-950 flex items-center gap-1.5">
+            <i data-lucide="badge-check" class="w-4 h-4 text-orange-600"></i>
+            <span>Awarded Honor Badges &amp; Demerits</span>
+          </div>
+          <div id="loafBadgesList" class="flex flex-wrap gap-2 pt-1">
+            <!-- Dynamic Badges -->
+          </div>
+        </div>
+
+        <!-- Fun Baker Tips for This Cat -->
+        <div id="loafTipsContainer" class="hidden p-4 bg-amber-50/50 rounded-2xl border border-amber-200/80 space-y-2">
+          <div class="text-[11px] font-black uppercase tracking-wider text-amber-950 flex items-center gap-1.5">
+            <i data-lucide="lightbulb" class="w-4 h-4 text-amber-600"></i>
+            <span>Baker Posture &amp; Rising Tips</span>
+          </div>
+          <ul id="loafTipsList" class="space-y-1.5 text-xs text-amber-900/90 leading-relaxed list-disc list-inside">
+            <!-- Dynamic Tips -->
+          </ul>
+        </div>
+
+        <!-- Official Archival Certificate Download Section -->
+        <div class="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-amber-50 via-orange-50 to-amber-50 border border-amber-300 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div class="flex items-center gap-3 w-full sm:w-auto">
+            <div class="w-12 h-12 rounded-2xl bg-amber-500/15 border border-amber-300 text-amber-800 flex items-center justify-center shrink-0 shadow-2xs">
+              <i data-lucide="award" class="w-6 h-6"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="text-sm font-black text-amber-950">Official Certificate of Loaf Posture</span>
+                <span id="loafCertOwnershipTag" class="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-amber-200/90 text-amber-900 border border-amber-300">Archival 1200x800</span>
+              </div>
+              <p class="text-xs text-amber-900/80 mt-0.5">
+                Archival high-resolution certification document suitable for printing and framing.
+              </p>
+            </div>
+          </div>
+          
+          <button id="downloadCertBtn" type="button" class="w-full sm:w-auto min-h-[44px] px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white font-bold text-xs shadow-sm flex items-center justify-center gap-2 shrink-0 transition-all active:scale-95 shimmer-btn btn-tactile cursor-pointer" title="Download High-Resolution Certificate">
+            <i data-lucide="download" class="w-4 h-4"></i>
+            <span>Download Certificate</span>
+          </button>
+        </div>
+
+        <!-- Shareable Link & Social Action Bar -->
+        <div class="pt-2 border-t border-orange-100 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div class="flex items-center gap-2 w-full sm:w-auto flex-1">
+            <input type="text" id="loafShareUrlInput" readonly class="w-full px-3 py-2 rounded-xl bg-stone-100 border border-stone-200 text-xs font-mono text-stone-600 select-all outline-none" title="Share URL">
+            <button id="copyShareUrlBtn" type="button" class="min-h-[40px] px-3.5 py-2 rounded-xl bg-orange-100 hover:bg-orange-200 text-orange-950 font-bold text-xs flex items-center gap-1.5 shrink-0 transition-colors btn-tactile cursor-pointer" title="Copy shareable link to clipboard">
+              <i data-lucide="copy" class="w-4 h-4 text-orange-700"></i>
+              <span>Copy Link</span>
+            </button>
+          </div>
+
+          <div class="flex items-center gap-2 w-full sm:w-auto shrink-0 justify-end">
+            <button id="loafNativeShareBtn" type="button" class="min-h-[40px] px-4 py-2 rounded-xl bg-gradient-to-r from-orange-600 via-amber-600 to-orange-700 hover:from-orange-700 hover:to-amber-700 text-white font-bold text-xs shadow-xs flex items-center gap-1.5 transition-all active:scale-95 shimmer-btn btn-tactile cursor-pointer">
+              <i data-lucide="share-2" class="w-4 h-4"></i>
+              <span>Share Loaf</span>
+            </button>
+            <a href="/" class="min-h-[40px] px-3.5 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs flex items-center gap-1.5 transition-colors">
+              <i data-lucide="camera" class="w-4 h-4 text-orange-700"></i>
+              <span>Grade Your Cat</span>
+            </a>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Call to Action Banner -->
+      <div class="rounded-3xl bg-gradient-to-r from-orange-600 via-amber-600 to-orange-700 p-6 sm:p-8 text-white shadow-xl flex flex-col sm:flex-row items-center justify-between gap-6 text-center sm:text-left">
+        <div class="space-y-1.5 max-w-xl">
+          <h3 class="text-xl sm:text-2xl font-black">Think your cat can out-loaf this champion?</h3>
+          <p class="text-xs sm:text-sm text-orange-100 leading-relaxed">
+            Upload 1 to 5 photos to receive an instant multi-angle posture inspection from our AI vision model and claim your spot on the leaderboard.
+          </p>
+        </div>
+        <a href="/" class="min-h-[48px] px-6 py-3 rounded-xl bg-white text-orange-800 hover:bg-orange-50 font-bold text-xs sm:text-sm shadow-md transition-all shrink-0 active:scale-95 inline-flex items-center justify-center gap-2 shimmer-btn btn-tactile" aria-label="Grade Your Cat Loaf">
+          <i data-lucide="camera" class="w-4 h-4 text-orange-600"></i>
+          <span>Grade Your Cat Loaf</span>
+        </a>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="mt-auto border-t border-orange-200/80 bg-white/70 py-8 text-center text-xs text-stone-500">
+    <div class="max-w-4xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="flex items-center gap-2">
+        <img src="/static/logo.png" alt="Loafed AI Logo" width="20" height="20" class="w-5 h-5 object-contain">
+        <span class="font-bold text-stone-700">Loafed AI</span>
+        <span>&bull;</span>
+        <span>A free novelty experiment by <a href="https://redersoft.com" target="_blank" rel="noopener noreferrer" class="text-orange-700 font-semibold underline">RederSoft</a></span>
+      </div>
+      <div class="flex items-center gap-4 text-stone-500">
+        <a href="/" class="hover:text-stone-800 transition-colors">Inspector</a>
+        <a href="/leaderboard" class="hover:text-stone-800 transition-colors">Leaderboard</a>
+        <a href="/?legal=privacy" class="hover:text-stone-800 transition-colors">Privacy Policy</a>
+        <a href="/?legal=terms" class="hover:text-stone-800 transition-colors">Terms of Service</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Photo Lightbox Modal -->
+  <div id="photoLightboxModal" class="hidden fixed inset-0 z-50 bg-stone-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="max-w-xl w-full p-4 relative bg-white rounded-2xl border border-stone-300 shadow-2xl flex flex-col">
+      <div class="flex items-center justify-between pb-2 mb-2 border-b border-stone-200">
+        <h3 id="lightboxCatName" class="text-sm font-black text-stone-900">Cat Portrait</h3>
+        <button id="closeLightboxBtn" class="w-8 h-8 rounded-full bg-stone-100 hover:bg-rose-50 hover:border-red-200 hover:text-red-600 border border-stone-200 text-stone-500 flex items-center justify-center transition-all cursor-pointer" aria-label="Close photo">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+      <div class="flex items-center justify-center bg-stone-100 rounded-xl overflow-hidden max-h-[70vh]">
+        <img id="lightboxImage" src="/static/logo.png" alt="Enlarged Loaf Photo" class="max-w-full max-h-[70vh] object-contain">
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2.5 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
+
+  <!-- Hidden Canvas for Certificate Generation (1200 x 800 Archival Resolution) -->
+  <canvas id="certificateCanvas" class="hidden" width="1200" height="800"></canvas>
+
+  <script src="/static/loaf.min.js" defer></script>
+</body>
+</html>

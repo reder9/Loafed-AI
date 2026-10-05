@@ -2125,7 +2125,7 @@ Certified by Loafed Inspection Engine`;
       const r = state.currentResult;
       if (!r) return;
       const shareUrl = state.submittedEntryId
-        ? `${window.location.origin}/leaderboard?loaf=${encodeURIComponent(state.submittedEntryId)}`
+        ? `${window.location.origin}/loaf?id=${encodeURIComponent(state.submittedEntryId)}`
         : window.location.origin;
       const shareData = {
         title: `${r.cat_name || 'My Cat'} — Official Loaf Score`,
@@ -4050,9 +4050,9 @@ Certified by Loafed Inspection Engine`;
     }
 
     if (state.submittedEntryId) {
-      const shareUrl = `${window.location.origin}/leaderboard?loaf=${encodeURIComponent(state.submittedEntryId)}`;
+      const shareUrl = `${window.location.origin}/loaf?id=${encodeURIComponent(state.submittedEntryId)}`;
       if (submitSuccessShareUrl) submitSuccessShareUrl.value = shareUrl;
-      if (submitSuccessViewLeaderboardBtn) submitSuccessViewLeaderboardBtn.href = `/leaderboard?loaf=${encodeURIComponent(state.submittedEntryId)}`;
+      if (submitSuccessViewLeaderboardBtn) submitSuccessViewLeaderboardBtn.href = `/loaf?id=${encodeURIComponent(state.submittedEntryId)}`;
       if (submitModalFormView) submitModalFormView.classList.add('hidden');
       if (submitSuccessView) submitSuccessView.classList.remove('hidden');
       submitModal.classList.remove('hidden');
@@ -4234,13 +4234,13 @@ Certified by Loafed Inspection Engine`;
         } catch (_) {}
 
         // Populate success view
-        const shareUrl = `${window.location.origin}/leaderboard?loaf=${encodeURIComponent(subData.entry_id)}`;
+        const shareUrl = `${window.location.origin}/loaf?id=${encodeURIComponent(subData.entry_id)}`;
         if (submitSuccessCatName) submitSuccessCatName.textContent = subData.cat_name || 'Your Cat';
         if (submitSuccessThumb) submitSuccessThumb.src = subData.thumbnail_url || (submitModalThumbnail ? submitModalThumbnail.src : '/static/logo.png');
         if (submitSuccessScoreBadge) submitSuccessScoreBadge.textContent = `${subData.score} ${state.currentResult ? state.currentResult.grade_letter : ''}`;
         if (submitSuccessRank) submitSuccessRank.textContent = state.currentResult ? state.currentResult.loaf_rank : 'Artisan Loaf';
         if (submitSuccessShareUrl) submitSuccessShareUrl.value = shareUrl;
-        if (submitSuccessViewLeaderboardBtn) submitSuccessViewLeaderboardBtn.href = `/leaderboard?loaf=${encodeURIComponent(subData.entry_id)}`;
+        if (submitSuccessViewLeaderboardBtn) submitSuccessViewLeaderboardBtn.href = `/loaf?id=${encodeURIComponent(subData.entry_id)}`;
         if (submitSuccessMessage) submitSuccessMessage.textContent = `${subData.cat_name || 'Your cat'} has been officially published to the Leaderboard. Share your certified scorecard with friends!`;
 
         // Switch to success view inside modal
@@ -4293,7 +4293,7 @@ Certified by Loafed Inspection Engine`;
     if (shareSuccessNativeBtn) {
       shareSuccessNativeBtn.addEventListener('click', async () => {
         if (!state.submittedEntryId) return;
-        const shareUrl = `${window.location.origin}/leaderboard?loaf=${encodeURIComponent(state.submittedEntryId)}`;
+        const shareUrl = `${window.location.origin}/loaf?id=${encodeURIComponent(state.submittedEntryId)}`;
         const cat = (state.currentResult && state.currentResult.cat_name) || 'My Cat';
         const score = (state.currentResult && state.currentResult.overall_score) || '';
         const grade = (state.currentResult && state.currentResult.grade_letter) || '';
@@ -4934,9 +4934,9 @@ Certified by Loafed Inspection Engine`;
   updateAuthUI();
   handleAuthRedirectCallback();
   // Check for shared loaf query param
-  const urlLoaf = new URLSearchParams(window.location.search).get('loaf');
+  const urlLoaf = new URLSearchParams(window.location.search).get('loaf') || new URLSearchParams(window.location.search).get('id');
   if (urlLoaf) {
-    window.location.replace(`/leaderboard?loaf=${encodeURIComponent(urlLoaf)}`);
+    window.location.replace(`/loaf?id=${encodeURIComponent(urlLoaf)}`);
     return;
   }
 
