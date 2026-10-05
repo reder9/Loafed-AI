@@ -61,6 +61,16 @@ body {
   font-family: var(--font-serif);
 }
 
+.auditor-field-notes {
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 1.7;
+  letter-spacing: normal;
+  color: #44403c;
+}
+
 /* Glassmorphism & Warm Cream Tabby Card styling */
 .bakery-card {
   background: #ffffff;
