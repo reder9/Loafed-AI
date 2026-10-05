@@ -167,22 +167,18 @@ body {
 }
 
 /* RederSoft Cartoony Physical Cat Stamp Applicator System */
-#stampStationWrapper > :not(#gradeStamp) {
-  display: none !important;
-}
-
 .stamp-station-wrapper {
   position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 0.625rem;
+  justify-content: center;
 }
 
-/* Cartoony Cat Stamper Applicator Tool */
+/* Cartoony Cat Stamper Applicator Tool (Centered over Grade Badge) */
 .cat-stamper-tool {
   position: absolute;
-  left: 1.75rem; /* center of 3.5rem catCertificationStamp */
-  bottom: 0;
+  left: 50%;
+  bottom: -6px;
   width: 4.75rem;
   height: 6rem;
   margin-left: -2.375rem;
@@ -232,15 +228,15 @@ body {
   animation: cat-stamper-slam-and-lift 0.78s cubic-bezier(0.2, 0.8, 0.2, 1) both !important;
 }
 
-/* Rubber Stamp Ink Shockwave */
+/* Rubber Stamp Ink Shockwave (Centered over Grade Badge) */
 .stamp-shockwave-ring {
   position: absolute;
-  left: 1.75rem;
+  left: 50%;
   top: 50%;
-  width: 3.5rem;
-  height: 3.5rem;
-  margin-left: -1.75rem;
-  margin-top: -1.75rem;
+  width: 3.75rem;
+  height: 3.75rem;
+  margin-left: -1.875rem;
+  margin-top: -1.875rem;
   border-radius: 9999px;
   border: 3px solid rgba(234, 88, 12, 0.85);
   background: radial-gradient(circle, rgba(249, 115, 22, 0.4) 0%, rgba(234, 88, 12, 0) 70%);
@@ -276,7 +272,7 @@ body {
 /* Cartoon Ink Particle Specks */
 .stamp-particles-cluster {
   position: absolute;
-  left: 1.75rem;
+  left: 50%;
   top: 50%;
   width: 0;
   height: 0;
@@ -321,46 +317,6 @@ body {
   animation: stamp-particle-burst 0.78s cubic-bezier(0.15, 0.8, 0.25, 1) both;
 }
 
-/* Stamped Cat Certification Seal */
-.cat-certification-stamp {
-  width: 3.5rem;
-  height: 3.5rem;
-  flex: 0 0 auto;
-  opacity: 0;
-  transform: scale(0.9) rotate(-2deg);
-  filter: drop-shadow(0 0.35rem 0.5rem rgba(154, 52, 18, 0.25));
-  will-change: transform, opacity;
-}
-
-@keyframes cat-stamp-imprint {
-  0%, 25% {
-    opacity: 0;
-    transform: scale(0.8) rotate(-4deg);
-    filter: drop-shadow(0 0 0 transparent);
-  }
-  26% {
-    opacity: 1;
-    transform: scale(1.15) rotate(-5deg);
-    filter: drop-shadow(0 0 14px rgba(234, 88, 12, 0.7));
-  }
-  42% {
-    transform: scale(0.96) rotate(-2deg);
-    filter: drop-shadow(0 4px 6px rgba(154, 52, 18, 0.35));
-  }
-  65% {
-    transform: scale(1.03) rotate(-3deg);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1) rotate(-2deg);
-    filter: drop-shadow(0 2px 4px rgba(154, 52, 18, 0.22));
-  }
-}
-
-.cat-certification-stamp-slam {
-  animation: cat-stamp-imprint 0.78s cubic-bezier(0.18, 0.85, 0.32, 1.2) both !important;
-}
-
 /* Synchronized Grade Stamp Slam */
 @keyframes stamp-slam {
   0%, 25% {
@@ -396,7 +352,6 @@ body {
   .stamp-particles-cluster {
     display: none !important;
   }
-  .cat-certification-stamp-slam,
   .stamp-slam {
     animation-duration: 0.01ms !important;
     opacity: 1 !important;

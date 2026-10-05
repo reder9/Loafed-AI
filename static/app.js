@@ -1832,12 +1832,18 @@ document.addEventListener('DOMContentLoaded', () => {
       circleEl.style.strokeDashoffset = circumference;
     }
 
-    // Keep grade stamp hidden until score roll completes
+    // Keep grade stamp and stamper tool hidden until score roll completes
     const gradeStamp = document.getElementById('gradeStamp');
     if (gradeStamp) {
       gradeStamp.classList.remove('stamp-slam');
       gradeStamp.style.opacity = '0';
     }
+    const catStamperTool = document.getElementById('catStamperTool');
+    if (catStamperTool) catStamperTool.classList.remove('cat-stamper-slamming');
+    const stampShockwaveRing = document.getElementById('stampShockwaveRing');
+    if (stampShockwaveRing) stampShockwaveRing.classList.remove('stamp-shockwave-active');
+    const stampParticlesCluster = document.getElementById('stampParticlesCluster');
+    if (stampParticlesCluster) stampParticlesCluster.classList.remove('stamp-particles-active');
 
     // Hide badges until stamp impact
     const multiAngleBadge = document.getElementById('multiAngleBadge');
@@ -2092,9 +2098,16 @@ document.addEventListener('DOMContentLoaded', () => {
   function triggerStampSlam(result) {
     const gradeStamp = document.getElementById('gradeStamp');
     if (!gradeStamp) return;
+    const catStamperTool = document.getElementById('catStamperTool');
+    const stampShockwaveRing = document.getElementById('stampShockwaveRing');
+    const stampParticlesCluster = document.getElementById('stampParticlesCluster');
+
     // Reset all animation states
     gradeStamp.classList.remove('stamp-slam');
     gradeStamp.style.opacity = '0';
+    if (catStamperTool) catStamperTool.classList.remove('cat-stamper-slamming');
+    if (stampShockwaveRing) stampShockwaveRing.classList.remove('stamp-shockwave-active');
+    if (stampParticlesCluster) stampParticlesCluster.classList.remove('stamp-particles-active');
 
     // Configure grade text and styling
     if (result.is_cat === false) {
@@ -2115,7 +2128,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Force reflow for seamless re-triggering
     void gradeStamp.offsetWidth;
-    // Animate only the grade mark as it stamps onto the scorecard.
+    if (catStamperTool) void catStamperTool.offsetWidth;
+
+    // Trigger physical cat stamper descent, squash press, shockwave, and grade stamp impact
+    if (catStamperTool) catStamperTool.classList.add('cat-stamper-slamming');
+    if (stampShockwaveRing) stampShockwaveRing.classList.add('stamp-shockwave-active');
+    if (stampParticlesCluster) stampParticlesCluster.classList.add('stamp-particles-active');
     gradeStamp.classList.add('stamp-slam');
 
     // Tactile haptic vibration timed right at rubber squash impact (~200ms)
@@ -2269,6 +2287,12 @@ document.addEventListener('DOMContentLoaded', () => {
       gradeStamp.classList.remove('stamp-slam');
       gradeStamp.style.opacity = '0';
     }
+    const catStamperTool = document.getElementById('catStamperTool');
+    if (catStamperTool) catStamperTool.classList.remove('cat-stamper-slamming');
+    const stampShockwaveRing = document.getElementById('stampShockwaveRing');
+    if (stampShockwaveRing) stampShockwaveRing.classList.remove('stamp-shockwave-active');
+    const stampParticlesCluster = document.getElementById('stampParticlesCluster');
+    if (stampParticlesCluster) stampParticlesCluster.classList.remove('stamp-particles-active');
     if (scroll) {
       scrollToSection(inspectorBay);
     }
