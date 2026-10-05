@@ -1419,12 +1419,6 @@ document.addEventListener('DOMContentLoaded', () => {
       updateSubmitButton();
       setActiveBenchmarkButton(catKey);
       renderResults(preset.result, false);
-
-      showToast({
-        type: 'info',
-        title: `${preset.name} (Benchmark Reference)`,
-        message: `Reference scorecard loaded: ${preset.result.overall_score} ${preset.result.grade_letter} (${preset.result.loaf_rank}). Benchmark cats cannot be graded or submitted.`
-      });
     } catch (e) {
       console.error('Failed to load benchmark preset', e);
       resetBenchmarkButtons();
@@ -3464,6 +3458,26 @@ Certified by Loafed Inspection Engine`;
     if (historyBadgeCount) {
       historyBadgeCount.textContent = history.length;
     }
+    if (openHistoryBtn) {
+      const lastSeenId = localStorage.getItem('loafed_history_seen_id');
+      if (history.length > 0 && (!lastSeenId || history[0].id !== lastSeenId)) {
+        openHistoryBtn.classList.add('has-new-entry');
+      } else {
+        openHistoryBtn.classList.remove('has-new-entry');
+      }
+    }
+  }
+
+  function markHistoryAsSeen() {
+    const history = getSavedHistory();
+    if (history.length > 0) {
+      localStorage.setItem('loafed_history_seen_id', history[0].id);
+    } else {
+      localStorage.removeItem('loafed_history_seen_id');
+    }
+    if (openHistoryBtn) {
+      openHistoryBtn.classList.remove('has-new-entry');
+    }
   }
 
   async function saveLoafToHistory(result, options = {}) {
@@ -3706,12 +3720,6 @@ Certified by Loafed Inspection Engine`;
         if (typeof updateSubmitLeaderboardBtnState === 'function') {
           updateSubmitLeaderboardBtnState();
         }
-
-        showToast({
-          type: 'info',
-          title: 'Report Loaded',
-          message: `Loaded saved inspection for ${entry.cat_name || 'your cat'}.`
-        });
       });
     });
 
@@ -3730,6 +3738,7 @@ Certified by Loafed Inspection Engine`;
 
   if (openHistoryBtn) {
     openHistoryBtn.addEventListener('click', () => {
+      markHistoryAsSeen();
       renderHistoryModal();
       historyModal.classList.remove('hidden');
       refreshIcons();
@@ -3751,6 +3760,7 @@ Certified by Loafed Inspection Engine`;
   if (clearAllHistoryBtn) {
     clearAllHistoryBtn.addEventListener('click', () => {
       localStorage.removeItem('loafed_history');
+      localStorage.removeItem('loafed_history_seen_id');
       clearAllInspectionsFromIndexedDb();
       updateHistoryBadge();
       renderHistoryModal();
@@ -3931,6 +3941,7 @@ Certified by Loafed Inspection Engine`;
       if (dropdownUserName) dropdownUserName.textContent = state.user.name;
       if (dropdownUserEmail) dropdownUserEmail.textContent = state.user.email || 'Authenticated User';
       syncUserSubmissionsFromServer();
+      syncSubmitDisplayNameField();
     } else {
       document.documentElement.classList.remove('user-logged-in');
       if (headerSignInBtn) {
@@ -3942,6 +3953,7 @@ Certified by Loafed Inspection Engine`;
         headerUserMenu.style.setProperty('display', 'none', 'important');
       }
       if (headerUserDropdown) headerUserDropdown.classList.add('hidden');
+      syncSubmitDisplayNameField();
     }
     refreshIcons();
   }
@@ -4515,12 +4527,6 @@ Certified by Loafed Inspection Engine`;
       btnEl.classList.add('rolling');
       setTimeout(() => btnEl.classList.remove('rolling'), 450);
     }
-
-    showToast({
-      type: 'info',
-      title: 'Baker Tag Rolled',
-      message: `Suggested: "${tag}"!`
-    });
   }
 
   function showSubmitNotice(msg) {
@@ -4570,9 +4576,38 @@ Certified by Loafed Inspection Engine`;
     return null;
   }
 
+  function syncSubmitDisplayNameField() {
+    const signedIn = Boolean(state.user);
+    const hintEl = document.getElementById('submitDisplayNameHint');
+
+    if (submitDisplayNameInput) {
+      if (signedIn) {
+        submitDisplayNameInput.value = (state.user.name || '').trim();
+        submitDisplayNameInput.readOnly = true;
+        submitDisplayNameInput.setAttribute('aria-readonly', 'true');
+      } else {
+        submitDisplayNameInput.readOnly = false;
+        submitDisplayNameInput.removeAttribute('aria-readonly');
+      }
+    }
+
+    if (rollSubmitBakerTagBtn) {
+      rollSubmitBakerTagBtn.classList.toggle('hidden', signedIn);
+      rollSubmitBakerTagBtn.disabled = signedIn;
+    }
+
+    if (hintEl) {
+      hintEl.textContent = signedIn
+        ? 'Your baker tag is set on your profile (or when you sign up). Update it from Profile — not here.'
+        : 'Your baker gamertag displayed alongside your cat on the leaderboard.';
+    }
+  }
+
   function getSubmitFormValidation() {
     const catName = submitCatNameInput ? submitCatNameInput.value.trim() : '';
-    const displayName = submitDisplayNameInput ? submitDisplayNameInput.value.trim() : '';
+    const displayName = state.user
+      ? (state.user.name || '').trim()
+      : (submitDisplayNameInput ? submitDisplayNameInput.value.trim() : '');
     const consent = submitConsentCheckbox ? submitConsentCheckbox.checked : false;
 
     const catErr = validateLeaderboardField(catName, "Cat's Name", 2, 40);
@@ -4758,7 +4793,7 @@ Certified by Loafed Inspection Engine`;
     if (submitModalScoreBadge) submitModalScoreBadge.textContent = `${state.currentResult.overall_score} ${state.currentResult.grade_letter}`;
     if (submitModalRank) submitModalRank.textContent = state.currentResult.loaf_rank || 'Artisan Loaf';
     if (submitModalBread) submitModalBread.textContent = state.currentResult.bread_classification || 'Brioche';
-    if (submitDisplayNameInput) submitDisplayNameInput.value = state.user ? (state.user.name || '') : '';
+    syncSubmitDisplayNameField();
     if (submitConsentCheckbox) submitConsentCheckbox.checked = false;
     hideSubmitNotice();
 
@@ -4868,6 +4903,7 @@ Certified by Loafed Inspection Engine`;
 
   if (submitDisplayNameInput) {
     submitDisplayNameInput.addEventListener('input', () => {
+      if (state.user) return;
       hideSubmitNotice();
       updateSubmitButtonState();
     });
@@ -4883,6 +4919,7 @@ Certified by Loafed Inspection Engine`;
   if (rollSubmitBakerTagBtn) {
     rollSubmitBakerTagBtn.addEventListener('click', (e) => {
       e.preventDefault();
+      if (state.user) return;
       handleRollGamerTag(submitDisplayNameInput, rollSubmitBakerTagBtn);
     });
   }

@@ -112,6 +112,47 @@ class TestApiLeaderboard:
             assert res_json["cat_name"] == "Luna"
             assert res_json["score"] == 94
 
+    def test_submit_ignores_form_display_name_when_profile_name_in_token(self, client, sample_image_bytes):
+        img_hash = hashlib.sha256(sample_image_bytes).hexdigest()
+        data = {
+            "cat_name": "Luna",
+            "overall_score": 94,
+            "grade_letter": "A+",
+            "loaf_rank": "Grandmaster Artisan Loaf",
+            "bread_classification": "Golden Brioche",
+            "summary_critique": "Terrific posture.",
+            "can_submit": True,
+            "image_sha256": img_hash,
+            "image_hashes": [img_hash]
+        }
+        token = app.generate_grade_token(data, image_hash=img_hash, can_submit=True)
+
+        mock_s3 = MagicMock()
+        mock_dynamo = MagicMock()
+        mock_table = MagicMock()
+        mock_dynamo.Table.return_value = mock_table
+
+        with patch("app.verify_cognito_token", return_value={"sub": "user_123", "name": "ProfileBaker"}), \
+             patch("app.get_boto3_session") as mock_session:
+
+            mock_sess_inst = MagicMock()
+            mock_sess_inst.client.return_value = mock_s3
+            mock_sess_inst.resource.return_value = mock_dynamo
+            mock_session.return_value = mock_sess_inst
+
+            files = [("photos", ("luna.jpg", io.BytesIO(sample_image_bytes), "image/jpeg"))]
+            form = {
+                "grade_token": token,
+                "cat_name": "Luna",
+                "display_name": "RerolledTag"
+            }
+            res = client.post("/api/leaderboard/submit", data=form, files=files, headers={"Authorization": "Bearer valid_token"})
+            assert res.status_code == 200
+            put_calls = mock_table.put_item.call_args_list
+            assert put_calls
+            first_item = put_calls[0].kwargs.get("Item") or put_calls[0][1].get("Item")
+            assert first_item["display_name"] == "ProfileBaker"
+
     def test_get_leaderboard_queries_dynamodb(self, client):
         mock_table = MagicMock()
         mock_table.query.return_value = {

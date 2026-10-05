@@ -2090,9 +2090,14 @@ async def submit_to_leaderboard(
         max_len=40
     )
 
-    raw_display_name = (display_name or "").strip() or user_claims.get("name") or (
-        user_claims.get("email", "").split("@")[0] if user_claims.get("email") else None
-    )
+    # Signed-in users must use their profile baker tag — not a one-off name on submit.
+    token_profile_name = (user_claims.get("name") or "").strip()
+    if token_profile_name:
+        raw_display_name = token_profile_name
+    else:
+        raw_display_name = (display_name or "").strip() or (
+            user_claims.get("email", "").split("@")[0] if user_claims.get("email") else None
+        )
     validated_display_name = validate_and_sanitize_name(
         raw_display_name,
         field_label="Baker Display Name",
