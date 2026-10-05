@@ -170,27 +170,27 @@
 
     <!-- Filter Bar / Tabs Navigation -->
     <div class="mb-8">
-      <div class="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white/95 p-2 rounded-2xl border border-orange-200/90 shadow-2xs backdrop-blur-sm">
-        <div class="grid grid-cols-4 gap-1 w-full sm:flex sm:w-auto sm:gap-1.5 p-1 bg-stone-100/90 sm:bg-transparent rounded-xl text-xs font-bold" role="tablist" aria-label="Leaderboard filter periods">
+      <div class="leaderboard-filter-bar">
+        <div class="leaderboard-tabs-group" role="tablist" aria-label="Leaderboard filter periods">
           <button id="tabPeriodAll" class="tab-filter-btn active" data-period="all" role="tab" aria-selected="true" aria-controls="leaderboardEntriesList">
-            <i data-lucide="trophy" class="w-3.5 h-3.5 hidden xs:inline sm:inline"></i>
+            <i data-lucide="trophy" class="tab-icon"></i>
             <span>All-Time</span>
           </button>
           <button id="tabPeriodMonth" class="tab-filter-btn" data-period="month" role="tab" aria-selected="false" aria-controls="leaderboardEntriesList">
-            <i data-lucide="calendar" class="w-3.5 h-3.5 hidden xs:inline sm:inline"></i>
+            <i data-lucide="calendar" class="tab-icon"></i>
             <span>Month</span>
           </button>
           <button id="tabPeriodWeek" class="tab-filter-btn" data-period="week" role="tab" aria-selected="false" aria-controls="leaderboardEntriesList">
-            <i data-lucide="flame" class="w-3.5 h-3.5 hidden xs:inline sm:inline"></i>
+            <i data-lucide="flame" class="tab-icon"></i>
             <span>Week</span>
           </button>
           <button id="tabPeriodMine" class="tab-filter-btn" data-period="mine" role="tab" aria-selected="false" aria-controls="leaderboardEntriesList">
-            <i data-lucide="award" class="w-3.5 h-3.5 hidden xs:inline sm:inline text-amber-500"></i>
+            <i data-lucide="award" class="tab-icon"></i>
             <span>My Loaves</span>
           </button>
         </div>
 
-        <div class="flex items-center gap-2 px-2 text-xs text-stone-600 font-medium w-full sm:w-auto justify-between sm:justify-end">
+        <div class="leaderboard-status-info">
           <span id="leaderboardCountText" class="text-stone-700 font-bold">Loading rankings...</span>
           <span class="inline-block w-2 h-2 rounded-full bg-emerald-500" title="DynamoDB Live Sync"></span>
         </div>
