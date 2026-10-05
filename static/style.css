@@ -750,26 +750,193 @@ body.user-logged-in #headerSignInBtn {
 .pedestal-pillar-3 .pedestal-pillar-label { color: #7c2d12; }
 
 /* ==========================================================================
-   Results Page Action Buttons
+   Results Scorecard Layout & Command Station Action Buttons
    ========================================================================== */
+
+/* Return / Close Section Button */
+#closeResultsSectionBtn {
+  position: absolute !important;
+  top: 1.25rem !important;
+  right: 1.25rem !important;
+  width: 36px !important;
+  height: 36px !important;
+  min-width: 36px !important;
+  min-height: 36px !important;
+  border-radius: 0.75rem !important;
+  background: rgba(255, 255, 255, 0.95) !important;
+  border: 1px solid rgba(251, 146, 60, 0.4) !important;
+  color: #78716c !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  z-index: 30 !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+}
+
+#closeResultsSectionBtn:hover {
+  background-color: #fee2e2 !important;
+  border-color: #fca5a5 !important;
+  color: #dc2626 !important;
+  transform: scale(1.06);
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.18) !important;
+}
+
+#closeResultsSectionBtn:active {
+  transform: scale(0.95);
+}
+
+@media (max-width: 640px) {
+  #closeResultsSectionBtn {
+    top: 0.875rem !important;
+    right: 0.875rem !important;
+    width: 32px !important;
+    height: 32px !important;
+    min-width: 32px !important;
+    min-height: 32px !important;
+  }
+}
+
+.scorecard-header-ribbon {
+  padding-right: 3.5rem !important;
+}
+
+@media (max-width: 640px) {
+  .scorecard-header-ribbon {
+    padding-right: 2.75rem !important;
+  }
+}
+
+/* Master Scorecard Layout Grid */
+.scorecard-main-layout {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 1.5rem !important;
+  width: 100% !important;
+}
+
+@media (min-width: 1024px) {
+  .scorecard-main-layout {
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 2rem !important;
+  }
+}
+
+/* Telemetry Cluster: Score Gauge + Cat Identity */
+.scorecard-telemetry-cluster {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  text-align: center !important;
+  gap: 1.5rem !important;
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+@media (min-width: 640px) {
+  .scorecard-telemetry-cluster {
+    flex-direction: row !important;
+    align-items: center !important;
+    text-align: left !important;
+    gap: 2rem !important;
+  }
+}
+
+@media (min-width: 1024px) {
+  .scorecard-telemetry-cluster {
+    flex: 1 1 0% !important;
+    min-width: 0 !important;
+  }
+}
+
+.scorecard-dial-wrap {
+  flex-shrink: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.scorecard-details-wrap {
+  flex: 1 1 0% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+/* Action Command Station */
+.scorecard-actions-cluster {
+  width: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.625rem !important;
+  min-width: 0 !important;
+}
+
+@media (min-width: 640px) and (max-width: 1023px) {
+  .scorecard-actions-cluster {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 0.625rem !important;
+    margin-top: 0.5rem !important;
+  }
+}
+
+@media (min-width: 1024px) {
+  .scorecard-actions-cluster {
+    width: 280px !important;
+    min-width: 280px !important;
+    max-width: 280px !important;
+    flex-shrink: 0 !important;
+    margin-top: 0 !important;
+  }
+}
+
+/* Unified Scorecard Action Button Styles */
+.scorecard-actions-cluster button,
+.btn-submit-leaderboard,
+.btn-download-cert,
+.btn-download-story,
+.btn-share-scorecard,
+.btn-grade-own,
+.btn-copy-summary,
+.btn-new-inspection {
+  width: 100% !important;
+  min-height: 46px !important;
+  padding: 0.625rem 1rem !important;
+  border-radius: 0.75rem !important;
+  font-weight: 700 !important;
+  font-size: 0.8125rem !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.5rem !important;
+  box-sizing: border-box !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  cursor: pointer !important;
+  text-decoration: none !important;
+  line-height: 1.25 !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+.scorecard-actions-cluster button:active,
+.btn-submit-leaderboard:active,
+.btn-download-cert:active,
+.btn-download-story:active,
+.btn-share-scorecard:active,
+.btn-grade-own:active,
+.btn-copy-summary:active,
+.btn-new-inspection:active {
+  transform: translateY(1.5px) scale(0.985) !important;
+}
+
 .btn-submit-leaderboard {
   background: linear-gradient(135deg, #b45309 0%, #d97706 35%, #ea580c 70%, #c2410c 100%) !important;
   color: #ffffff !important;
   border: 1.5px solid #d97706 !important;
   box-shadow: 0 4px 16px rgba(217, 119, 6, 0.45), 0 2px 4px rgba(0, 0, 0, 0.1) !important;
-  font-weight: 800 !important;
-  font-size: 0.875rem !important;
-  min-height: 48px !important;
-  padding: 0.75rem 1.25rem !important;
-  border-radius: 0.75rem !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 0.5rem !important;
-  cursor: pointer !important;
-  position: relative !important;
-  overflow: hidden !important;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
 .btn-submit-leaderboard:hover {
@@ -778,29 +945,11 @@ body.user-logged-in #headerSignInBtn {
   transform: translateY(-1px);
 }
 
-.btn-submit-leaderboard:active {
-  transform: translateY(1.5px) scale(0.985) !important;
-  box-shadow: 0 2px 8px rgba(217, 119, 6, 0.4) !important;
-}
-
 .btn-download-cert {
   background: linear-gradient(135deg, #c2410c 0%, #b45309 50%, #9a3412 100%) !important;
   color: #ffffff !important;
   border: 1px solid #78350f !important;
   box-shadow: 0 4px 16px rgba(180, 83, 9, 0.35) !important;
-  font-weight: 800 !important;
-  font-size: 0.875rem !important;
-  min-height: 48px !important;
-  padding: 0.75rem 1.25rem !important;
-  border-radius: 0.75rem !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 0.5rem !important;
-  cursor: pointer !important;
-  position: relative !important;
-  overflow: hidden !important;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
 .btn-download-cert:hover {
@@ -809,9 +958,88 @@ body.user-logged-in #headerSignInBtn {
   transform: translateY(-1px);
 }
 
-.btn-download-cert:active {
-  transform: translateY(1.5px) scale(0.985) !important;
-  box-shadow: 0 2px 6px rgba(234, 88, 12, 0.3) !important;
+.btn-download-story {
+  background: linear-gradient(135deg, #e11d48 0%, #db2777 50%, #f59e0b 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid #be123c !important;
+  box-shadow: 0 4px 14px rgba(225, 29, 72, 0.35) !important;
+}
+
+.btn-download-story:hover {
+  background: linear-gradient(135deg, #f43f5e 0%, #ec4899 50%, #d97706 100%) !important;
+  box-shadow: 0 6px 18px rgba(225, 29, 72, 0.5) !important;
+  transform: translateY(-1px);
+}
+
+.btn-share-scorecard {
+  background: linear-gradient(135deg, #d97706 0%, #f97316 50%, #ea580c 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid #b45309 !important;
+  box-shadow: 0 4px 14px rgba(217, 119, 6, 0.35) !important;
+}
+
+.btn-share-scorecard:hover {
+  background: linear-gradient(135deg, #f59e0b 0%, #fb923c 50%, #f97316 100%) !important;
+  box-shadow: 0 6px 18px rgba(217, 119, 6, 0.5) !important;
+  transform: translateY(-1px);
+}
+
+.btn-grade-own {
+  background: linear-gradient(135deg, #ea580c 0%, #f97316 50%, #d97706 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid #c2410c !important;
+  box-shadow: 0 4px 14px rgba(234, 88, 12, 0.35) !important;
+}
+
+.btn-grade-own:hover {
+  background: linear-gradient(135deg, #f97316 0%, #fb923c 50%, #ea580c 100%) !important;
+  box-shadow: 0 6px 18px rgba(234, 88, 12, 0.5) !important;
+  transform: translateY(-1px);
+}
+
+.btn-copy-summary {
+  background-color: #ffffff !important;
+  color: #292524 !important;
+  border: 1.5px solid #fed7aa !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+}
+
+.btn-copy-summary:hover {
+  background-color: #fffaf5 !important;
+  border-color: #f97316 !important;
+  color: #431407 !important;
+  box-shadow: 0 3px 10px rgba(234, 88, 12, 0.12) !important;
+  transform: translateY(-1px);
+}
+
+.btn-new-inspection {
+  background-color: #fff7ed !important;
+  color: #7c2d12 !important;
+  border: 1.5px solid #fdba74 !important;
+  box-shadow: 0 1px 3px rgba(234, 88, 12, 0.08) !important;
+}
+
+.btn-new-inspection:hover {
+  background-color: #ffedd5 !important;
+  border-color: #f97316 !important;
+  color: #431407 !important;
+  box-shadow: 0 3px 10px rgba(234, 88, 12, 0.15) !important;
+  transform: translateY(-1px);
+}
+
+/* Strict Hidden Overrides to Guarantee Elements Hide Fully */
+.hidden,
+[hidden],
+button.hidden,
+.scorecard-actions-cluster button.hidden,
+.btn-submit-leaderboard.hidden,
+.btn-download-cert.hidden,
+.btn-download-story.hidden,
+.btn-share-scorecard.hidden,
+.btn-grade-own.hidden,
+.btn-copy-summary.hidden,
+.btn-new-inspection.hidden {
+  display: none !important;
 }
 
 /* ==========================================================================

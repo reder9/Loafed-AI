@@ -188,3 +188,48 @@ class TestApiLeaderboard:
         res = client.post("/api/admin/leaderboard/remove", json={"entry_id": "loaf_test_123", "admin_key": "wrong_secret"})
         assert res.status_code == 403
         assert "Unauthorized" in res.text
+
+    def test_duplicate_submission_prevented(self, client, sample_image_bytes):
+        img_hash = hashlib.sha256(sample_image_bytes).hexdigest()
+        data = {
+            "cat_name": "Luna",
+            "overall_score": 94,
+            "grade_letter": "A+",
+            "can_submit": True,
+            "image_sha256": img_hash,
+            "image_hashes": [img_hash]
+        }
+        token = app.generate_grade_token(data, image_hash=img_hash, can_submit=True)
+
+        mock_dynamo = MagicMock()
+        mock_table = MagicMock()
+        # Simulate that this user already submitted this image hash
+        mock_table.get_item.return_value = {
+            "Item": {
+                "entry_id": "existing_123",
+                "cat_name": "Luna",
+                "overall_score": 94
+            }
+        }
+        mock_dynamo.Table.return_value = mock_table
+
+        with patch("app.verify_cognito_token", return_value={"sub": "user_123", "name": "LunaMom"}), \
+             patch("app.get_boto3_session") as mock_session:
+
+            mock_sess_inst = MagicMock()
+            mock_sess_inst.resource.return_value = mock_dynamo
+            mock_session.return_value = mock_sess_inst
+
+            files = [("photos", ("luna.jpg", io.BytesIO(sample_image_bytes), "image/jpeg"))]
+            form = {
+                "grade_token": token,
+                "cat_name": "Luna",
+                "display_name": "LunaMom"
+            }
+            res = client.post("/api/leaderboard/submit", data=form, files=files, headers={"Authorization": "Bearer valid_token"})
+            assert res.status_code == 409
+            res_json = res.json()
+            assert res_json["already_submitted"] is True
+            assert res_json["entry_id"] == "existing_123"
+            assert "already been published" in res_json["detail"]
+

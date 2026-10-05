@@ -2167,8 +2167,55 @@ async def submit_to_leaderboard(
         if best_alt is not None:
             chosen_idx = best_alt
 
-    entry_id = uuid.uuid4().hex[:12]
+    primary_image_hash = uploaded_hashes[chosen_idx]
+
+    # Duplicate submission prevention: check if user has already published this loaf
     session = get_boto3_session()
+    ddb = session.resource("dynamodb")
+    table = ddb.Table(DYNAMODB_TABLE_NAME)
+
+    existing_entry_id = None
+    try:
+        dedup_res = table.get_item(Key={"pk": f"USER#{user_id}", "sk": f"SUBMISSION#{primary_image_hash}"})
+        if dedup_res and "Item" in dedup_res:
+            existing_entry_id = dedup_res["Item"].get("entry_id")
+    except Exception as e:
+        logger.warning(f"Error checking submission dedup point lookup: {e}")
+
+    if not existing_entry_id:
+        try:
+            u_res = table.query(
+                IndexName="UserIndex",
+                KeyConditionExpression=Key("user_id").eq(user_id)
+            )
+            for it in u_res.get("Items", []):
+                it_hash = it.get("primary_image_hash")
+                it_hashes = it.get("image_hashes", [])
+                it_salt = it.get("token_salt")
+                if (it_hash and it_hash == primary_image_hash) or \
+                   (it_hashes and any(h in it_hashes for h in uploaded_hashes)) or \
+                   (it_salt and score_data.get("salt") and it_salt == score_data.get("salt")):
+                    existing_entry_id = it.get("entry_id")
+                    break
+        except Exception as e:
+            logger.warning(f"Error checking UserIndex for duplicate submission: {e}")
+
+    if existing_entry_id:
+        logger.info(f"Duplicate submission prevented: User {user_id} already published entry {existing_entry_id}")
+        return JSONResponse(
+            status_code=409,
+            content={
+                "success": False,
+                "already_submitted": True,
+                "entry_id": existing_entry_id,
+                "cat_name": validated_cat_name,
+                "score": int(score_data.get("overall_score", 0)),
+                "detail": f"This cat loaf has already been published to the leaderboard! (Entry #{existing_entry_id})",
+                "message": f"This cat loaf has already been published to the leaderboard! (Entry #{existing_entry_id})"
+            }
+        )
+
+    entry_id = uuid.uuid4().hex[:12]
     s3_client = session.client("s3")
 
     # 1. Upload primary hero thumbnail (WebP, under 40 KB)
@@ -2258,7 +2305,10 @@ async def submit_to_leaderboard(
         "fun_tips_for_cat": score_data.get("fun_tips_for_cat", []),
         "oar_detected": bool(score_data.get("oar_detected", False)),
         "face_loaf": bool(score_data.get("face_loaf", False)),
-        "multi_angle_bonus": int(score_data.get("multi_angle_bonus", 0))
+        "multi_angle_bonus": int(score_data.get("multi_angle_bonus", 0)),
+        "primary_image_hash": primary_image_hash,
+        "image_hashes": uploaded_hashes,
+        "token_salt": score_data.get("salt", "")
     }
 
     item_month = dict(item_all)
@@ -2273,11 +2323,21 @@ async def submit_to_leaderboard(
     item_entry["pk"] = f"ENTRY#{entry_id}"
     item_entry["sk"] = "METADATA"
 
+    dedup_item = {
+        "pk": f"USER#{user_id}",
+        "sk": f"SUBMISSION#{primary_image_hash}",
+        "entry_id": entry_id,
+        "cat_name": validated_cat_name,
+        "overall_score": score,
+        "created_at": now_iso
+    }
+
     try:
         table.put_item(Item=item_all)
         table.put_item(Item=item_month)
         table.put_item(Item=item_week)
         table.put_item(Item=item_entry)
+        table.put_item(Item=dedup_item)
     except Exception as e:
         logger.error(f"DynamoDB write error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to save leaderboard record.")
@@ -2748,6 +2808,14 @@ async def delete_leaderboard_entry(entry_id: str, authorization: Optional[str] =
         table.delete_item(Key={"pk": f"ENTRY#{entry_id}", "sk": "METADATA"})
     except Exception as e:
         logger.warning(f"Error deleting entry lookup item ENTRY#{entry_id}: {e}")
+
+    # Remove submission dedup record if present
+    primary_hash = matching_item.get("primary_image_hash")
+    if primary_hash:
+        try:
+            table.delete_item(Key={"pk": f"USER#{user_id}", "sk": f"SUBMISSION#{primary_hash}"})
+        except Exception as e:
+            logger.warning(f"Error deleting dedup item: {e}")
 
     try:
         s3_res = s3_client.list_objects_v2(Bucket=S3_BUCKET_NAME, Prefix=f"thumbnails/{entry_id}")

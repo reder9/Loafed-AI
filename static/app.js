@@ -30,7 +30,9 @@ document.addEventListener('DOMContentLoaded', () => {
     canSubmit: true,
     userSavedPhotos: [],
     userSavedCatName: '',
-    pendingLeaderboardIntent: false
+    pendingLeaderboardIntent: false,
+    submittedEntryId: null,
+    loadedHistoryId: null
   };
 
   // Helper to re-render Lucide icons
@@ -642,6 +644,11 @@ document.addEventListener('DOMContentLoaded', () => {
       if (catNameInput) catNameInput.value = '';
     }
 
+    if (!isBenchmarkInternal) {
+      state.submittedEntryId = null;
+      state.loadedHistoryId = null;
+    }
+
     let filesToInspect = imageFiles;
 
     // Detect and reject any benchmark reference images attempted by the user
@@ -803,6 +810,8 @@ document.addEventListener('DOMContentLoaded', () => {
     state.isExamplePreset = false;
     state.activePresetKey = null;
     state.canSubmit = true;
+    state.submittedEntryId = null;
+    state.loadedHistoryId = null;
     syncLegacySlots();
     if (photosInput) photosInput.value = '';
     renderStagedPhotos();
@@ -1929,12 +1938,7 @@ document.addEventListener('DOMContentLoaded', () => {
           submitLeaderboardBtn.classList.add('hidden');
         }
         submitLeaderboardBtn.disabled = false;
-        submitLeaderboardBtn.className = 'btn-submit-leaderboard shimmer-btn btn-tactile';
-        submitLeaderboardBtn.innerHTML = `
-          <i data-lucide="trophy" class="w-4 h-4 text-amber-200"></i>
-          <span>Submit to Leaderboard</span>
-        `;
-        submitLeaderboardBtn.title = 'Submit to Official Leaderboard';
+        updateSubmitLeaderboardBtnState();
       }
     }
 
@@ -3277,7 +3281,7 @@ Certified by Loafed Inspection Engine`;
   const historyListContainer = document.getElementById('historyListContainer');
 
   const IDB_NAME = 'loafed_cache_db';
-  const IDB_VERSION = 1;
+  const IDB_VERSION = 2;
   const IDB_STORE = 'inspections';
 
   function openIndexedDb() {
@@ -3326,6 +3330,18 @@ Certified by Loafed Inspection Engine`;
     } catch (err) {
       console.warn('Could not retrieve inspection photos from IndexedDB:', err);
       return null;
+    }
+  }
+
+  async function updateInspectionInIndexedDb(id, updates) {
+    try {
+      const existing = await getInspectionFromIndexedDb(id);
+      if (!existing) return false;
+      const updated = { ...existing, ...updates };
+      return await saveInspectionToIndexedDb(updated);
+    } catch (err) {
+      console.warn('Could not update inspection in IndexedDB:', err);
+      return false;
     }
   }
 
@@ -3423,7 +3439,7 @@ Certified by Loafed Inspection Engine`;
           }
 
           if (photoRecords.length > 0) {
-            await saveInspectionToIndexedDb({
+            const savedOk = await saveInspectionToIndexedDb({
               id: id,
               result: result,
               grade_token: gradeToken,
@@ -3432,8 +3448,11 @@ Certified by Loafed Inspection Engine`;
               timestamp: entry.timestamp,
               photos: photoRecords
             });
-            entry.has_cached_photos = true;
+            if (savedOk) {
+              entry.has_cached_photos = true;
+            }
           }
+          state.loadedHistoryId = id;
         } catch (dbErr) {
           console.warn('IndexedDB photo cache failed (continuing with localStorage metadata):', dbErr);
         }
@@ -3504,6 +3523,10 @@ Certified by Loafed Inspection Engine`;
         ? '<span class="inline-flex items-center gap-1 text-[9px] bg-orange-100 text-orange-800 font-semibold px-1.5 py-0.5 rounded border border-orange-200"><i data-lucide="camera" class="w-2.5 h-2.5"></i>Photos Cached</span>'
         : '';
 
+      const leaderboardTag = item.submitted_entry_id
+        ? `<a href="/loaf?id=${encodeURIComponent(item.submitted_entry_id)}" class="inline-flex items-center gap-1 text-[9px] bg-emerald-100 hover:bg-emerald-200 text-emerald-800 font-bold px-1.5 py-0.5 rounded border border-emerald-200 transition-colors" title="View official leaderboard entry"><i data-lucide="trophy" class="w-2.5 h-2.5 text-emerald-700"></i>Leaderboard</a>`
+        : '';
+
       return `
         <div class="p-3.5 rounded-xl border border-orange-200/90 bg-orange-50/40 hover:bg-orange-50/80 transition-colors flex items-center justify-between gap-3 shadow-2xs" data-id="${item.id}">
           <div class="flex items-center gap-3 min-w-0">
@@ -3512,15 +3535,22 @@ Certified by Loafed Inspection Engine`;
               <span class="text-[9px] font-bold text-orange-900/60 leading-none">${item.grade_letter}</span>
             </div>
             <div class="min-w-0">
-              <div class="text-xs font-bold text-stone-900 truncate flex items-center gap-1.5">
+              <div class="text-xs font-bold text-stone-900 truncate flex items-center gap-1.5 flex-wrap">
                 <span class="truncate">${item.cat_name}</span>
                 ${photoTag}
+                ${leaderboardTag}
               </div>
               <div class="text-[11px] text-stone-600 truncate">${item.loaf_rank} &bull; ${item.bread_classification}</div>
               <div class="text-[10px] text-stone-400 mt-0.5">${formattedDate}</div>
             </div>
           </div>
           <div class="flex items-center gap-1.5 shrink-0">
+            ${item.submitted_entry_id ? `
+              <a href="/loaf?id=${encodeURIComponent(item.submitted_entry_id)}" class="px-2 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-bold border border-emerald-200 transition-colors shadow-2xs flex items-center gap-1" title="View published leaderboard loaf">
+                <i data-lucide="trophy" class="w-3 h-3 text-emerald-700"></i>
+                <span class="hidden sm:inline">Loaf</span>
+              </a>
+            ` : ''}
             <button class="view-history-entry-btn px-2.5 py-1.5 rounded-lg bg-white hover:bg-orange-100 text-orange-950 text-xs font-bold border border-orange-200 transition-colors shadow-2xs" data-id="${item.id}" aria-label="View inspection for ${item.cat_name}">
               View
             </button>
@@ -3551,6 +3581,9 @@ Certified by Loafed Inspection Engine`;
         state.isExamplePreset = false;
         state.activePresetKey = null;
 
+        // Track loaded history entry ID
+        state.loadedHistoryId = id;
+
         // Try to load full inspection with photos from IndexedDB
         let fullRecord = null;
         try {
@@ -3566,7 +3599,7 @@ Certified by Loafed Inspection Engine`;
         state.primaryPhotoIndex = (fullRecord && fullRecord.primary_photo_index !== undefined)
           ? fullRecord.primary_photo_index
           : (entry.primary_photo_index || 0);
-        state.submittedEntryId = entry.submitted_entry_id || null;
+        state.submittedEntryId = entry.submitted_entry_id || (fullRecord && fullRecord.submitted_entry_id) || null;
 
         // Restore photos if available in fullRecord
         if (fullRecord && Array.isArray(fullRecord.photos) && fullRecord.photos.length > 0) {
@@ -3595,6 +3628,9 @@ Certified by Loafed Inspection Engine`;
         historyModal.classList.add('hidden');
         renderResults(resultToRender, false);
         updateSubmitButton();
+        if (typeof updateSubmitLeaderboardBtnState === 'function') {
+          updateSubmitLeaderboardBtnState();
+        }
 
         showToast({
           type: 'info',
@@ -3819,6 +3855,7 @@ Certified by Loafed Inspection Engine`;
       if (headerUserAvatar) headerUserAvatar.textContent = state.user.avatar;
       if (dropdownUserName) dropdownUserName.textContent = state.user.name;
       if (dropdownUserEmail) dropdownUserEmail.textContent = state.user.email || 'Authenticated User';
+      syncUserSubmissionsFromServer();
     } else {
       document.documentElement.classList.remove('user-logged-in');
       if (headerSignInBtn) {
@@ -3832,6 +3869,43 @@ Certified by Loafed Inspection Engine`;
       if (headerUserDropdown) headerUserDropdown.classList.add('hidden');
     }
     refreshIcons();
+  }
+
+  async function syncUserSubmissionsFromServer() {
+    if (!state.idToken) return;
+    try {
+      const res = await fetch('/api/leaderboard/my-entries', {
+        headers: { 'Authorization': `Bearer ${state.idToken}` }
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      const entries = data.entries || [];
+      if (entries.length > 0) {
+        const saved = JSON.parse(localStorage.getItem('loafed_my_submissions') || '[]');
+        const history = getSavedHistory();
+        let historyChanged = false;
+
+        entries.forEach(sub => {
+          if (!saved.includes(sub.entry_id)) {
+            saved.push(sub.entry_id);
+          }
+          const matched = history.find(h =>
+            h.result && (h.result.overall_score === sub.overall_score && (h.cat_name === sub.cat_name || (h.result.cat_name && h.result.cat_name === sub.cat_name)))
+          );
+          if (matched && !matched.submitted_entry_id) {
+            matched.submitted_entry_id = sub.entry_id;
+            historyChanged = true;
+          }
+        });
+
+        localStorage.setItem('loafed_my_submissions', JSON.stringify(saved));
+        if (historyChanged) {
+          localStorage.setItem('loafed_history', JSON.stringify(history));
+          updateHistoryBadge();
+        }
+        updateSubmitLeaderboardBtnState();
+      }
+    } catch (_) {}
   }
 
   async function fetchAuthConfig() {
@@ -4439,6 +4513,125 @@ Certified by Loafed Inspection Engine`;
     return { valid: true, error: null, catName, displayName };
   }
 
+  function getSubmittedEntryIdForCurrentLoaf() {
+    if (state.submittedEntryId) return state.submittedEntryId;
+
+    if (state.gradeToken) {
+      try {
+        const tokenMap = JSON.parse(localStorage.getItem('loafed_submitted_tokens') || '{}');
+        if (tokenMap[state.gradeToken]) {
+          state.submittedEntryId = tokenMap[state.gradeToken];
+          return state.submittedEntryId;
+        }
+      } catch (_) {}
+    }
+
+    const history = getSavedHistory();
+    if (state.loadedHistoryId) {
+      const entry = history.find(h => h.id === state.loadedHistoryId);
+      if (entry && entry.submitted_entry_id) {
+        state.submittedEntryId = entry.submitted_entry_id;
+        return state.submittedEntryId;
+      }
+    }
+
+    if (state.currentResult) {
+      const entry = history.find(h =>
+        (state.gradeToken && h.grade_token === state.gradeToken) ||
+        (h.result && h.result.overall_score === state.currentResult.overall_score &&
+         (h.cat_name === state.currentResult.cat_name || (h.result.cat_name && h.result.cat_name === state.currentResult.cat_name)) &&
+         h.submitted_entry_id)
+      );
+      if (entry && entry.submitted_entry_id) {
+        state.submittedEntryId = entry.submitted_entry_id;
+        return state.submittedEntryId;
+      }
+    }
+
+    return null;
+  }
+
+  function markLoafAsSubmitted(entryId, details = {}) {
+    if (!entryId) return;
+    state.submittedEntryId = entryId;
+
+    // 1. List of user submission IDs
+    try {
+      const list = JSON.parse(localStorage.getItem('loafed_my_submissions') || '[]');
+      if (!list.includes(entryId)) {
+        list.push(entryId);
+        localStorage.setItem('loafed_my_submissions', JSON.stringify(list));
+      }
+    } catch (_) {}
+
+    // 2. Token mapping
+    try {
+      const tokenMap = JSON.parse(localStorage.getItem('loafed_submitted_tokens') || '{}');
+      if (state.gradeToken) {
+        tokenMap[state.gradeToken] = entryId;
+      }
+      if (details.gradeToken) {
+        tokenMap[details.gradeToken] = entryId;
+      }
+      localStorage.setItem('loafed_submitted_tokens', JSON.stringify(tokenMap));
+    } catch (_) {}
+
+    // 3. Update localStorage history
+    try {
+      const history = getSavedHistory();
+      const catName = details.catName || (state.currentResult && state.currentResult.cat_name);
+      const target = history.find(h =>
+        (state.loadedHistoryId && h.id === state.loadedHistoryId) ||
+        (details.historyId && h.id === details.historyId) ||
+        (state.gradeToken && h.grade_token === state.gradeToken) ||
+        (catName && (h.cat_name === catName || (h.result && h.result.cat_name === catName)))
+      );
+      if (target) {
+        target.submitted_entry_id = entryId;
+        localStorage.setItem('loafed_history', JSON.stringify(history));
+        if (target.id) {
+          updateInspectionInIndexedDb(target.id, { submitted_entry_id: entryId }).catch(() => {});
+        }
+      }
+    } catch (_) {}
+
+    // 4. Update UI button and badges
+    updateSubmitLeaderboardBtnState();
+    updateHistoryBadge();
+  }
+
+  function updateSubmitLeaderboardBtnState() {
+    if (!submitLeaderboardBtn) return;
+    if (!state.currentResult || state.currentResult.is_cat === false || state.isExamplePreset || state.canSubmit === false) {
+      submitLeaderboardBtn.classList.add('hidden');
+      return;
+    }
+
+    const entryId = getSubmittedEntryIdForCurrentLoaf();
+    if (entryId) {
+      submitLeaderboardBtn.classList.remove('hidden');
+      submitLeaderboardBtn.disabled = false;
+      submitLeaderboardBtn.className = 'w-full min-h-[44px] py-2.5 px-4 rounded-xl bg-emerald-700 hover:bg-emerald-600 text-white font-bold text-xs border border-emerald-600 transition-all flex items-center justify-center gap-2 shadow-2xs btn-tactile cursor-pointer';
+      submitLeaderboardBtn.innerHTML = `
+        <i data-lucide="trophy" class="w-4 h-4 text-amber-200"></i>
+        <span>View on Leaderboard</span>
+        <i data-lucide="external-link" class="w-3.5 h-3.5 text-emerald-200 ml-0.5"></i>
+      `;
+      submitLeaderboardBtn.title = `View official leaderboard entry #${entryId}`;
+      refreshIcons();
+    } else {
+      submitLeaderboardBtn.classList.remove('hidden');
+      submitLeaderboardBtn.disabled = false;
+      submitLeaderboardBtn.className = 'btn-submit-leaderboard shimmer-btn btn-tactile';
+      submitLeaderboardBtn.innerHTML = `
+        <i data-lucide="trophy" class="w-4 h-4 text-amber-200"></i>
+        <span>Submit to Leaderboard</span>
+      `;
+      submitLeaderboardBtn.title = 'Submit to Official Leaderboard';
+      refreshIcons();
+    }
+  }
+
   function updateSubmitButtonState() {
     const catName = submitCatNameInput ? submitCatNameInput.value.trim() : '';
     if (submitModalCatName) {
@@ -4446,8 +4639,9 @@ Certified by Loafed Inspection Engine`;
     }
 
     const { valid } = getSubmitFormValidation();
+    const hasPhoto = Boolean(state.submittedPhotoBlob || (state.photos && state.photos.length > 0 && state.photos[0].file));
     if (confirmSubmitLeaderboardBtn) {
-      confirmSubmitLeaderboardBtn.disabled = !valid;
+      confirmSubmitLeaderboardBtn.disabled = !valid || !hasPhoto;
     }
   }
 
@@ -4462,10 +4656,15 @@ Certified by Loafed Inspection Engine`;
       return;
     }
 
-    if (state.submittedEntryId) {
-      const shareUrl = `${window.location.origin}/loaf?id=${encodeURIComponent(state.submittedEntryId)}`;
+    const alreadySubmittedId = getSubmittedEntryIdForCurrentLoaf();
+    if (alreadySubmittedId) {
+      const shareUrl = `${window.location.origin}/loaf?id=${encodeURIComponent(alreadySubmittedId)}`;
+      if (submitSuccessCatName) submitSuccessCatName.textContent = state.currentResult.cat_name || 'Your Cat';
+      if (submitSuccessScoreBadge) submitSuccessScoreBadge.textContent = `${state.currentResult.overall_score} ${state.currentResult.grade_letter || ''}`;
+      if (submitSuccessRank) submitSuccessRank.textContent = state.currentResult.loaf_rank || 'Artisan Loaf';
       if (submitSuccessShareUrl) submitSuccessShareUrl.value = shareUrl;
-      if (submitSuccessViewLeaderboardBtn) submitSuccessViewLeaderboardBtn.href = `/loaf?id=${encodeURIComponent(state.submittedEntryId)}`;
+      if (submitSuccessViewLeaderboardBtn) submitSuccessViewLeaderboardBtn.href = `/loaf?id=${encodeURIComponent(alreadySubmittedId)}`;
+      if (submitSuccessMessage) submitSuccessMessage.textContent = `${state.currentResult.cat_name || 'Your cat'} is officially published on the Leaderboard. Share your certified scorecard with friends!`;
       if (submitModalFormView) submitModalFormView.classList.add('hidden');
       if (submitSuccessView) submitSuccessView.classList.remove('hidden');
       submitModal.classList.remove('hidden');
@@ -4487,7 +4686,19 @@ Certified by Loafed Inspection Engine`;
     if (submitDisplayNameInput) submitDisplayNameInput.value = state.user ? (state.user.name || '') : '';
     if (submitConsentCheckbox) submitConsentCheckbox.checked = false;
     hideSubmitNotice();
-    updateSubmitButtonState();
+
+    // Check if photo is present or missing from local cache
+    const hasPhoto = Boolean(state.submittedPhotoBlob || (state.photos && state.photos.length > 0 && state.photos[0].file));
+    const photoPickerBox = document.getElementById('submitModalPhotoPickerBox');
+    if (photoPickerBox) {
+      if (!hasPhoto) {
+        photoPickerBox.classList.remove('hidden');
+        const pickedNameEl = document.getElementById('submitModalPhotoPickedName');
+        if (pickedNameEl) pickedNameEl.textContent = 'No photo attached';
+      } else {
+        photoPickerBox.classList.add('hidden');
+      }
+    }
 
     if (submitModalThumbnail) {
       const pIdx = (state.primaryPhotoIndex !== null && state.primaryPhotoIndex >= 0 && state.primaryPhotoIndex < state.photos.length) ? state.primaryPhotoIndex : 0;
@@ -4496,10 +4707,11 @@ Certified by Loafed Inspection Engine`;
       } else if (state.photos.length > 0 && state.photos[0].previewUrl) {
         submitModalThumbnail.src = state.photos[0].previewUrl;
       } else {
-        submitModalThumbnail.src = '/static/logo.png';
+        submitModalThumbnail.src = '/static/logo.webp';
       }
     }
 
+    updateSubmitButtonState();
     submitModal.classList.remove('hidden');
     refreshIcons();
   }
@@ -4507,6 +4719,69 @@ Certified by Loafed Inspection Engine`;
   function closeSubmitModal() {
     if (submitModal) submitModal.classList.add('hidden');
     hideSubmitNotice();
+  }
+
+  const submitModalPhotoFilePicker = document.getElementById('submitModalPhotoFilePicker');
+  if (submitModalPhotoFilePicker) {
+    submitModalPhotoFilePicker.addEventListener('change', async (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      try {
+        const optimized = await optimizeImage(file);
+        state.submittedPhotoBlob = optimized;
+        const previewUrl = URL.createObjectURL(optimized);
+        state.photos = [{
+          id: 'reattached_photo_' + Date.now(),
+          file: optimized,
+          previewUrl: previewUrl,
+          name: file.name,
+          angleType: 'front'
+        }];
+        state.primaryPhotoIndex = 0;
+
+        if (submitModalThumbnail) {
+          submitModalThumbnail.src = previewUrl;
+        }
+        const pickedNameEl = document.getElementById('submitModalPhotoPickedName');
+        if (pickedNameEl) {
+          pickedNameEl.textContent = file.name;
+        }
+
+        // Cache into IndexedDB for current history entry if available
+        if (state.loadedHistoryId) {
+          try {
+            await saveInspectionToIndexedDb({
+              id: state.loadedHistoryId,
+              result: state.currentResult,
+              grade_token: state.gradeToken,
+              can_submit: state.canSubmit,
+              primary_photo_index: 0,
+              timestamp: new Date().toISOString(),
+              photos: [{
+                blob: optimized,
+                name: file.name,
+                type: optimized.type || 'image/jpeg',
+                angleType: 'front'
+              }]
+            });
+            const history = getSavedHistory();
+            const hItem = history.find(h => h.id === state.loadedHistoryId);
+            if (hItem) {
+              hItem.has_cached_photos = true;
+              localStorage.setItem('loafed_history', JSON.stringify(history));
+            }
+          } catch (dbErr) {
+            console.warn('Could not cache attached photo in IndexedDB:', dbErr);
+          }
+        }
+
+        hideSubmitNotice();
+        updateSubmitButtonState();
+        refreshIcons();
+      } catch (err) {
+        showSubmitNotice('Could not process selected image: ' + err.message);
+      }
+    });
   }
 
   if (submitCatNameInput) {
@@ -4649,31 +4924,48 @@ Certified by Loafed Inspection Engine`;
           showSubmitNotice(errMsg);
           throw new Error(errMsg);
         }
+
+        // Handle duplicate submission prevented by backend
+        if (subRes.status === 409 || (subData && subData.already_submitted)) {
+          const existingId = (subData && subData.entry_id) || state.submittedEntryId;
+          markLoafAsSubmitted(existingId, { catName: validation.catName });
+
+          const shareUrl = `${window.location.origin}/loaf?id=${encodeURIComponent(existingId)}`;
+          if (submitSuccessCatName) submitSuccessCatName.textContent = validation.catName;
+          if (submitSuccessThumb) submitSuccessThumb.src = (submitModalThumbnail ? submitModalThumbnail.src : '/static/logo.webp');
+          if (submitSuccessScoreBadge) submitSuccessScoreBadge.textContent = `${(subData && subData.score) || (state.currentResult ? state.currentResult.overall_score : 90)} ${state.currentResult ? state.currentResult.grade_letter : ''}`;
+          if (submitSuccessRank) submitSuccessRank.textContent = state.currentResult ? state.currentResult.loaf_rank : 'Artisan Loaf';
+          if (submitSuccessShareUrl) submitSuccessShareUrl.value = shareUrl;
+          if (submitSuccessViewLeaderboardBtn) submitSuccessViewLeaderboardBtn.href = `/loaf?id=${encodeURIComponent(existingId)}`;
+          if (submitSuccessMessage) {
+            submitSuccessMessage.textContent = `${validation.catName} has already been officially published to the Leaderboard (Entry #${existingId}). Share your certified scorecard with friends!`;
+          }
+
+          if (submitModalFormView) submitModalFormView.classList.add('hidden');
+          if (submitSuccessView) submitSuccessView.classList.remove('hidden');
+          updateSubmitLeaderboardBtnState();
+
+          showToast({
+            type: 'info',
+            title: 'Already on Leaderboard',
+            message: `${validation.catName} is already on the leaderboard! (Entry #${existingId})`
+          });
+          refreshIcons();
+          return;
+        }
+
         if (!subRes.ok) {
           const errMsg = (subData && (subData.detail || subData.message)) || (subRes.status === 413 ? 'Photos payload exceeded size limit.' : 'Leaderboard submission failed.');
           showSubmitNotice(errMsg);
           throw new Error(errMsg);
         }
 
-        state.submittedEntryId = subData.entry_id;
-        try {
-          const saved = JSON.parse(localStorage.getItem('loafed_my_submissions') || '[]');
-          if (!saved.includes(subData.entry_id)) {
-            saved.push(subData.entry_id);
-            localStorage.setItem('loafed_my_submissions', JSON.stringify(saved));
-          }
-          const history = JSON.parse(localStorage.getItem('loafed_history') || '[]');
-          const target = history.find(h => h.result && (h.result.cat_name === validation.catName || h.cat_name === validation.catName));
-          if (target) {
-            target.submitted_entry_id = subData.entry_id;
-            localStorage.setItem('loafed_history', JSON.stringify(history));
-          }
-        } catch (_) {}
+        markLoafAsSubmitted(subData.entry_id, { catName: validation.catName });
 
         // Populate success view
         const shareUrl = `${window.location.origin}/loaf?id=${encodeURIComponent(subData.entry_id)}`;
         if (submitSuccessCatName) submitSuccessCatName.textContent = subData.cat_name || 'Your Cat';
-        if (submitSuccessThumb) submitSuccessThumb.src = subData.thumbnail_url || (submitModalThumbnail ? submitModalThumbnail.src : '/static/logo.png');
+        if (submitSuccessThumb) submitSuccessThumb.src = subData.thumbnail_url || (submitModalThumbnail ? submitModalThumbnail.src : '/static/logo.webp');
         if (submitSuccessScoreBadge) submitSuccessScoreBadge.textContent = `${subData.score} ${state.currentResult ? state.currentResult.grade_letter : ''}`;
         if (submitSuccessRank) submitSuccessRank.textContent = state.currentResult ? state.currentResult.loaf_rank : 'Artisan Loaf';
         if (submitSuccessShareUrl) submitSuccessShareUrl.value = shareUrl;
@@ -4685,9 +4977,7 @@ Certified by Loafed Inspection Engine`;
         if (submitSuccessView) submitSuccessView.classList.remove('hidden');
 
         // Update submit button on scorecard
-        if (submitLeaderboardBtn) {
-          submitLeaderboardBtn.innerHTML = '<i data-lucide="share-2" class="w-4 h-4 text-amber-200"></i><span>Share Loaf Link</span>';
-        }
+        updateSubmitLeaderboardBtnState();
 
         showToast({
           type: 'success',
@@ -5116,14 +5406,10 @@ Certified by Loafed Inspection Engine`;
         return;
       }
 
-      // Check if photo is missing (e.g. legacy history entry where photos were not saved in IndexedDB)
-      const hasPhoto = Boolean(state.submittedPhotoBlob || (state.photos && state.photos.length > 0 && state.photos[0].file));
-      if (!hasPhoto) {
-        showToast({
-          type: 'warning',
-          title: 'Photo File Required',
-          message: 'The original photo is not stored in your browser cache for this past inspection. Please re-upload your cat\'s photo to publish to the leaderboard.'
-        });
+      // Check if already submitted to leaderboard
+      const alreadySubmittedId = getSubmittedEntryIdForCurrentLoaf();
+      if (alreadySubmittedId) {
+        window.location.href = `/loaf?id=${encodeURIComponent(alreadySubmittedId)}`;
         return;
       }
 
