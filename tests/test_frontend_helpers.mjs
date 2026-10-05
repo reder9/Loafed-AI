@@ -66,3 +66,51 @@ test('Frontend Helper - Grade Token Expiration Validation', () => {
   const ageSecondsExpired = (Date.now() / 1000) - parsedExpired.ts;
   assert.equal(ageSecondsExpired > 86400, true);
 });
+
+test('Frontend Helper - Safe Perspective Angle Extraction', () => {
+  function parseAngleMeta(angleItem, idx) {
+    let angleText = '';
+    let customLabel = '';
+
+    if (typeof angleItem === 'string') {
+      angleText = angleItem;
+      customLabel = angleItem;
+    } else if (angleItem && typeof angleItem === 'object') {
+      angleText = `${angleItem.angle || ''} ${angleItem.label || ''} ${angleItem.name || ''}`;
+      customLabel = angleItem.label || angleItem.name || angleItem.angle || '';
+    }
+
+    const rawAngle = angleText.toLowerCase();
+    let label = customLabel || `Angle ${idx + 1}`;
+    let icon = 'camera';
+    if (rawAngle.includes('front') || rawAngle.includes('elevation')) {
+      label = customLabel || 'Front View';
+      icon = 'eye';
+    } else if (rawAngle.includes('side') || rawAngle.includes('lateral') || rawAngle.includes('profile')) {
+      label = customLabel || 'Side Profile';
+      icon = 'move-horizontal';
+    } else if (rawAngle.includes('top') || rawAngle.includes('dorsal') || rawAngle.includes('overhead')) {
+      label = customLabel || 'Overhead (Top)';
+      icon = 'compass';
+    }
+
+    return { label, icon };
+  }
+
+  // 1. Object from DynamoDB/presets
+  const objAngle = { angle: 'front', label: 'Front Elevation', url: 'https://example.com/cat.jpg' };
+  const res1 = parseAngleMeta(objAngle, 0);
+  assert.equal(res1.label, 'Front Elevation');
+  assert.equal(res1.icon, 'eye');
+
+  // 2. String representation
+  const strAngle = 'Lateral Profile';
+  const res2 = parseAngleMeta(strAngle, 1);
+  assert.equal(res2.label, 'Lateral Profile');
+  assert.equal(res2.icon, 'move-horizontal');
+
+  // 3. Fallback when undefined
+  const res3 = parseAngleMeta(undefined, 2);
+  assert.equal(res3.label, 'Angle 3');
+  assert.equal(res3.icon, 'camera');
+});

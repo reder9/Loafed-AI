@@ -764,17 +764,29 @@ document.addEventListener('DOMContentLoaded', () => {
           loafAnglesButtons.innerHTML = '';
 
           rawUrls.forEach((url, idx) => {
-            const rawAngle = (rawAngles[idx] || '').toLowerCase();
-            let label = `Angle ${idx + 1}`;
+            const angleItem = rawAngles[idx];
+            let angleText = '';
+            let customLabel = '';
+
+            if (typeof angleItem === 'string') {
+              angleText = angleItem;
+              customLabel = angleItem;
+            } else if (angleItem && typeof angleItem === 'object') {
+              angleText = `${angleItem.angle || ''} ${angleItem.label || ''} ${angleItem.name || ''}`;
+              customLabel = angleItem.label || angleItem.name || angleItem.angle || '';
+            }
+
+            const rawAngle = angleText.toLowerCase();
+            let label = customLabel || `Angle ${idx + 1}`;
             let icon = 'camera';
-            if (rawAngle.includes('front')) {
-              label = 'Front View';
+            if (rawAngle.includes('front') || rawAngle.includes('elevation')) {
+              label = customLabel || 'Front View';
               icon = 'eye';
-            } else if (rawAngle.includes('side')) {
-              label = 'Side Profile';
+            } else if (rawAngle.includes('side') || rawAngle.includes('lateral') || rawAngle.includes('profile')) {
+              label = customLabel || 'Side Profile';
               icon = 'move-horizontal';
-            } else if (rawAngle.includes('top') || rawAngle.includes('overhead')) {
-              label = 'Overhead (Top)';
+            } else if (rawAngle.includes('top') || rawAngle.includes('dorsal') || rawAngle.includes('overhead')) {
+              label = customLabel || 'Overhead (Top)';
               icon = 'compass';
             }
 
