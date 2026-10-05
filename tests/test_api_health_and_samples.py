@@ -26,18 +26,16 @@ def test_samples_endpoint(client):
     res = client.get("/api/samples")
     assert res.status_code == 200
     data = res.json()
-    assert "buttercup" in data
-    assert "chonks" in data
     assert "flash" in data
+    assert "chonks_79" in data
+    assert "chonks_68" in data
 
-    # Verify Buttercup preset structure
-    buttercup = data["buttercup"]
-    assert buttercup["name"] == "Buttercup"
-    assert "front" in buttercup["images"]
-    assert "side" in buttercup["images"]
-    assert "top" in buttercup["images"]
-    assert buttercup["cached_analysis"]["overall_score"] == 98
-    assert buttercup["cached_analysis"]["grade_letter"] == "A+"
+    # Verify Flash preset structure
+    flash = data["flash"]
+    assert flash["name"] == "Flash"
+    assert "front" in flash["images"]
+    assert flash["cached_analysis"]["overall_score"] == 92
+    assert flash["cached_analysis"]["grade_letter"] == "A"
 
 
 def test_robots_and_sitemap(client):

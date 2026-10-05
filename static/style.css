@@ -218,6 +218,38 @@ body {
   background: #fb923c;
 }
 
+/* Keep audited angle controls fully visible and easy to tap on narrow screens. */
+#inspectorBay {
+  scroll-margin-top: 6rem;
+}
+
+@media (max-width: 480px) {
+  #loafAnglesButtons,
+  #loafDetailsAnglesButtons {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(108px, 1fr));
+    overflow: visible;
+    gap: 0.375rem;
+  }
+
+  #loafAnglesButtons > button,
+  #loafDetailsAnglesButtons > button {
+    width: 100%;
+    min-width: 0;
+    justify-content: center;
+    white-space: normal;
+    text-align: center;
+    line-height: 1.2;
+    padding: 0.45rem 0.35rem;
+  }
+
+  #loafAnglesButtons > button span,
+  #loafDetailsAnglesButtons > button span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+}
+
 /* Toast Notifications */
 .toast-card {
   pointer-events: auto;
@@ -2226,6 +2258,4 @@ img, video, canvas {
     box-shadow: 0 0 10px rgba(234, 88, 12, 1);
   }
 }
-
-
 

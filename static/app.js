@@ -585,9 +585,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   const SAMPLE_FILENAMES = [
-    'buttercup_front', 'buttercup_side', 'buttercup_top',
-    'chonks_front', 'chonks_side', 'chonks_semi_front',
-    'flash_front', 'flash_side'
+    'flash_92', 'flash_front', 'flash_side', 'flash_top',
+    'chonks_79', 'chonks_68', 'chonks_front', 'chonks_side', 'chonks_semi_front',
+    'buttercup_front', 'buttercup_side', 'buttercup_top'
   ];
 
   const SAMPLE_HASH_HEXES = new Set([
@@ -677,7 +677,7 @@ document.addEventListener('DOMContentLoaded', () => {
         showToast({
           type: 'warning',
           title: 'Benchmark Cat Detected',
-          message: 'Example reference cats (Buttercup, Chonks, Flash) cannot be uploaded. Please upload original photos of your own cat!'
+          message: 'Example reference cats (Flash, Chonks) cannot be uploaded. Please upload original photos of your own cat!'
         });
         if (passedFiles.length === 0) {
           updateSubmitButton();
@@ -1068,242 +1068,236 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Benchmark Loaf Presets (Buttercup, Chonks, and Flash)
+  // Benchmark Loaf Presets (Flash, Chonks 79 C+, and Chonks 68 C)
   const BENCHMARK_PRESETS = {
-    buttercup: {
-      name: "Buttercup",
-      subtitle: "Golden Brioche",
-      badge: "3 Angles",
+    flash: {
+      name: "Flash",
+      subtitle: "Rustic Dark Rye",
+      badge: "5 Angles",
       images: [
-        { url: '/samples/buttercup_front.jpg', filename: 'buttercup_front.jpg' },
-        { url: '/samples/buttercup_side.jpg', filename: 'buttercup_side.jpg' },
-        { url: '/samples/buttercup_top.jpg', filename: 'buttercup_top.jpg' }
+        { url: '/samples/flash_92_front.webp', filename: 'flash_front.webp' },
+        { url: '/samples/flash_92_top.webp', filename: 'flash_top.webp' },
+        { url: '/samples/flash_92_side1.webp', filename: 'flash_side1.webp' },
+        { url: '/samples/flash_92_side2.webp', filename: 'flash_side2.webp' },
+        { url: '/samples/flash_92_extra.webp', filename: 'flash_extra.webp' }
       ],
       result: {
-        cat_name: "Buttercup",
-        overall_score: 98,
-        grade_letter: "A+",
+        cat_name: "Flash",
+        overall_score: 92,
+        grade_letter: "A",
         loaf_rank: "Grandmaster Artisan Loaf",
-        bread_classification: "Double-Toasted Golden Brioche",
-        summary_critique: "A masterclass in feline bakery arts. Buttercup demonstrates peerless geometry with zero paw visibility across all three inspected planes. The tail tuck is flush, virtually eliminating aerodynamic drag.",
+        bread_classification: "Rustic Dark Rye Boule",
+        summary_critique: "Flash delivers a textbook demonstration of high-altitude culinary geometry with near-total peet concealment and formidable dorsal density. Telemetry across five distinct inspection angles confirms exceptional structural integrity and minimal aerodynamic drag.",
         paw_tuck: {
-          score: 25,
-          status: "100% Peet Stealth Concealment",
-          critique: "Front and rear peet are completely tucked beneath the chest. Not a single toe bean, claw, or wrist joint breaches the loaf perimeter from any angle.",
+          score: 23,
+          status: "Stealth Peet Concealment",
+          critique: "Front limbs are folded impeccably inward, keeping all toe beans completely out of sight from primary inspection angles.",
           observations: [
-            "Front view reveals total paw withdrawal into undercarriage",
-            "Side view confirms rear haunches are flush to floor",
-            "Zero paw flaring visible from overhead inspection"
+            "Front paws vanish beneath the dense chest fleece with zero wrist protrusion.",
+            "No oar deployment or loaf boat tendencies detected.",
+            "Extreme discretion maintained regarding regional toe bean exposure."
           ]
         },
         tail_tuck: {
-          score: 24,
-          status: "Zero Drag Flank Wrap",
-          critique: "Tail is seamlessly curled flush along the starboard flank, hugging the body curve like an artisanal baguette score line.",
+          score: 22,
+          status: "Flush Flank Wrap",
+          critique: "The tail is tightly coiled along the posterior perimeter, creating a seamless dough boundary with negligible wake turbulence.",
           observations: [
-            "Tail tip rests tightly against flank with no swishing",
-            "Calculated aerodynamic drag coefficient: 0.03",
-            "Minor 1-point deduction because tail tip has high-contrast white ring accentuating outline"
+            "Tail tip tucked securely into the lateral flank.",
+            "Zero casual tail swishing or trailing drag detected in multi-angle telemetry.",
+            "Posterior curvature resembles a masterfully shaped sourdough end piece."
           ]
         },
         elbow_compactness: {
-          score: 24,
-          status: "Artisanal Dough Fold",
-          critique: "Elbows are neatly pulled inwards against the ribcage. The rising dough curvature creates a smooth, unbroken parabolic contour with no chicken-wing flare.",
+          score: 23,
+          status: "Tight Boule Convergence",
+          critique: "Elbows are tucked firmly against the ribcage, eliminating chicken-wing flare and maintaining a solid, aerodynamic loaf geometry.",
           observations: [
-            "Flanks are tightly drawn with zero wing flare",
-            "Chest curve is smooth and rectangular",
-            "Posture displays maximum relaxation and security"
+            "Flanks compress inward to form a cohesive, unified dough mass.",
+            "Shoulder joints locked tightly in place for maximum thermal retention.",
+            "Body contour exhibits zero lateral sagging or liquid dough behavior."
           ]
         },
         crust_symmetry: {
-          score: 25,
-          status: "Top-Tier Dorsal Boule Symmetry",
-          critique: "Overhead inspection reveals a textbook oval boule with golden tiger-stripe crusting, baked to an even, honey-golden hue with optimal butterfat gloss.",
+          score: 24,
+          status: "Masterclass Bilateral Balance",
+          critique: "The tabby coat grain displays even rise and balanced proportion from both profile and overhead perspectives.",
           observations: [
-            "Top-down view shows pristine 50/50 bilateral symmetry",
-            "Coat toastiness is uniform with warm marmalade highlights",
-            "Bread rise is even with no dough slumping"
+            "Evenly baked distribution of gray and black tabby striping.",
+            "Dorsal ridge runs straight down the center line with artisanal precision.",
+            "Stately facial expression matches the rigorous dignity of a Michelin-starred bakery."
           ]
         },
-        drag_coefficient: 0.03,
+        drag_coefficient: 0.14,
         oar_detected: false,
         face_loaf: false,
         multi_angle_bonus: 5,
         badges: [
-          "Certified 360-Degree Artisan Loaf",
-          "Zero Paw Visibility",
-          "Golden Brioche Classification",
-          "Sub-0.05 Drag Coefficient",
-          "Bilateral Boule Symmetry"
+          "Multi-Angle Telemetry Master",
+          "Invisible Peet Elite",
+          "Zero-Drag Aerodynamicist",
+          "Certified Master Boule"
         ],
         fun_tips_for_cat: [
-          "Buttercup could attempt a full 'Face Loaf' to reach the legendary 100/100 threshold.",
-          "Maintain current hydration levels for optimal crust sheen.",
-          "Continue maintaining optimal bilateral flank compression."
+          "Maintain this exact structural tightness during sudden household disturbances to protect your A-grade rating.",
+          "Consider a micro-adjustment of the rear tail coil by 2 millimeters to chase absolute perfection."
         ],
         angle_notes: {
-          front: "Pristine chest tuck; calm, unbothered facial expression.",
-          side: "Sleek aerodynamic silhouette; tail tightly wrapped along flank.",
-          top: "Near-perfect oval boule; impeccable bilateral spinal symmetry."
+          front: "Front view confirms total invisibility of the front paws and a stern, focused baking countenance.",
+          side: "Profile perspectives reveal exceptional height-to-width ratio and snug elbow containment.",
+          top: "Overhead bird-eye telemetry demonstrates a perfectly oval, compact boule contour."
         }
       }
     },
-    chonks: {
+    chonks_79: {
       name: "Chonks",
-      subtitle: "Dark Rye Pumpernickel",
-      badge: "2 Angles",
+      subtitle: "Charcoal Rye Boule",
+      badge: "4 Angles",
       images: [
-        { url: '/samples/chonks_side.jpg', filename: 'chonks_side.jpg' },
-        { url: '/samples/chonks_front.jpg', filename: 'chonks_front.jpg' }
+        { url: '/samples/chonks_79_front.webp', filename: 'chonks_front.webp' },
+        { url: '/samples/chonks_79_side.webp', filename: 'chonks_side.webp' },
+        { url: '/samples/chonks_79_top.webp', filename: 'chonks_top.webp' },
+        { url: '/samples/chonks_79_extra.webp', filename: 'chonks_extra.webp' }
       ],
       result: {
         cat_name: "Chonks",
-        overall_score: 89,
-        grade_letter: "A",
-        loaf_rank: "Master Artisan Loaf",
-        bread_classification: "Dark Rye Pumpernickel Boule",
-        summary_critique: "Chonks demonstrates textbook high-elevation loaf technique. Perched atop the lookout tree, this dark rye pumpernickel boule displays exceptional undercarriage discipline with zero toe bean breaches and sleek, low-drag flank compression. A distinguished feline baker of the highest order.",
+        overall_score: 79,
+        grade_letter: "C+",
+        loaf_rank: "Qualified Journeyman Loaf",
+        bread_classification: "Charcoal Rye Boule",
+        summary_critique: "A solid domestic loaf attempt with good dorsal symmetry and compact elbows, though front paw exposure and a trailing tail tip incur standard demerits.",
         paw_tuck: {
-          score: 23,
-          status: "95% Concealment (Sub-Perch Tuck)",
-          critique: "Front and rear limbs are securely tucked into the plush undercarriage. While the cat tree rim assists in masking the lower extremities, zero illicit toe beans or claws are visibly breaching the perimeter.",
+          score: 15,
+          status: "Visible Front Peet Infraction",
+          critique: "While the wrist fold shows promise, individual toe beans and front paws remain stubbornly deployed outside the perimeter.",
           observations: [
-            "Undercarriage limbs fully withdrawn into dark charcoal fur perimeter",
-            "No forward wrist extension detected from front-quarter view",
-            "Slight edge elevation supported by cat perch bolster"
+            "Front paws are clearly resting outward on the carpet surface",
+            "Lack of complete stealth concealment under the breastplate"
           ]
         },
         tail_tuck: {
-          score: 23,
-          status: "Starboard Flank Curvature",
-          critique: "Tail is smoothly curled along the lateral flank, providing unbroken curvature with negligible aerodynamic turbulence.",
+          score: 18,
+          status: "Trailing Tail Tip",
+          critique: "The tail begins a respectable flank wrap but terminates in a persistent rearward extension, creating unnecessary aerodynamic drag.",
           observations: [
-            "Tail tip resting flush against starboard haunch",
-            "Aerodynamic drag coefficient measured at 0.04",
-            "Uniform dark coat renders tail outline nearly imperceptible"
+            "Tail coils partially along the right flank",
+            "Terminal tip trails outward rather than locking flush"
           ]
         },
         elbow_compactness: {
-          score: 22,
-          status: "Compact Dough Rise",
-          critique: "Excellent lateral dough compression. Elbows pulled tightly against ribcage with zero chicken-wing flare, forming an imposing rectangular bread profile.",
+          score: 21,
+          status: "Taut Dough Boundary",
+          critique: "Elbows are drawn inward with commendable discipline, maintaining a tight core structure reminiscent of well-kneaded dough.",
           observations: [
-            "Zero lateral limb flare or oar protrusions",
-            "Solid muscular rise with uniform breadth",
-            "Slight upward gaze introduces minor cranial yaw"
+            "Minimal chicken-wing flare detected across all angles",
+            "Torso breadth is well-contained against the ribcage"
           ]
         },
         crust_symmetry: {
-          score: 21,
-          status: "Dark Rye Boule Symmetry",
-          critique: "Dense, beautifully baked charcoal-slate coat resembling a rustic pumpernickel boule. Topline curvature is even with a smooth spinal arch.",
+          score: 20,
+          status: "Balanced Gray Toast",
+          critique: "The coat exhibits an even, velvety charcoal pigmentation with a balanced dorsal ridge and minimal lateral listing.",
           observations: [
-            "Uniform dark coat toastiness with velvety matte finish",
-            "Bilateral contour balanced across medial axis",
-            "Slight cranial turn toward starboard window"
+            "Symmetrical spine line running from crown to rump",
+            "Evenly baked fur texture with uniform density"
           ]
         },
-        drag_coefficient: 0.04,
+        drag_coefficient: 0.38,
         oar_detected: false,
         face_loaf: false,
-        multi_angle_bonus: 4,
+        multi_angle_bonus: 5,
         badges: [
-          "Certified Dark Rye Pumpernickel",
-          "High-Perch Boule Formation",
-          "Stealth Peet Concealment",
-          "Sub-0.05 Aerodynamic Drag",
-          "Solid Slate Symmetry"
+          "Multi-Angle Telemetry Pioneer",
+          "Charcoal Crust Achiever",
+          "Minor Peet Protrusion Demerit"
         ],
         fun_tips_for_cat: [
-          "Align cranial axis directly forward for 100% bilateral boule symmetry.",
-          "Try the floor-level test to verify paw concealment without perch rim support.",
-          "A sub-perch ear tuck would push Chonks toward Grandmaster status."
+          "Practice retracting front paws entirely beneath the chest cavity during pre-nap stretches.",
+          "Work on coiling the tail tip closer to the flank to eliminate rear aerodynamic drag."
         ],
         angle_notes: {
-          front: "Alert, observant gaze; chest squarely aligned over perch bolster.",
-          side: "Continuous slate-grey parabolic topline with tight starboard tail tuck."
+          front: "Reveals clear front paw exposure and upright posture.",
+          side: "Highlights body length and trailing tail configuration.",
+          top: "Provides confirmation of dorsal symmetry and flank curvature."
         }
       }
     },
-    flash: {
-      name: "Flash",
-      subtitle: "Marbled Sourdough",
-      badge: "2 Angles",
+    chonks_68: {
+      name: "Chonks",
+      subtitle: "Dark Pumpernickel",
+      badge: "Single Angle",
       images: [
-        { url: '/samples/flash_front.jpg', filename: 'flash_front.jpg' },
-        { url: '/samples/flash_side.jpg', filename: 'flash_side.jpg' }
+        { url: '/samples/chonks_68_front.webp', filename: 'chonks_front.webp' }
       ],
       result: {
-        cat_name: "Flash",
-        overall_score: 83,
-        grade_letter: "B+",
-        loaf_rank: "Senior Artisan Loaf",
-        bread_classification: "Marbled Sourdough Baton",
-        summary_critique: "Flash presents an exquisite marbled sourdough baton resting atop prime cushion real estate. While full aerodynamic marks are awarded for the remarkable horizontal airplane ears, a minor wrist protrusion on the starboard side prevents an A+ rating. Nonetheless, an outstanding exhibition of feline baking discipline.",
+        cat_name: "Chonks",
+        overall_score: 68,
+        grade_letter: "C",
+        loaf_rank: "Apprentice Doughball",
+        bread_classification: "Dark Pumpernickel Loaf",
+        summary_critique: "Single-photo inspection limitation applied: The subject demonstrates a recognizable attempt at domestic feline baking, but substantial aerodynamic drag from the trailing appendage and a slight chicken-wing elbow flare pull this loaf into the apprentice tier.",
         paw_tuck: {
-          score: 20,
-          status: "Minor Wrist Protrusion (Cushion Sink)",
-          critique: "Right front wrist displays slight forward protrusion onto the cushion surface, breaching pure concealment by approximately 1.5 cm. Rear peet remain fully tucked.",
+          score: 16,
+          status: "Slight Toe Peek Detected",
+          critique: "The front wrist area shows a minor lack of discipline with digits hovering perilously near the edge of concealment.",
           observations: [
-            "Starboard front wrist joint visible resting on cushion piping",
-            "Rear peet and hocks firmly retracted beneath flank",
-            "Cushion softness causes slight dough sinking along lower seam"
+            "Front right paw shows slight wrist elevation",
+            "Perimeter containment is marginally compromised",
+            "Single-photo angle obscures secondary rear peet telemetry"
           ]
         },
         tail_tuck: {
-          score: 21,
-          status: "Portside Flank Wrap",
-          critique: "Tail is tucked along the portside flank, creating a tight sweep though slightly flattened by the cushion seam.",
+          score: 8,
+          status: "Trailing Aerodynamic Drag",
+          critique: "The tail is cascading freely off the edge of the cat tree perch rather than curling flush against the flank, creating severe aerodynamic turbulence.",
           observations: [
-            "Calculated aerodynamic drag coefficient: 0.06",
-            "Tail tip resting flush against left rear haunch",
-            "Minimal swish turbulence detected"
+            "Full tail extension draping downwards",
+            "Zero flank wrap observed",
+            "High gravitational pull on distal tail tip"
           ]
         },
         elbow_compactness: {
-          score: 21,
-          status: "Marbled Dough Fold",
-          critique: "Elbows pulled inwards with good bilateral compression. Distinctive 'airplane ears' deployed horizontally, creating an aerodynamically intriguing cranial profile.",
+          score: 20,
+          status: "Acceptable Joint Fold",
+          critique: "Elbows are reasonably tucked inward toward the ribcage, though a minor flare prevents this from achieving artisan masterclass status.",
           observations: [
-            "Lateral airplane ear configuration detected (aerodynamic stabilizer mode)",
-            "Subtle leftward lean due to pillow contour",
-            "Suspicious facial expression indicates hyper-vigilant loaf state"
+            "Forelimbs pressed moderately close to the chest cavity",
+            "Slight lateral protrusion near the shoulder joints"
           ]
         },
         crust_symmetry: {
-          score: 21,
-          status: "Tiger-Stripe Sourdough Swirl",
-          critique: "Gorgeous marbled silver-grey tiger stripes with distinct dorsal scoring. Bilateral symmetry is solid despite slight pillow elevation gradient.",
+          score: 24,
+          status: "Evenly Baked Charcoal Coat",
+          critique: "The sleek gray fur coat is gorgeously toasted and exhibits a wonderful uniform color profile across the dorsal arch.",
           observations: [
-            "Even tiger-stripe crust score markings across back",
-            "Bilateral symmetry graded at 84% due to cushion tilt",
-            "Coat luster exhibits pristine sourdough crust shine"
+            "Rich matte charcoal pigment",
+            "Solid bilateral dorsal contour",
+            "Balanced rise along the spine"
           ]
         },
-        drag_coefficient: 0.06,
+        drag_coefficient: 0.58,
         oar_detected: false,
         face_loaf: false,
-        multi_angle_bonus: 4,
+        multi_angle_bonus: 0,
         badges: [
-          "Aerodynamic Airplane Ears",
-          "Marbled Sourdough Certification",
-          "Cushion Loaf Specialist",
-          "Vigilant Baker Stance",
-          "Tiger-Stripe Crust Finish"
+          "Perch Gravity Defier",
+          "Tail-Drag Infraction Recipient",
+          "Midnight Fur Monolith"
         ],
         fun_tips_for_cat: [
-          "Retract the right front wrist 1.5 cm deeper into the chest fold to eliminate peet deductions.",
-          "Test on a firm, flat surface to prevent cushion-induced dough slumping.",
-          "Fold ears forward during inspection to reduce lateral cranial drag."
+          "Practice curling the tail around the front paws like a cinnamon roll to eliminate aerodynamic drag.",
+          "Tuck the front wrists deeper into the chest cavity during the next resting cycle.",
+          "Avoid perching on narrow edges where appendages are tempted to spill over."
         ],
         angle_notes: {
-          front: "Signature horizontal airplane ears deployed; minor right wrist breach.",
-          side: "Classic sourdough baton contour along cushion diagonal; tail tucked flush."
+          front: "Front view reveals a stately gray coat with a trailing tail and minor wrist visibility on the perch edge."
         }
       }
     }
   };
+  BENCHMARK_PRESETS.flash_92 = BENCHMARK_PRESETS.flash;
+  BENCHMARK_PRESETS.chonks = BENCHMARK_PRESETS.chonks_79;
+  BENCHMARK_PRESETS.buttercup = BENCHMARK_PRESETS.flash;
 
   // Benchmark button UI helpers
   function resetBenchmarkButtons() {
@@ -1319,7 +1313,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <i data-lucide="sparkles" class="w-3.5 h-3.5 text-orange-700 shrink-0"></i>
         <span>Inspect</span>
       `;
-      btn.className = 'load-benchmark-btn flex-1 min-h-[40px] py-1.5 px-2.5 rounded-xl bg-orange-50 hover:bg-orange-100 text-orange-950 text-xs font-bold border border-orange-200 transition-all flex items-center justify-center gap-1.5 shadow-2xs active:scale-95 whitespace-nowrap btn-tactile';
+      btn.className = 'load-benchmark-btn flex-1 min-h-[38px] sm:min-h-[40px] py-1.5 px-1.5 sm:px-2 rounded-xl bg-orange-50 hover:bg-orange-100 text-orange-950 text-[11px] sm:text-xs font-bold border border-orange-200 transition-all flex items-center justify-center gap-1 sm:gap-1.5 shadow-2xs active:scale-95 whitespace-nowrap btn-tactile';
     });
     refreshIcons();
   }
@@ -1334,7 +1328,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <i data-lucide="chevron-up" class="w-3.5 h-3.5 text-white shrink-0"></i>
           <span>Collapse</span>
         `;
-        btn.className = 'load-benchmark-btn flex-1 min-h-[40px] py-1.5 px-2.5 rounded-xl bg-gradient-to-r from-orange-600 via-amber-600 to-orange-700 hover:from-orange-700 hover:to-amber-700 text-white text-xs font-black border border-transparent transition-all flex items-center justify-center gap-1.5 shadow-sm active:scale-95 whitespace-nowrap shimmer-btn btn-tactile';
+        btn.className = 'load-benchmark-btn flex-1 min-h-[38px] sm:min-h-[40px] py-1.5 px-1.5 sm:px-2 rounded-xl bg-gradient-to-r from-orange-600 via-amber-600 to-orange-700 hover:from-orange-700 hover:to-amber-700 text-white text-[11px] sm:text-xs font-black border border-transparent transition-all flex items-center justify-center gap-1 sm:gap-1.5 shadow-sm active:scale-95 whitespace-nowrap shimmer-btn btn-tactile';
 
         if (card) {
           card.classList.remove('border-orange-200/90', 'bg-white/95');
@@ -1401,7 +1395,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const resp = await fetch(url);
         if (!resp.ok) throw new Error(`HTTP ${resp.status} fetching sample image`);
         const blob = await resp.blob();
-        return new File([blob], filename, { type: 'image/jpeg' });
+        const mimeType = url.endsWith('.webp') ? 'image/webp' : 'image/jpeg';
+        return new File([blob], filename, { type: mimeType });
       };
 
       const files = await Promise.all(
@@ -1443,7 +1438,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Load Buttercup Shortcut Button in upload bay
   if (loadButtercupBtn) {
     loadButtercupBtn.addEventListener('click', () => {
-      loadBenchmarkLoaf('buttercup');
+      loadBenchmarkLoaf('flash');
     });
   }
 
@@ -1580,7 +1575,7 @@ document.addEventListener('DOMContentLoaded', () => {
       photoUrls = BENCHMARK_PRESETS[state.activePresetKey].images.map(img => img.url);
     }
     if (photoUrls.length === 0) {
-      photoUrls = ['/samples/buttercup_front.jpg'];
+      photoUrls = ['/samples/flash_92_front.webp'];
     }
 
     if (ovenCatPhoto) {
@@ -2390,13 +2385,14 @@ Certified by Loafed Inspection Engine`;
     }
     if (result && result.cat_name) {
       const nameLow = result.cat_name.toLowerCase();
-      if (nameLow.includes('buttercup')) return '/samples/buttercup_front.jpg';
+      if (nameLow.includes('flash')) return '/samples/flash_92_thumb.webp';
+      if (nameLow.includes('chonks')) return '/samples/chonks_79_thumb.webp';
       if (nameLow.includes('chonk')) return '/samples/chonks_front.jpg';
       if (nameLow.includes('flash')) return '/samples/flash_front.jpg';
     }
     const firstGridImg = document.querySelector('#angleReviewGrid img');
     if (firstGridImg && firstGridImg.src) return firstGridImg.src;
-    return '/samples/buttercup_front.jpg';
+    return '/samples/flash_92_thumb.webp';
   }
 
   function loadImage(src) {
@@ -2543,7 +2539,7 @@ Certified by Loafed Inspection Engine`;
 
   if (downloadStoryCardBtn) {
     downloadStoryCardBtn.addEventListener('click', async () => {
-      const res = state.currentResult || (activeModalCertResult || BENCHMARK_PRESETS.buttercup.result);
+      const res = state.currentResult || (activeModalCertResult || BENCHMARK_PRESETS.flash.result);
       if (!res) return;
       await generateStoryCard(res, true);
       showToast({
@@ -3291,7 +3287,7 @@ Certified by Loafed Inspection Engine`;
 
   if (viewSampleCertBtn) {
     viewSampleCertBtn.addEventListener('click', () => {
-      const sample = state.currentResult || BENCHMARK_PRESETS.buttercup.result;
+      const sample = state.currentResult || BENCHMARK_PRESETS.flash.result;
       openCertificateModal(sample);
     });
   }
@@ -3320,7 +3316,7 @@ Certified by Loafed Inspection Engine`;
       if (msg && !msg.toLowerCase().includes('configuration') && !msg.toLowerCase().includes('settings')) {
         ovenAlertBody.textContent = msg;
       } else {
-        ovenAlertBody.textContent = "Our public evaluation ovens have reached their daily limit for today! Fresh loaf inspection slots will open up tomorrow. In the meantime, you can inspect Buttercup's certified benchmark dataset below or explore today's champions on the Leaderboard.";
+        ovenAlertBody.textContent = "Our public evaluation ovens have reached their daily limit for today! Fresh loaf inspection slots will open up tomorrow. In the meantime, you can inspect Flash's certified benchmark dataset below or explore today's champions on the Leaderboard.";
       }
     }
     if (ovenAlertModal) ovenAlertModal.classList.remove('hidden');
@@ -3336,7 +3332,7 @@ Certified by Loafed Inspection Engine`;
   if (ovenAlertPresetBtn) {
     ovenAlertPresetBtn.addEventListener('click', () => {
       ovenAlertModal.classList.add('hidden');
-      loadBenchmarkLoaf('buttercup');
+      loadBenchmarkLoaf('flash');
     });
   }
 
@@ -5002,7 +4998,11 @@ Certified by Loafed Inspection Engine`;
         const submitForm = new FormData();
         submitForm.append('grade_token', gradeToken);
         submitForm.append('cat_name', validation.catName);
-        submitForm.append('display_name', validation.displayName);
+        // The API derives this from the authenticated profile. Anonymous users
+        // still provide the name chosen in the submit modal.
+        if (!state.user) {
+          submitForm.append('display_name', validation.displayName);
+        }
         submitForm.append('primary_photo_index', pIdx);
 
         if (state.photos && state.photos.length > 0) {

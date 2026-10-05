@@ -32,15 +32,15 @@ class TestApiLeaderboard:
             assert "Benchmark and example cats cannot be submitted" in res.text
 
     def test_submit_with_sample_image_hash_is_rejected(self, client):
-        # Read the genuine benchmark Buttercup image file
-        sample_path = Path("static/samples/buttercup_front.webp")
-        real_buttercup_bytes = sample_path.read_bytes()
-        real_hash = hashlib.sha256(real_buttercup_bytes).hexdigest()
+        # Read the genuine benchmark Flash image file
+        sample_path = Path("static/samples/flash_92_front.webp")
+        real_benchmark_bytes = sample_path.read_bytes()
+        real_hash = hashlib.sha256(real_benchmark_bytes).hexdigest()
         assert real_hash in app.SAMPLE_IMAGE_HASHES
 
         data = {
-            "cat_name": "Copied Buttercup",
-            "overall_score": 95,
+            "cat_name": "Copied Flash",
+            "overall_score": 92,
             "grade_letter": "A",
             "can_submit": True,
             "image_sha256": real_hash,
@@ -49,10 +49,10 @@ class TestApiLeaderboard:
         token = app.generate_grade_token(data, image_hash=real_hash, can_submit=True)
 
         with patch("app.verify_cognito_token", return_value={"sub": "user_123"}):
-            files = [("photos", ("buttercup.webp", io.BytesIO(real_buttercup_bytes), "image/webp"))]
+            files = [("photos", ("flash.webp", io.BytesIO(real_benchmark_bytes), "image/webp"))]
             form = {
                 "grade_token": token,
-                "cat_name": "Copied Buttercup",
+                "cat_name": "Copied Flash",
                 "display_name": "BakerBob"
             }
             res = client.post("/api/leaderboard/submit", data=form, files=files, headers={"Authorization": "Bearer mock"})

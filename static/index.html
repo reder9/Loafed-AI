@@ -46,7 +46,7 @@
 
   <!-- Preload Critical Above-The-Fold Mascot & Hero Benchmark Assets -->
   <link rel="preload" as="image" href="/static/logo.webp" type="image/webp" fetchpriority="high">
-  <link rel="preload" as="image" href="/samples/buttercup_front.webp" type="image/webp" fetchpriority="high">
+  <link rel="preload" as="image" href="/samples/flash_92_thumb.webp" type="image/webp" fetchpriority="high">
 
   <!-- Production Tailwind CSS & Core Styles -->
   <link rel="stylesheet" href="/static/tailwind.min.css">
@@ -193,73 +193,13 @@
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-          <!-- Buttercup Card -->
+          <!-- Flash 92 A Card -->
           <div class="benchmark-card p-3 sm:p-3.5 rounded-2xl bg-white/95 border border-orange-200/90 hover:border-orange-400 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between group">
             <div>
               <div class="relative w-full h-36 rounded-xl overflow-hidden mb-2.5 bg-orange-50 border border-orange-200/60">
-                <img src="/samples/buttercup_front.webp" alt="Buttercup - Golden Brioche Loaf" width="480" height="480" fetchpriority="high" decoding="async" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200">
-                <span class="absolute top-2 right-2 stamp text-xs font-black text-orange-700 border-orange-700 bg-white/95">98 A+</span>
-                <span class="absolute bottom-2 left-2 text-[10px] font-bold bg-stone-900/80 text-white px-2 py-0.5 rounded-md">3 Angles</span>
-                <span class="benchmark-active-badge hidden absolute top-2 left-2 text-[10px] font-black uppercase tracking-wider bg-orange-600 text-white px-2 py-0.5 rounded-md shadow-xs flex items-center gap-1">
-                  <i data-lucide="eye" class="w-3 h-3"></i>
-                  <span>Inspecting</span>
-                </span>
-              </div>
-              <div class="flex items-baseline justify-between">
-                <h3 class="text-sm font-black text-stone-900">Buttercup</h3>
-                <span class="text-[11px] font-bold text-orange-800">Grandmaster</span>
-              </div>
-              <p class="text-[11px] text-stone-600 mt-0.5 leading-snug">Golden Brioche &bull; 100% Peet Concealment with sub-0.03 drag.</p>
-            </div>
-            <div class="mt-3 pt-2.5 border-t border-orange-100 flex items-center gap-1.5">
-              <button type="button" class="load-benchmark-btn flex-1 min-h-[38px] sm:min-h-[40px] py-1.5 px-1.5 sm:px-2 rounded-xl bg-orange-50 hover:bg-orange-100 text-orange-950 text-[11px] sm:text-xs font-bold border border-orange-200 transition-all flex items-center justify-center gap-1 sm:gap-1.5 shadow-2xs active:scale-95 whitespace-nowrap btn-tactile" data-cat="buttercup" aria-label="Inspect Buttercup Loaf">
-                <i data-lucide="sparkles" class="w-3.5 h-3.5 text-orange-700 shrink-0"></i>
-                <span>Inspect</span>
-              </button>
-              <button type="button" class="preview-cert-btn flex-1 min-h-[38px] sm:min-h-[40px] py-1.5 px-1.5 sm:px-2 rounded-xl bg-white hover:bg-orange-50 text-stone-700 hover:text-orange-950 text-[11px] sm:text-xs font-bold border border-stone-200 hover:border-orange-300 transition-all flex items-center justify-center gap-1 sm:gap-1.5 shadow-2xs active:scale-95 whitespace-nowrap btn-tactile" data-cat="buttercup" title="Preview Official Certificate" aria-label="Preview Buttercup Certificate">
-                <i data-lucide="file-badge" class="w-3.5 h-3.5 text-orange-600 shrink-0"></i>
-                <span>Certificate</span>
-              </button>
-            </div>
-          </div>
-
-          <!-- Chonks Card -->
-          <div class="benchmark-card p-3 sm:p-3.5 rounded-2xl bg-white/95 border border-orange-200/90 hover:border-orange-400 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between group">
-            <div>
-              <div class="relative w-full h-36 rounded-xl overflow-hidden mb-2.5 bg-orange-50 border border-orange-200/60">
-                <img src="/samples/chonks_front.webp" alt="Chonks - Dark Rye Pumpernickel Boule" width="480" height="340" loading="lazy" decoding="async" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200">
-                <span class="absolute top-2 right-2 stamp text-xs font-black text-orange-700 border-orange-700 bg-white/95">89 A</span>
-                <span class="absolute bottom-2 left-2 text-[10px] font-bold bg-stone-900/80 text-white px-2 py-0.5 rounded-md">2 Angles</span>
-                <span class="benchmark-active-badge hidden absolute top-2 left-2 text-[10px] font-black uppercase tracking-wider bg-orange-600 text-white px-2 py-0.5 rounded-md shadow-xs flex items-center gap-1">
-                  <i data-lucide="eye" class="w-3 h-3"></i>
-                  <span>Inspecting</span>
-                </span>
-              </div>
-              <div class="flex items-baseline justify-between">
-                <h3 class="text-sm font-black text-stone-900">Chonks</h3>
-                <span class="text-[11px] font-bold text-orange-800">Master Loaf</span>
-              </div>
-              <p class="text-[11px] text-stone-600 mt-0.5 leading-snug">Dark Rye Pumpernickel &bull; High-perch boule with stealth undercarriage.</p>
-            </div>
-            <div class="mt-3 pt-2.5 border-t border-orange-100 flex items-center gap-1.5">
-              <button type="button" class="load-benchmark-btn flex-1 min-h-[38px] sm:min-h-[40px] py-1.5 px-1.5 sm:px-2 rounded-xl bg-orange-50 hover:bg-orange-100 text-orange-950 text-[11px] sm:text-xs font-bold border border-orange-200 transition-all flex items-center justify-center gap-1 sm:gap-1.5 shadow-2xs active:scale-95 whitespace-nowrap btn-tactile" data-cat="chonks" aria-label="Inspect Chonks Loaf">
-                <i data-lucide="sparkles" class="w-3.5 h-3.5 text-orange-700 shrink-0"></i>
-                <span>Inspect</span>
-              </button>
-              <button type="button" class="preview-cert-btn flex-1 min-h-[38px] sm:min-h-[40px] py-1.5 px-1.5 sm:px-2 rounded-xl bg-white hover:bg-orange-50 text-stone-700 hover:text-orange-950 text-[11px] sm:text-xs font-bold border border-stone-200 hover:border-orange-300 transition-all flex items-center justify-center gap-1 sm:gap-1.5 shadow-2xs active:scale-95 whitespace-nowrap btn-tactile" data-cat="chonks" title="Preview Official Certificate" aria-label="Preview Chonks Certificate">
-                <i data-lucide="file-badge" class="w-3.5 h-3.5 text-orange-600 shrink-0"></i>
-                <span>Certificate</span>
-              </button>
-            </div>
-          </div>
-
-          <!-- Flash Card -->
-          <div class="benchmark-card p-3 sm:p-3.5 rounded-2xl bg-white/95 border border-orange-200/90 hover:border-orange-400 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between group">
-            <div>
-              <div class="relative w-full h-36 rounded-xl overflow-hidden mb-2.5 bg-orange-50 border border-orange-200/60">
-                <img src="/samples/flash_front.webp" alt="Flash - Marbled Sourdough Baton" width="480" height="340" loading="lazy" decoding="async" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200">
-                <span class="absolute top-2 right-2 stamp text-xs font-black text-amber-700 border-amber-700 bg-white/95">83 B+</span>
-                <span class="absolute bottom-2 left-2 text-[10px] font-bold bg-stone-900/80 text-white px-2 py-0.5 rounded-md">2 Angles</span>
+                <img src="/samples/flash_92_thumb.webp" alt="Flash - Certified Grandmaster Loaf" width="480" height="340" fetchpriority="high" decoding="async" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200">
+                <span class="absolute top-2 right-2 stamp text-xs font-black text-orange-700 border-orange-700 bg-white/95">92 A</span>
+                <span class="absolute bottom-2 left-2 text-[10px] font-bold bg-stone-900/80 text-white px-2 py-0.5 rounded-md">5 Angles</span>
                 <span class="benchmark-active-badge hidden absolute top-2 left-2 text-[10px] font-black uppercase tracking-wider bg-orange-600 text-white px-2 py-0.5 rounded-md shadow-xs flex items-center gap-1">
                   <i data-lucide="eye" class="w-3 h-3"></i>
                   <span>Inspecting</span>
@@ -267,9 +207,9 @@
               </div>
               <div class="flex items-baseline justify-between">
                 <h3 class="text-sm font-black text-stone-900">Flash</h3>
-                <span class="text-[11px] font-bold text-amber-800">Senior Loaf</span>
+                <span class="text-[11px] font-bold text-orange-800">Grandmaster</span>
               </div>
-              <p class="text-[11px] text-stone-600 mt-0.5 leading-snug">Marbled Sourdough &bull; Aerodynamic airplane ears with minor wrist peek.</p>
+              <p class="text-[11px] text-stone-600 mt-0.5 leading-snug">Rustic Dark Rye Boule &bull; Stealth peet concealment with 0.14 drag.</p>
             </div>
             <div class="mt-3 pt-2.5 border-t border-orange-100 flex items-center gap-1.5">
               <button type="button" class="load-benchmark-btn flex-1 min-h-[38px] sm:min-h-[40px] py-1.5 px-1.5 sm:px-2 rounded-xl bg-orange-50 hover:bg-orange-100 text-orange-950 text-[11px] sm:text-xs font-bold border border-orange-200 transition-all flex items-center justify-center gap-1 sm:gap-1.5 shadow-2xs active:scale-95 whitespace-nowrap btn-tactile" data-cat="flash" aria-label="Inspect Flash Loaf">
@@ -277,6 +217,66 @@
                 <span>Inspect</span>
               </button>
               <button type="button" class="preview-cert-btn flex-1 min-h-[38px] sm:min-h-[40px] py-1.5 px-1.5 sm:px-2 rounded-xl bg-white hover:bg-orange-50 text-stone-700 hover:text-orange-950 text-[11px] sm:text-xs font-bold border border-stone-200 hover:border-orange-300 transition-all flex items-center justify-center gap-1 sm:gap-1.5 shadow-2xs active:scale-95 whitespace-nowrap btn-tactile" data-cat="flash" title="Preview Official Certificate" aria-label="Preview Flash Certificate">
+                <i data-lucide="file-badge" class="w-3.5 h-3.5 text-orange-600 shrink-0"></i>
+                <span>Certificate</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Chonks 79 C+ Card -->
+          <div class="benchmark-card p-3 sm:p-3.5 rounded-2xl bg-white/95 border border-orange-200/90 hover:border-orange-400 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between group">
+            <div>
+              <div class="relative w-full h-36 rounded-xl overflow-hidden mb-2.5 bg-orange-50 border border-orange-200/60">
+                <img src="/samples/chonks_79_thumb.webp" alt="Chonks - Charcoal Rye Boule" width="480" height="340" loading="lazy" decoding="async" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200">
+                <span class="absolute top-2 right-2 stamp text-xs font-black text-amber-700 border-amber-700 bg-white/95">79 C+</span>
+                <span class="absolute bottom-2 left-2 text-[10px] font-bold bg-stone-900/80 text-white px-2 py-0.5 rounded-md">4 Angles</span>
+                <span class="benchmark-active-badge hidden absolute top-2 left-2 text-[10px] font-black uppercase tracking-wider bg-orange-600 text-white px-2 py-0.5 rounded-md shadow-xs flex items-center gap-1">
+                  <i data-lucide="eye" class="w-3 h-3"></i>
+                  <span>Inspecting</span>
+                </span>
+              </div>
+              <div class="flex items-baseline justify-between">
+                <h3 class="text-sm font-black text-stone-900">Chonks</h3>
+                <span class="text-[11px] font-bold text-amber-800">Journeyman Loaf</span>
+              </div>
+              <p class="text-[11px] text-stone-600 mt-0.5 leading-snug">Charcoal Rye Boule &bull; Disciplined elbows with slight front peet peek.</p>
+            </div>
+            <div class="mt-3 pt-2.5 border-t border-orange-100 flex items-center gap-1.5">
+              <button type="button" class="load-benchmark-btn flex-1 min-h-[38px] sm:min-h-[40px] py-1.5 px-1.5 sm:px-2 rounded-xl bg-orange-50 hover:bg-orange-100 text-orange-950 text-[11px] sm:text-xs font-bold border border-orange-200 transition-all flex items-center justify-center gap-1 sm:gap-1.5 shadow-2xs active:scale-95 whitespace-nowrap btn-tactile" data-cat="chonks_79" aria-label="Inspect Chonks Loaf">
+                <i data-lucide="sparkles" class="w-3.5 h-3.5 text-orange-700 shrink-0"></i>
+                <span>Inspect</span>
+              </button>
+              <button type="button" class="preview-cert-btn flex-1 min-h-[38px] sm:min-h-[40px] py-1.5 px-1.5 sm:px-2 rounded-xl bg-white hover:bg-orange-50 text-stone-700 hover:text-orange-950 text-[11px] sm:text-xs font-bold border border-stone-200 hover:border-orange-300 transition-all flex items-center justify-center gap-1 sm:gap-1.5 shadow-2xs active:scale-95 whitespace-nowrap btn-tactile" data-cat="chonks_79" title="Preview Official Certificate" aria-label="Preview Chonks Certificate">
+                <i data-lucide="file-badge" class="w-3.5 h-3.5 text-orange-600 shrink-0"></i>
+                <span>Certificate</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Chonks 68 C Card -->
+          <div class="benchmark-card p-3 sm:p-3.5 rounded-2xl bg-white/95 border border-orange-200/90 hover:border-orange-400 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between group">
+            <div>
+              <div class="relative w-full h-36 rounded-xl overflow-hidden mb-2.5 bg-orange-50 border border-orange-200/60">
+                <img src="/samples/chonks_68_thumb.webp" alt="Chonks - Dark Pumpernickel Loaf" width="480" height="340" loading="lazy" decoding="async" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200">
+                <span class="absolute top-2 right-2 stamp text-xs font-black text-stone-700 border-stone-700 bg-white/95">68 C</span>
+                <span class="absolute bottom-2 left-2 text-[10px] font-bold bg-stone-900/80 text-white px-2 py-0.5 rounded-md">Single Angle</span>
+                <span class="benchmark-active-badge hidden absolute top-2 left-2 text-[10px] font-black uppercase tracking-wider bg-orange-600 text-white px-2 py-0.5 rounded-md shadow-xs flex items-center gap-1">
+                  <i data-lucide="eye" class="w-3 h-3"></i>
+                  <span>Inspecting</span>
+                </span>
+              </div>
+              <div class="flex items-baseline justify-between">
+                <h3 class="text-sm font-black text-stone-900">Chonks</h3>
+                <span class="text-[11px] font-bold text-stone-700">Apprentice Loaf</span>
+              </div>
+              <p class="text-[11px] text-stone-600 mt-0.5 leading-snug">Dark Pumpernickel &bull; High-perch rise with trailing tail turbulence.</p>
+            </div>
+            <div class="mt-3 pt-2.5 border-t border-orange-100 flex items-center gap-1.5">
+              <button type="button" class="load-benchmark-btn flex-1 min-h-[38px] sm:min-h-[40px] py-1.5 px-1.5 sm:px-2 rounded-xl bg-orange-50 hover:bg-orange-100 text-orange-950 text-[11px] sm:text-xs font-bold border border-orange-200 transition-all flex items-center justify-center gap-1 sm:gap-1.5 shadow-2xs active:scale-95 whitespace-nowrap btn-tactile" data-cat="chonks_68" aria-label="Inspect Chonks Loaf">
+                <i data-lucide="sparkles" class="w-3.5 h-3.5 text-orange-700 shrink-0"></i>
+                <span>Inspect</span>
+              </button>
+              <button type="button" class="preview-cert-btn flex-1 min-h-[38px] sm:min-h-[40px] py-1.5 px-1.5 sm:px-2 rounded-xl bg-white hover:bg-orange-50 text-stone-700 hover:text-orange-950 text-[11px] sm:text-xs font-bold border border-stone-200 hover:border-orange-300 transition-all flex items-center justify-center gap-1 sm:gap-1.5 shadow-2xs active:scale-95 whitespace-nowrap btn-tactile" data-cat="chonks_68" title="Preview Official Certificate" aria-label="Preview Chonks Certificate">
                 <i data-lucide="file-badge" class="w-3.5 h-3.5 text-orange-600 shrink-0"></i>
                 <span>Certificate</span>
               </button>
@@ -312,7 +312,7 @@
           <input 
             type="text" 
             id="catNameInput" 
-            placeholder="e.g. Buttercup, Mochi, Oliver..." 
+            placeholder="e.g. Flash, Chonks, Oliver..." 
             maxlength="40"
             class="w-full px-3.5 py-2.5 rounded-xl border border-orange-200 bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-200 outline-none text-sm font-medium text-stone-900 placeholder:text-stone-400 transition-all shadow-xs"
           >
@@ -496,7 +496,7 @@
         <!-- Oven Hearth Chamber with User Cat Photo -->
         <div class="oven-chamber-portal" aria-hidden="true">
           <div id="ovenPhotoStage" class="oven-photo-stage">
-            <img id="ovenCatPhoto" class="oven-cat-photo" src="/samples/buttercup_front.webp" alt="Baking cat loaf photo" width="160" height="120">
+            <img id="ovenCatPhoto" class="oven-cat-photo" src="/samples/flash_92_front.webp" alt="Baking cat loaf photo" width="160" height="120">
           </div>
           <!-- Warm Amber Hearth Tint -->
           <div class="oven-hearth-sheen"></div>
@@ -553,7 +553,7 @@
           <div>
             <div class="flex items-center gap-2 flex-wrap">
               <span class="text-xs font-black uppercase tracking-wider text-orange-950">Benchmark Reference Loaf</span>
-              <span id="exampleCatBadge" class="text-[11px] font-bold bg-orange-200 text-orange-950 px-2.5 py-0.5 rounded-full border border-orange-300">Buttercup Baseline</span>
+              <span id="exampleCatBadge" class="text-[11px] font-bold bg-orange-200 text-orange-950 px-2.5 py-0.5 rounded-full border border-orange-300">Flash Baseline</span>
               <span class="text-[11px] font-bold text-rose-700 bg-rose-100 px-2 py-0.5 rounded border border-rose-200">&bull; Ineligible for Leaderboard</span>
             </div>
             <p class="text-xs text-stone-700 mt-0.5">
@@ -680,7 +680,7 @@
               </div>
 
               <h2 id="resultCatName" class="text-2xl sm:text-3xl lg:text-4xl font-black text-stone-900 tracking-tight leading-tight mb-1">
-                Buttercup
+                Flash
               </h2>
               <div class="text-orange-800 font-extrabold text-base sm:text-lg lg:text-xl mt-0.5 flex items-center gap-1.5 justify-center sm:justify-start">
                 <i data-lucide="medal" class="w-5 h-5 text-amber-600 shrink-0"></i>
@@ -689,22 +689,22 @@
               
               <div class="inline-flex items-center gap-1.5 text-orange-950 text-xs sm:text-sm mt-2 bg-gradient-to-r from-orange-100/90 to-amber-100/80 border border-orange-300/80 px-3 py-1.5 rounded-xl font-bold shadow-2xs">
                 <i data-lucide="tag" class="w-3.5 h-3.5 text-orange-700"></i>
-                <span id="resultBreadClass">Toasted Golden Brioche</span>
+                <span id="resultBreadClass">Rustic Dark Rye Boule</span>
               </div>
 
               <!-- Sleek Telemetry HUD Row -->
               <div class="flex items-center gap-2 mt-3 flex-wrap justify-center sm:justify-start text-xs font-semibold">
                 <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/95 border border-orange-200/90 text-stone-700 shadow-2xs">
                   <i data-lucide="wind" class="w-3.5 h-3.5 text-orange-600"></i>
-                  <span>Drag: <strong id="hudDragCoeff" class="text-stone-900 font-extrabold">0.03 Cd</strong></span>
+                  <span>Drag: <strong id="hudDragCoeff" class="text-stone-900 font-extrabold">0.14 Cd</strong></span>
                 </span>
                 <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/95 border border-orange-200/90 text-stone-700 shadow-2xs">
                   <i data-lucide="eye-off" class="w-3.5 h-3.5 text-emerald-600"></i>
-                  <span id="hudPawSummary">100% Peet Stealth</span>
+                  <span id="hudPawSummary">Stealth Peet Concealment</span>
                 </span>
                 <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/95 border border-orange-200/90 text-stone-700 shadow-2xs">
                   <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-600"></i>
-                  <span id="hudSymmetrySummary">Bilateral Boule</span>
+                  <span id="hudSymmetrySummary">Masterclass Bilateral Balance</span>
                 </span>
               </div>
             </div>
@@ -759,7 +759,7 @@
                 <span class="text-[10px] font-bold text-orange-900 bg-orange-200/70 px-2.5 py-0.5 rounded-full border border-orange-300">Certified Inspection Finding</span>
               </div>
               <p id="resultSummaryCritique" class="text-stone-800 text-sm sm:text-base leading-relaxed font-serif italic pr-2">
-                "A masterclass in feline bakery arts. Buttercup demonstrates peerless geometry with zero paw visibility across all three inspected planes..."
+                "Flash delivers a textbook demonstration of high-altitude culinary geometry with near-total peet concealment and formidable dorsal density. Telemetry across five distinct inspection angles confirms exceptional structural integrity and minimal aerodynamic drag."
               </p>
             </div>
           </div>
@@ -990,12 +990,12 @@
       </div>
       <h3 class="text-lg font-bold text-stone-900 mb-1" id="ovenAlertTitle">Bakery Ovens at Daily Capacity</h3>
       <p class="text-xs text-stone-600 leading-relaxed mb-6" id="ovenAlertBody">
-        Our public evaluation ovens have reached their daily limit for today! Fresh loaf inspection slots will open up tomorrow. In the meantime, you can inspect Buttercup's certified benchmark dataset below or explore today's champions on the Leaderboard.
+        Our public evaluation ovens have reached their daily limit for today! Fresh loaf inspection slots will open up tomorrow. In the meantime, you can inspect Flash's certified benchmark dataset below or explore today's champions on the Leaderboard.
       </p>
       <div class="flex flex-col gap-2">
-        <button id="ovenAlertPresetBtn" class="w-full py-2.5 rounded-xl bg-orange-50 hover:bg-orange-100 text-orange-950 font-bold text-xs border border-orange-200 transition-colors flex items-center justify-center gap-1.5 cursor-pointer" aria-label="Inspect Buttercup Benchmark">
+        <button id="ovenAlertPresetBtn" class="w-full py-2.5 rounded-xl bg-orange-50 hover:bg-orange-100 text-orange-950 font-bold text-xs border border-orange-200 transition-colors flex items-center justify-center gap-1.5 cursor-pointer" aria-label="Inspect Flash Benchmark">
           <i data-lucide="sparkles" class="w-3.5 h-3.5 text-orange-700"></i>
-          <span>Inspect Buttercup Benchmark (Demo)</span>
+          <span>Inspect Flash Benchmark (Demo)</span>
         </button>
         <a href="/leaderboard" class="w-full py-2.5 rounded-xl bg-stone-50 hover:bg-stone-100 text-stone-700 font-bold text-xs border border-stone-200 transition-colors flex items-center justify-center gap-1.5" aria-label="Browse Leaderboard">
           <i data-lucide="trophy" class="w-3.5 h-3.5 text-amber-600"></i>
@@ -1239,7 +1239,7 @@
             </label>
             <div class="input-with-icon-wrapper">
               <i data-lucide="tag" class="input-icon-left"></i>
-              <input type="text" id="submitCatNameInput" required maxlength="40" placeholder="e.g. Buttercup, Professor Whiskers, Milo" class="auth-input">
+              <input type="text" id="submitCatNameInput" required maxlength="40" placeholder="e.g. Flash, Chonks, Milo" class="auth-input">
             </div>
             <p class="text-[10px] text-stone-500 mt-1">Every loaf on the public leaderboard requires an official cat name.</p>
           </div>
