@@ -2718,17 +2718,42 @@ Certified by Loafed Inspection Engine`;
     ctx.save();
     ctx.translate(230, 642);
     ctx.rotate(-0.1);
+    const gradeLetter = (result.grade_letter || 'A').toUpperCase().trim();
     let stampColor = '#c2410c'; // A
-    if (result.grade_letter.includes('B')) stampColor = '#d97706';
-    else if (result.grade_letter.includes('C')) stampColor = '#57534e';
-    else if (result.grade_letter.includes('D') || result.grade_letter.includes('F')) stampColor = '#be123c';
+    if (gradeLetter.includes('B')) stampColor = '#d97706';
+    else if (gradeLetter.includes('C')) stampColor = '#57534e';
+    else if (gradeLetter.includes('D') || gradeLetter.includes('F')) stampColor = '#be123c';
+
+    ctx.font = 'bold 28px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const stampMetrics = ctx.measureText(gradeLetter);
+    const stampW = Math.max(104, Math.round(stampMetrics.width + 38));
+    const stampH = 46;
+    const halfW = stampW / 2;
+    const halfH = stampH / 2;
+
+    ctx.fillStyle = 'rgba(194, 65, 12, 0.06)';
+    ctx.beginPath();
+    if (typeof ctx.roundRect === 'function') {
+      ctx.roundRect(-halfW, -halfH, stampW, stampH, 6);
+    } else {
+      ctx.rect(-halfW, -halfH, stampW, stampH);
+    }
+    ctx.fill();
 
     ctx.strokeStyle = stampColor;
     ctx.lineWidth = 3;
-    ctx.strokeRect(-55, -24, 110, 48);
+    ctx.beginPath();
+    if (typeof ctx.roundRect === 'function') {
+      ctx.roundRect(-halfW, -halfH, stampW, stampH, 6);
+    } else {
+      ctx.rect(-halfW, -halfH, stampW, stampH);
+    }
+    ctx.stroke();
+
     ctx.fillStyle = stampColor;
-    ctx.font = 'bold 28px -apple-system, BlinkMacSystemFont, sans-serif';
-    ctx.fillText(result.grade_letter, 0, 9);
+    ctx.fillText(gradeLetter, 0, 0);
     ctx.restore();
 
     // Telemetry Footnote
@@ -3075,17 +3100,67 @@ Certified by Loafed Inspection Engine`;
 
     // Grade Rubber Stamp on the right
     ctx.save();
-    ctx.translate(scoreBoxX + 660, scoreBoxY + 88);
-    ctx.rotate(-0.06);
-    ctx.strokeStyle = '#c2410c';
-    ctx.lineWidth = 4;
-    ctx.strokeRect(-120, -50, 240, 100);
-    ctx.fillStyle = 'rgba(194, 65, 12, 0.08)';
-    ctx.fillRect(-120, -50, 240, 100);
-    ctx.fillStyle = '#c2410c';
-    ctx.font = '900 48px -apple-system, sans-serif';
+    const gradeStr = (result.grade_letter || 'A').toUpperCase().trim();
+    const stampText = `GRADE ${gradeStr}`;
+    ctx.font = '900 46px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(`GRADE ${result.grade_letter || 'A'}`, 0, 16);
+    ctx.textBaseline = 'middle';
+
+    const stampMetrics = ctx.measureText(stampText);
+    const stampTextW = stampMetrics.width;
+    const padX = 36;
+    const stampW = Math.max(280, Math.round(stampTextW + padX * 2));
+    const stampH = 88;
+    const halfW = stampW / 2;
+    const halfH = stampH / 2;
+
+    const stampCenterX = Math.min(scoreBoxX + scoreBoxW - halfW - 25, scoreBoxX + 670);
+    const stampCenterY = scoreBoxY + Math.round(scoreBoxH / 2);
+
+    ctx.translate(stampCenterX, stampCenterY);
+    ctx.rotate(-0.06);
+
+    let stampColor = '#c2410c'; // A / A+
+    if (gradeStr.startsWith('B')) stampColor = '#d97706';
+    else if (gradeStr.startsWith('C')) stampColor = '#57534e';
+    else if (gradeStr.startsWith('D') || gradeStr.startsWith('F')) stampColor = '#be123c';
+
+    // Stamp ink background tint
+    ctx.fillStyle = 'rgba(194, 65, 12, 0.08)';
+    ctx.beginPath();
+    if (typeof ctx.roundRect === 'function') {
+      ctx.roundRect(-halfW, -halfH, stampW, stampH, 8);
+    } else {
+      ctx.rect(-halfW, -halfH, stampW, stampH);
+    }
+    ctx.fill();
+
+    // Outer crisp stamp border
+    ctx.strokeStyle = stampColor;
+    ctx.lineWidth = 3.5;
+    ctx.beginPath();
+    if (typeof ctx.roundRect === 'function') {
+      ctx.roundRect(-halfW, -halfH, stampW, stampH, 8);
+    } else {
+      ctx.rect(-halfW, -halfH, stampW, stampH);
+    }
+    ctx.stroke();
+
+    // Inner subtle hairline for authentic bureau stamp depth
+    ctx.lineWidth = 1.2;
+    ctx.globalAlpha = 0.55;
+    ctx.beginPath();
+    if (typeof ctx.roundRect === 'function') {
+      ctx.roundRect(-halfW + 5, -halfH + 5, stampW - 10, stampH - 10, 5);
+    } else {
+      ctx.rect(-halfW + 5, -halfH + 5, stampW - 10, stampH - 10);
+    }
+    ctx.stroke();
+    ctx.globalAlpha = 1.0;
+
+    // Stamp text centered
+    ctx.fillStyle = stampColor;
+    ctx.fillText(stampText, 0, 0);
     ctx.restore();
 
     // 7. Subscore Telemetry Progress Bars

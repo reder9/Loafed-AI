@@ -499,18 +499,42 @@ document.addEventListener('DOMContentLoaded', () => {
     ctx.save();
     ctx.translate(230, 642);
     ctx.rotate(-0.1);
-    const gradeLetter = result.grade_letter || 'A';
+    const gradeLetter = (result.grade_letter || 'A').toUpperCase().trim();
     let stampColor = '#c2410c';
     if (gradeLetter.includes('B')) stampColor = '#d97706';
     else if (gradeLetter.includes('C')) stampColor = '#57534e';
     else if (gradeLetter.includes('D') || gradeLetter.includes('F')) stampColor = '#be123c';
 
+    ctx.font = 'bold 28px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const stampMetrics = ctx.measureText(gradeLetter);
+    const stampW = Math.max(104, Math.round(stampMetrics.width + 38));
+    const stampH = 46;
+    const halfW = stampW / 2;
+    const halfH = stampH / 2;
+
+    ctx.fillStyle = 'rgba(194, 65, 12, 0.06)';
+    ctx.beginPath();
+    if (typeof ctx.roundRect === 'function') {
+      ctx.roundRect(-halfW, -halfH, stampW, stampH, 6);
+    } else {
+      ctx.rect(-halfW, -halfH, stampW, stampH);
+    }
+    ctx.fill();
+
     ctx.strokeStyle = stampColor;
     ctx.lineWidth = 3;
-    ctx.strokeRect(-55, -24, 110, 48);
+    ctx.beginPath();
+    if (typeof ctx.roundRect === 'function') {
+      ctx.roundRect(-halfW, -halfH, stampW, stampH, 6);
+    } else {
+      ctx.rect(-halfW, -halfH, stampW, stampH);
+    }
+    ctx.stroke();
+
     ctx.fillStyle = stampColor;
-    ctx.font = 'bold 28px -apple-system, BlinkMacSystemFont, sans-serif';
-    ctx.fillText(gradeLetter, 0, 9);
+    ctx.fillText(gradeLetter, 0, 0);
     ctx.restore();
 
     // Telemetry Footnote
