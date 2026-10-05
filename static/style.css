@@ -183,6 +183,32 @@ body {
   transform-origin: center center;
 }
 
+.cat-certification-stamp {
+  width: 3.5rem;
+  height: 3.5rem;
+  flex: 0 0 auto;
+  opacity: 0;
+  transform: translateY(-1.75rem) rotate(-18deg) scale(1.5);
+  filter: drop-shadow(0 0.5rem 0.6rem rgba(154, 52, 18, 0.28));
+}
+
+@keyframes cat-stamp-slam {
+  0% { opacity: 0; transform: translateY(-2.25rem) rotate(-24deg) scale(1.65); }
+  55% { opacity: 1; transform: translateY(0.2rem) rotate(5deg) scale(0.88); }
+  74% { transform: translateY(-0.12rem) rotate(-3deg) scale(1.06); }
+  100% { opacity: 1; transform: translateY(0) rotate(-2deg) scale(1); }
+}
+
+.cat-certification-stamp-slam {
+  animation: cat-stamp-slam 0.58s cubic-bezier(0.18, 0.85, 0.32, 1.2) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cat-certification-stamp-slam {
+    animation-duration: 0.01ms;
+  }
+}
+
 /* Animations */
 @keyframes pulse-gentle {
   0%, 100% { transform: scale(1); }
@@ -2258,4 +2284,3 @@ img, video, canvas {
     box-shadow: 0 0 10px rgba(234, 88, 12, 1);
   }
 }
-

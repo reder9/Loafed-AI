@@ -1838,6 +1838,8 @@ document.addEventListener('DOMContentLoaded', () => {
       gradeStamp.classList.remove('stamp-slam');
       gradeStamp.style.opacity = '0';
     }
+    const catCertificationStamp = document.getElementById('catCertificationStamp');
+    if (catCertificationStamp) catCertificationStamp.classList.remove('cat-certification-stamp-slam');
 
     // Hide badges until stamp impact
     const multiAngleBadge = document.getElementById('multiAngleBadge');
@@ -2092,6 +2094,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function triggerStampSlam(result) {
     const gradeStamp = document.getElementById('gradeStamp');
     if (!gradeStamp) return;
+    const catCertificationStamp = document.getElementById('catCertificationStamp');
 
     gradeStamp.classList.remove('stamp-slam');
     gradeStamp.style.opacity = '1';
@@ -2115,6 +2118,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // Force reflow and re-add stamp-slam animation
     void gradeStamp.offsetWidth;
     gradeStamp.classList.add('stamp-slam');
+    if (catCertificationStamp) {
+      void catCertificationStamp.offsetWidth;
+      catCertificationStamp.classList.add('cat-certification-stamp-slam');
+    }
 
     // Subtle tactile haptic vibration feedback on supported mobile devices
     try {
