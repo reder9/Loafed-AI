@@ -250,9 +250,31 @@ document.addEventListener('DOMContentLoaded', () => {
       .replace(/'/g, '&#039;');
   }
 
+  // API validation errors can be strings, arrays of field errors, or nested
+  // objects. Passing those directly to Error/string templates produces
+  // "[object Object]" in the UI.
+  function formatUserFacingError(value, fallback = 'Something went wrong. Please try again.') {
+    if (value instanceof Error) return formatUserFacingError(value.message, fallback);
+    if (typeof value === 'string' && value.trim() && value.trim() !== '[object Object]') return value.trim();
+    if (Array.isArray(value)) {
+      const messages = value.map(item => formatUserFacingError(item, '')).filter(Boolean);
+      return messages.length ? messages.join(' ') : fallback;
+    }
+    if (value && typeof value === 'object') {
+      for (const key of ['detail', 'message', 'msg', 'error', 'reason']) {
+        if (value[key] !== undefined) {
+          const message = formatUserFacingError(value[key], '');
+          if (message) return message;
+        }
+      }
+    }
+    return fallback;
+  }
+
   // Modern Toast Notification System (Zero emojis, clean Lucide iconography)
   function showToast({ title = '', message = '', type = 'info', duration = 4500 } = {}) {
     if (!toastContainer) return;
+    message = formatUserFacingError(message, 'Something went wrong. Please try again.');
 
     const toast = document.createElement('div');
     toast.className = 'toast-card w-full p-3.5 rounded-xl shadow-lg border flex items-start gap-3 relative overflow-hidden bg-white text-stone-800';
@@ -1758,9 +1780,9 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!res.ok) {
         const errorDetail = data && (data.detail || data.message);
         if (res.status === 413) {
-          throw new Error(errorDetail || 'Upload payload exceeded size limits. Please try with fewer photos.');
+          throw new Error(formatUserFacingError(errorDetail, 'Upload payload exceeded size limits. Please try with fewer photos.'));
         }
-        throw new Error(errorDetail || 'Inspection failed');
+        throw new Error(formatUserFacingError(errorDetail, 'Inspection failed. Please check the photos and try again.'));
       }
 
       stopLoadingAnimation(() => {
@@ -1798,20 +1820,21 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (err) {
       stopLoadingAnimation();
       inspectorBay.classList.remove('hidden');
+      const userMessage = formatUserFacingError(err, 'Inspection failed. Please check the photos and try again.');
 
-      const isOvenFull = err.message.toLowerCase().includes('oven') || 
-                         err.message.toLowerCase().includes('capacity') || 
-                         err.message.toLowerCase().includes('quota') || 
-                         err.message.toLowerCase().includes('limit') ||
-                         err.message.includes('429');
+      const isOvenFull = userMessage.toLowerCase().includes('oven') ||
+                         userMessage.toLowerCase().includes('capacity') ||
+                         userMessage.toLowerCase().includes('quota') ||
+                         userMessage.toLowerCase().includes('limit') ||
+                         userMessage.includes('429');
                          
       if (isOvenFull) {
-        showOvenAlert(err.message);
+        showOvenAlert(userMessage);
       } else {
         showToast({
           type: 'error',
           title: 'Inspection Alert',
-          message: err.message
+          message: userMessage
         });
       }
     } finally {
@@ -4485,6 +4508,7 @@ Certified by Loafed Inspection Engine`;
   // Submit Modal Logic & Safety Filters
   const CLIENT_PROFANITY_REGEX = /\b(?:fuck|fck|shit|bitch|asshole|bastard|dick|pussy|cunt|cock|nigger|nigga|faggot|retard|whore|slut|twat|wanker|prick|penis|vagina|tit|tits|boob|boobs|nazi|hitler)\b/i;
   const ALLOWED_NAME_REGEX = /^[a-zA-Z0-9\u00C0-\u017F\s\-'.&_]+$/;
+  const ALLOWED_CAT_NAME_REGEX = /^[a-zA-Z0-9\u00C0-\u017F\s\-'.&_#]+$/;
   const PLACEHOLDER_NAMES = new Set([
     'anonymous loaf', 'anonymous', 'unknown', 'untitled',
     'n/a', 'na', 'none', 'null', 'undefined', 'placeholder', 'test', 'user', 'username'
@@ -4572,7 +4596,7 @@ Certified by Loafed Inspection Engine`;
 
   function showSubmitNotice(msg) {
     if (!submitModalNotice) return;
-    submitModalNotice.textContent = msg;
+    submitModalNotice.textContent = formatUserFacingError(msg, 'Submission could not be completed. Please review the form and try again.');
     submitModalNotice.classList.remove('hidden');
   }
 
@@ -4597,7 +4621,8 @@ Certified by Loafed Inspection Engine`;
     if (/[<>{}[\];\\/`~=+^%$*"]/.test(trimmed)) {
       return `${fieldLabel} contains invalid characters. Please use letters, numbers, spaces, and basic punctuation (- ' . & _).`;
     }
-    if (!ALLOWED_NAME_REGEX.test(trimmed)) {
+    const allowedNameRegex = fieldLabel === "Cat's Name" ? ALLOWED_CAT_NAME_REGEX : ALLOWED_NAME_REGEX;
+    if (!allowedNameRegex.test(trimmed)) {
       return `${fieldLabel} contains unsupported characters. Please use letters, numbers, spaces, and basic punctuation (- ' . & _).`;
     }
     if (!/[a-zA-Z0-9\u00C0-\u017F]/.test(trimmed)) {
@@ -4944,7 +4969,7 @@ Certified by Loafed Inspection Engine`;
         updateSubmitButtonState();
         refreshIcons();
       } catch (err) {
-        showSubmitNotice('Could not process selected image: ' + err.message);
+        showSubmitNotice(`Could not process selected image: ${formatUserFacingError(err, 'Please choose a valid image file.')}`);
       }
     });
   }
@@ -5126,7 +5151,10 @@ Certified by Loafed Inspection Engine`;
         }
 
         if (!subRes.ok) {
-          const errMsg = (subData && (subData.detail || subData.message)) || (subRes.status === 413 ? 'Photos payload exceeded size limit.' : 'Leaderboard submission failed.');
+          const errMsg = formatUserFacingError(
+            subData && (subData.detail || subData.message),
+            subRes.status === 413 ? 'Photos payload exceeded size limit.' : 'Leaderboard submission failed. Please try again.'
+          );
           showSubmitNotice(errMsg);
           throw new Error(errMsg);
         }
@@ -5158,7 +5186,7 @@ Certified by Loafed Inspection Engine`;
         refreshIcons();
       } catch (err) {
         console.error('Submission error:', err);
-        showToast({ type: 'error', title: 'Submission Failed', message: err.message || 'Failed to submit loaf.' });
+        showToast({ type: 'error', title: 'Submission Failed', message: formatUserFacingError(err, 'Failed to submit loaf. Please try again.') });
       } finally {
         confirmSubmitLeaderboardBtn.disabled = false;
         confirmSubmitLeaderboardBtn.innerHTML = '<i data-lucide="check" class="w-4 h-4"></i><span>Confirm & Publish</span>';

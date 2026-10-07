@@ -23,6 +23,7 @@ import jwt
 from jwt.algorithms import RSAAlgorithm
 
 from fastapi import FastAPI, UploadFile, File, Form, Header, HTTPException, Request, BackgroundTasks
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, FileResponse, PlainTextResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
@@ -70,6 +71,24 @@ except ImportError:
     logger.warning("google-genai is not installed. AI features will run in demo/mock mode.")
 
 app = FastAPI(title="Loafed AI", description="AI Cat Loaf Grading System")
+
+
+@app.exception_handler(RequestValidationError)
+async def request_validation_exception_handler(request: Request, exc: RequestValidationError):
+    """Convert FastAPI's object-shaped validation payload into a useful message."""
+    problems = []
+    for error in exc.errors():
+        location = [str(part) for part in error.get("loc", []) if str(part) not in {"body", "query"}]
+        field = location[-1] if location else "submitted data"
+        if field in {"images", "photo", "front", "side", "top"}:
+            field = "uploaded photo"
+        problems.append(f"{field}: {error.get('msg', 'invalid value')}")
+
+    message = "Please review the submitted information and try again."
+    if problems:
+        message = "Please review: " + "; ".join(problems[:3])
+    logger.warning("Request validation failed method=%s path=%s problems=%s", request.method, request.url.path, message)
+    return JSONResponse(status_code=422, content={"detail": message, "error_code": "REQUEST_VALIDATION_FAILED"})
 
 # Enable CORS for production and development
 app.add_middleware(
@@ -352,6 +371,7 @@ def is_profane(text: str) -> bool:
 
 
 ALLOWED_NAME_REGEX = re.compile(r"^[a-zA-Z0-9\u00C0-\u017F\s\-'.&_]+$")
+ALLOWED_CAT_NAME_REGEX = re.compile(r"^[a-zA-Z0-9\u00C0-\u017F\s\-'.&_#]+$")
 PLACEHOLDER_NAMES = {
     "anonymous loaf", "anonymous", "unknown", "untitled",
     "n/a", "na", "none", "null", "undefined", "placeholder", "test", "user", "username"
@@ -362,7 +382,7 @@ RESERVED_NAMES = {
     "support", "root", "security", "bureau", "master", "owner"
 }
 
-def validate_and_sanitize_name(name: Optional[str], field_label: str = "Name", min_len: int = 2, max_len: int = 30) -> str:
+def validate_and_sanitize_name(name: Optional[str], field_label: str = "Name", min_len: int = 2, max_len: int = 30, allow_hash: bool = False) -> str:
     """Strictly validates, sanitizes, and filters user-supplied public names for the leaderboard and profile."""
     if not name or not str(name).strip():
         raise HTTPException(
@@ -396,8 +416,10 @@ def validate_and_sanitize_name(name: Optional[str], field_label: str = "Name", m
             detail=f"{field_label} cannot exceed {max_len} characters."
         )
 
-    # Must match allowed characters whitelist (no emojis, no symbols)
-    if not ALLOWED_NAME_REGEX.match(cleaned):
+    # Cat names may contain a literal hash (for names such as C# or #Toast),
+    # while baker/profile names retain the stricter public-identity whitelist.
+    allowed_name_regex = ALLOWED_CAT_NAME_REGEX if allow_hash else ALLOWED_NAME_REGEX
+    if not allowed_name_regex.match(cleaned):
         raise HTTPException(
             status_code=400,
             detail=f"{field_label} contains unsupported characters. Please use standard letters, numbers, spaces, and basic punctuation (- ' . & _)."
@@ -480,12 +502,23 @@ DYNAMODB_TABLE_NAME = os.getenv("DYNAMODB_TABLE", "Loafed-Leaderboard")
 S3_BUCKET_NAME = os.getenv("S3_THUMBNAILS_BUCKET", "loafed-thumbnails-686255947626")
 SIGNATURE_SECRET = os.getenv("SIGNATURE_SECRET", "c0afed7a89b4e5f61234567890abcdefc0afed7a89b4e5f61234567890abcdef")
 
+_BOTO3_SESSION_CACHE: Optional[Any] = None
+_BOTO3_SESSION_CACHED_AT = 0.0
+_BOTO3_SESSION_TTL_SECONDS = 900
+
 
 def get_boto3_session():
     """Returns a working boto3 Session, prioritizing Lambda IAM execution role,
     standard environment variables, or local profile fallback."""
+    global _BOTO3_SESSION_CACHE, _BOTO3_SESSION_CACHED_AT
+    now = time.monotonic()
+    if _BOTO3_SESSION_CACHE is not None and now - _BOTO3_SESSION_CACHED_AT < _BOTO3_SESSION_TTL_SECONDS:
+        return _BOTO3_SESSION_CACHE
+
     if os.getenv("AWS_LAMBDA_FUNCTION_NAME"):
-        return boto3.Session(region_name=AWS_REGION)
+        _BOTO3_SESSION_CACHE = boto3.Session(region_name=AWS_REGION)
+        _BOTO3_SESSION_CACHED_AT = now
+        return _BOTO3_SESSION_CACHE
 
     # For local development or non-Lambda environments, try exported profile credentials
     profile = os.getenv("AWS_PROFILE", "antigravity")
@@ -498,16 +531,20 @@ def get_boto3_session():
         )
         if proc.returncode == 0 and proc.stdout:
             creds = json.loads(proc.stdout)
-            return boto3.Session(
+            _BOTO3_SESSION_CACHE = boto3.Session(
                 aws_access_key_id=creds.get("AccessKeyId"),
                 aws_secret_access_key=creds.get("SecretAccessKey"),
                 aws_session_token=creds.get("SessionToken"),
                 region_name=AWS_REGION
             )
+            _BOTO3_SESSION_CACHED_AT = now
+            return _BOTO3_SESSION_CACHE
     except Exception as err:
         logger.debug("AWS profile credential export unavailable profile=%s error=%s", profile, err)
 
-    return boto3.Session(region_name=AWS_REGION)
+    _BOTO3_SESSION_CACHE = boto3.Session(region_name=AWS_REGION)
+    _BOTO3_SESSION_CACHED_AT = now
+    return _BOTO3_SESSION_CACHE
 
 
 COGNITO_JWKS_CACHE: Dict[str, Any] = {"keys": None, "fetched_at": 0.0}
@@ -954,6 +991,17 @@ async def get_status():
         "genai_sdk_available": GENAI_AVAILABLE,
         "default_model": os.getenv("DEFAULT_MODEL", "gemini-3.8-flash")
     }
+
+
+# Public rankings change relatively infrequently. A short in-process cache avoids
+# repeating the same DynamoDB query when several visitors arrive together or a
+# browser refreshes the page. Writes clear this cache immediately below.
+LEADERBOARD_CACHE: Dict[str, Any] = {}
+LEADERBOARD_CACHE_TTL_SECONDS = 10
+
+
+def clear_leaderboard_cache():
+    LEADERBOARD_CACHE.clear()
 
 @app.get("/robots.txt", response_class=PlainTextResponse)
 async def get_robots():
@@ -2157,7 +2205,8 @@ async def submit_to_leaderboard(
         raw_cat_name,
         field_label="Cat's Name",
         min_len=2,
-        max_len=40
+        max_len=40,
+        allow_hash=True
     )
 
     # Signed-in users must use their profile baker tag — never a one-off name
@@ -2413,6 +2462,7 @@ async def submit_to_leaderboard(
         logger.error(f"DynamoDB write error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to save leaderboard record.")
 
+    clear_leaderboard_cache()
     return {
         "success": True,
         "entry_id": entry_id,
@@ -2429,6 +2479,12 @@ async def submit_to_leaderboard(
 async def get_leaderboard(period: str = "all", limit: int = 50):
     """Retrieves leaderboard rankings sorted by overall score descending."""
     limit = min(max(1, limit), 100)
+    cache_key = f"{period}:{limit}"
+    cached = LEADERBOARD_CACHE.get(cache_key)
+    if cached and time.monotonic() - cached["cached_at"] < LEADERBOARD_CACHE_TTL_SECONDS:
+        logger.debug("Leaderboard cache hit period=%s limit=%d", period, limit)
+        return cached["payload"]
+
     now = datetime.now(timezone.utc)
 
     if period == "month":
@@ -2447,7 +2503,9 @@ async def get_leaderboard(period: str = "all", limit: int = 50):
             KeyConditionExpression=Key("pk").eq(pk),
             FilterExpression=Attr("is_hidden").ne(True),
             ScanIndexForward=False,
-            Limit=limit
+            Limit=limit,
+            ProjectionExpression="#entry_id, cat_name, display_name, overall_score, grade_letter, loaf_rank, bread_classification, thumbnail_url, created_at, is_hidden, report_count",
+            ExpressionAttributeNames={"#entry_id": "entry_id"}
         )
         raw_items = response.get("Items", [])
     except Exception as e:
@@ -2471,11 +2529,14 @@ async def get_leaderboard(period: str = "all", limit: int = 50):
             "created_at": it.get("created_at", "")
         })
 
-    return {
+    payload = {
         "period": period,
         "count": len(entries),
         "entries": entries
     }
+    LEADERBOARD_CACHE[cache_key] = {"cached_at": time.monotonic(), "payload": payload}
+    logger.debug("Leaderboard query completed period=%s limit=%d returned=%d", period, limit, len(entries))
+    return payload
 
 
 @app.get("/api/loaf/{entry_id}")
@@ -2734,6 +2795,7 @@ async def report_leaderboard_entry(
         except Exception as e:
             logger.warning(f"Error updating report count on {pk}/{sk}: {e}")
 
+    clear_leaderboard_cache()
     logger.info("Leaderboard entry reported entry_id=%s client=%s report_count=%d hidden=%s", entry_id, safe_identifier(client_ip), current_reports, should_hide)
     return {
         "success": True,
@@ -2804,6 +2866,7 @@ async def admin_remove_entry(req: AdminRemoveRequest):
     except Exception as e:
         logger.warning(f"Admin delete S3 thumbnail error for {entry_id}: {e}")
 
+    clear_leaderboard_cache()
     logger.info("Admin successfully purged leaderboard entry entry_id=%s", entry_id)
     return {"success": True, "purged_id": entry_id, "message": "Entry purged from leaderboard and S3."}
 
@@ -2899,6 +2962,7 @@ async def delete_leaderboard_entry(entry_id: str, authorization: Optional[str] =
     except Exception as e:
         logger.warning(f"Error deleting S3 thumbnails for {entry_id}: {e}")
 
+    clear_leaderboard_cache()
     return {"success": True, "deleted_id": entry_id, "message": "Leaderboard entry removed."}
 
 

@@ -57,6 +57,14 @@ class TestValidateAndSanitizeName:
         assert app.validate_and_sanitize_name("Cat & Dog", "Cat Name") == "Cat & Dog"
         assert app.validate_and_sanitize_name("Baker_Pro.1", "Baker Name") == "Baker_Pro.1"
 
+    def test_hash_is_allowed_for_cat_names(self):
+        assert app.validate_and_sanitize_name("C#", "Cat Name", allow_hash=True) == "C#"
+        assert app.validate_and_sanitize_name("#Toast", "Cat Name", allow_hash=True) == "#Toast"
+
+    def test_hash_remains_rejected_for_baker_names(self):
+        with pytest.raises(HTTPException):
+            app.validate_and_sanitize_name("Baker#1", "Baker Name")
+
     def test_missing_or_empty_name_raises_400(self):
         with pytest.raises(HTTPException) as exc_info:
             app.validate_and_sanitize_name("", "Baker Name")

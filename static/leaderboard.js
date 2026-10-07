@@ -18,10 +18,29 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  function formatUserFacingError(value, fallback = 'Something went wrong. Please try again.') {
+    if (value instanceof Error) return formatUserFacingError(value.message, fallback);
+    if (typeof value === 'string' && value.trim() && value.trim() !== '[object Object]') return value.trim();
+    if (Array.isArray(value)) {
+      const messages = value.map(item => formatUserFacingError(item, '')).filter(Boolean);
+      return messages.length ? messages.join(' ') : fallback;
+    }
+    if (value && typeof value === 'object') {
+      for (const key of ['detail', 'message', 'msg', 'error', 'reason']) {
+        if (value[key] !== undefined) {
+          const message = formatUserFacingError(value[key], '');
+          if (message) return message;
+        }
+      }
+    }
+    return fallback;
+  }
+
   // Toast Notification System (Zero emojis, Lucide vector icons)
   const toastContainer = document.getElementById('toastContainer');
   function showToast({ title = '', message = '', type = 'info', duration = 4500 } = {}) {
     if (!toastContainer) return;
+    message = formatUserFacingError(message, 'Something went wrong. Please try again.');
 
     const toast = document.createElement('div');
     toast.className = 'toast-card w-full p-3.5 rounded-xl shadow-lg border flex items-start gap-3 relative overflow-hidden bg-white text-stone-800';
