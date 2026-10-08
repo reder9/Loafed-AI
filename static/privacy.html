@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="index,follow">
+  <meta name="description" content="Learn how Loafed AI handles account information, cat photos, Gemini processing, browser storage, and deletion requests.">
+  <link rel="canonical" href="https://loafed.redersoft.com/privacy.html">
+  <title>Privacy Policy — Loafed AI</title>
+  <link rel="stylesheet" href="/static/tailwind.min.css">
+  <link rel="stylesheet" href="/static/style.min.css?v=20261008b">
+</head>
+<body class="bg-orange-50 text-stone-800 antialiased">
+  <main class="max-w-3xl mx-auto my-8 sm:my-14 px-4 sm:px-6">
+    <article class="bakery-card bg-white p-6 sm:p-10 border border-orange-200 shadow-sm">
+      <a href="/" class="text-sm text-orange-800 underline font-semibold">Back to Loafed AI</a>
+      <h1 class="text-3xl sm:text-4xl font-black text-stone-900 mt-5 mb-2">Privacy Policy</h1>
+      <p class="text-sm text-stone-500 mb-8">Effective October 8, 2026 · Operated by RederSoft · <a class="underline text-orange-800" href="mailto:privacy@redersoft.com">privacy@redersoft.com</a></p>
+
+      <div class="space-y-7 text-sm leading-7 text-stone-700">
+        <section>
+          <h2 class="text-lg font-bold text-stone-900 mb-2">1. Information Loafed handles</h2>
+          <p>When you use the service, Loafed and its providers may handle account identifiers and email addresses used for sign-in; the baker name and cat name you choose; uploaded photos; AI prompts and generated scorecards; and technical information such as request time, device/browser details, IP address, and error or security logs. To prevent duplicate community reports, Loafed stores a keyed, pseudonymous identifier derived from your account ID or network address with the reported entry; that marker is configured to expire after one year, subject to DynamoDB’s TTL cleanup. The marker does not contain your raw account ID or IP address. Do not include personal, sensitive, or confidential information in cat names, photos, or prompts.</p>
+        </section>
+        <section>
+          <h2 class="text-lg font-bold text-stone-900 mb-2">2. Photos, AI, and Google Gemini</h2>
+          <p>For grading, submitted images are transmitted to Loafed’s backend and then to Google Gemini. Loafed does not intend to retain non-published originals after the grading request completes, though they may be temporarily processed by the backend and Google. The Google API project or key used for a request may be paid or unpaid; Loafed may not know the billing status of a key you supply. Under Google’s current <a class="underline text-orange-800" href="https://ai.google.dev/gemini-api/terms" target="_blank" rel="noopener noreferrer">Gemini API terms</a>, unpaid-service content may be used to improve and develop Google products and may be reviewed by people. Paid-service prompts and responses are not used to improve Google products, but may be logged for a limited time for safety, security, and legal purposes. Review Google’s terms and do not upload images containing sensitive, confidential, or personal information.</p>
+        </section>
+        <section>
+          <h2 class="text-lg font-bold text-stone-900 mb-2">3. Optional public leaderboard</h2>
+          <p>If you choose to publish, your selected baker name, cat name, scorecard, and submitted photo versions are stored in AWS and displayed publicly. Your account email is not intended to appear on the public leaderboard. Published entries remain until you remove them or request account deletion. A successful in-app deletion removes Loafed’s active entry and associated stored images; provider backups, security logs, or previously transmitted Gemini data may follow separate retention rules.</p>
+        </section>
+        <section>
+          <h2 class="text-lg font-bold text-stone-900 mb-2">4. Browser storage</h2>
+          <p>The app uses browser storage for sign-in tokens, app preferences, and your optional Gemini API key. It may also keep local inspection history and photo copies in IndexedDB until you clear them in the app or browser. The 18+ confirmation is stored locally in your browser so the age gate does not repeat on every page visit. Clearing site data removes these local records but does not remove a public leaderboard submission; use the account deletion controls for that.</p>
+        </section>
+        <section>
+          <h2 class="text-lg font-bold text-stone-900 mb-2">5. Service providers and operational use</h2>
+          <p>AWS supports hosting, account authentication, leaderboard storage, image delivery, and operational messaging. Google Gemini processes grading requests; Google Fonts may be loaded from Google. Providers may process technical information to operate, secure, and troubleshoot their services under their own terms and retention policies. Loafed does not use advertising pixels or claim that third-party providers retain no data.</p>
+        </section>
+        <section>
+          <h2 class="text-lg font-bold text-stone-900 mb-2">6. Access, deletion, and questions</h2>
+          <p>You can delete individual published entries or request account deletion in the app. Local browser history is separate and must be cleared locally. Deletion can fail temporarily; if so, retry or contact <a class="underline text-orange-800" href="mailto:privacy@redersoft.com">privacy@redersoft.com</a>. Contact us for privacy questions or requests concerning access, correction, or deletion. This policy does not promise deletion of information already processed by third-party providers.</p>
+        </section>
+        <section>
+          <h2 class="text-lg font-bold text-stone-900 mb-2">7. Age restriction and policy updates</h2>
+          <p>Gemini-powered evaluation is restricted to adults 18 and older. The age gate is a self-declaration, not identity verification. We do not knowingly invite people under 18 to use the AI service. This policy may be revised as the service changes; the effective date above identifies the current version. Read the <a class="underline text-orange-800" href="/terms.html">Terms of Service</a> for the separate Gemini consumer-use limitation.</p>
+        </section>
+      </div>
+    </article>
+  </main>
+</body>
+</html>

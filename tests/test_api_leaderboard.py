@@ -193,6 +193,31 @@ class TestApiLeaderboard:
             assert "cat_name" in data
             assert data["overall_score"] >= 70
 
+    def test_public_loaf_details_do_not_expose_account_identifier(self, client):
+        mock_table = MagicMock()
+        mock_table.get_item.return_value = {"Item": {
+            "entry_id": "public_entry_123",
+            "user_id": "private_cognito_subject",
+            "cat_name": "Milo",
+            "display_name": "Baker",
+            "overall_score": 80,
+            "grade_letter": "B",
+            "periods": ["ALL"],
+            "thumbnail_url": "https://example.test/photo.webp",
+        }}
+        mock_dynamo = MagicMock()
+        mock_dynamo.Table.return_value = mock_table
+
+        with patch("app.get_boto3_session") as mock_session:
+            mock_sess_inst = MagicMock()
+            mock_sess_inst.resource.return_value = mock_dynamo
+            mock_session.return_value = mock_sess_inst
+
+            res = client.get("/api/loaf/public_entry_123")
+
+        assert res.status_code == 200
+        assert "user_id" not in res.json()
+
     def test_get_loaf_details_nonexistent_returns_404(self, client):
         mock_table = MagicMock()
         mock_table.get_item.return_value = {"Item": None}
@@ -213,6 +238,16 @@ class TestApiLeaderboard:
 
     def test_report_entry(self, client):
         mock_table = MagicMock()
+        mock_table.query.return_value = {
+            "Items": [{
+                "entry_id": "loaf_test_123",
+                "overall_score": 85,
+                "periods": ["ALL", "2026-10", "2026-W41"],
+                "report_count": 2,
+                "is_hidden": False
+            }]
+        }
+        mock_table.get_item.return_value = {"Item": {"report_count": 3, "is_hidden": False}}
         mock_dynamo = MagicMock()
         mock_dynamo.Table.return_value = mock_table
 
@@ -224,6 +259,48 @@ class TestApiLeaderboard:
             res = client.post("/api/leaderboard/report", json={"entry_id": "loaf_test_123", "reason": "offensive"})
             assert res.status_code == 200
             assert res.json()["success"] is True
+            assert res.json()["is_hidden"] is True
+            assert res.json()["already_reported"] is False
+
+        transaction = mock_table.meta.client.transact_write_items.call_args.kwargs["TransactItems"]
+        assert len(transaction) == 5  # One dedupe marker plus all-time, month, week, and metadata rows.
+        assert transaction[0]["Put"]["ConditionExpression"] == "attribute_not_exists(pk)"
+        update_keys = [call.kwargs["Key"] for call in mock_table.update_item.call_args_list]
+        assert {"pk": "ENTRY#loaf_test_123", "sk": "METADATA"} in update_keys
+        assert len(update_keys) == 4
+
+    def test_duplicate_report_does_not_increment_count_again(self, client):
+        from botocore.exceptions import ClientError
+
+        mock_table = MagicMock()
+        mock_table.query.return_value = {"Items": [{
+            "entry_id": "loaf_test_123",
+            "overall_score": 85,
+            "periods": ["ALL"],
+            "report_count": 3,
+            "is_hidden": True,
+        }]}
+        mock_table.meta.client.transact_write_items.side_effect = ClientError(
+            {"Error": {"Code": "TransactionCanceledException", "Message": "conditional check failed"}},
+            "TransactWriteItems",
+        )
+        mock_table.get_item.side_effect = [
+            {"Item": {"pk": "REPORT#loaf_test_123", "sk": "REPORTER#hashed"}},
+            {"Item": {"report_count": 3, "is_hidden": True}},
+        ]
+        mock_dynamo = MagicMock()
+        mock_dynamo.Table.return_value = mock_table
+
+        with patch("app.get_boto3_session") as mock_session:
+            mock_sess_inst = MagicMock()
+            mock_sess_inst.resource.return_value = mock_dynamo
+            mock_session.return_value = mock_sess_inst
+            res = client.post("/api/leaderboard/report", json={"entry_id": "loaf_test_123"})
+
+        assert res.status_code == 200
+        assert res.json()["already_reported"] is True
+        assert res.json()["report_count"] == 3
+        mock_table.update_item.assert_not_called()
 
     def test_admin_remove_unauthorized(self, client):
         res = client.post("/api/admin/leaderboard/remove", json={"entry_id": "loaf_test_123", "admin_key": "wrong_secret"})
@@ -273,4 +350,3 @@ class TestApiLeaderboard:
             assert res_json["already_submitted"] is True
             assert res_json["entry_id"] == "existing_123"
             assert "already been published" in res_json["detail"]
-

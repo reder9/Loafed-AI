@@ -304,8 +304,8 @@ document.addEventListener('DOMContentLoaded', () => {
         <i data-lucide="${iconName}" class="w-4 h-4"></i>
       </div>
       <div class="flex-1 min-w-0 pr-5">
-        ${title ? `<div class="text-xs font-bold text-stone-900 mb-0.5 tracking-tight">${title}</div>` : ''}
-        <div class="text-xs text-stone-600 leading-relaxed break-words">${message}</div>
+        ${title ? `<div class="text-xs font-bold text-stone-900 mb-0.5 tracking-tight">${escapeHtml(title)}</div>` : ''}
+        <div class="text-xs text-stone-600 leading-relaxed break-words">${escapeHtml(message)}</div>
       </div>
       <button class="toast-close-btn absolute top-2.5 right-2.5 text-stone-400 hover:text-stone-700 transition-colors p-1 rounded-md hover:bg-stone-100" aria-label="Dismiss">
         <i data-lucide="x" class="w-3.5 h-3.5"></i>
@@ -450,9 +450,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (res.ok) {
           closeReportModal();
           showToast({
-            type: 'success',
-            title: 'Report Submitted',
-            message: 'Thank you for helping keep Loafed authentic and family friendly!'
+            type: data.already_reported ? 'info' : 'success',
+            title: data.already_reported ? 'Already Reported' : 'Report Submitted',
+            message: data.message || 'Thank you for helping keep Loafed authentic and family friendly!'
           });
           loadLeaderboardEntries('all');
         } else {
@@ -887,17 +887,17 @@ document.addEventListener('DOMContentLoaded', () => {
       card.className = `relative group rounded-xl overflow-hidden border ${isPrimary ? 'border-amber-400 ring-2 ring-amber-400/50' : 'border-orange-200/80'} bg-white shadow-2xs flex flex-col`;
       card.innerHTML = `
         <div class="relative w-full aspect-square bg-stone-100 overflow-hidden">
-          <img src="${photo.previewUrl}" class="w-full h-full object-cover transition-transform group-hover:scale-105 duration-200 ortho-photo-img" alt="${photo.name}">
+          <img src="${escapeHtml(photo.previewUrl)}" class="w-full h-full object-cover transition-transform group-hover:scale-105 duration-200 ortho-photo-img" alt="${escapeHtml(photo.name)}">
           <div class="absolute inset-0 bg-gradient-to-t from-stone-950/85 via-stone-950/30 to-transparent flex flex-col justify-between p-2 text-white">
             <div class="flex items-center justify-between">
               ${isPrimary ? '<span class="px-1.5 py-0.5 rounded bg-amber-500/95 text-white text-[9px] font-black uppercase tracking-wider shadow-2xs">Primary</span>' : '<span></span>'}
-              <button type="button" class="remove-photo-btn bg-stone-900/80 hover:bg-rose-600 text-white rounded-md p-1 transition-colors shrink-0 cursor-pointer" data-id="${photo.id}" title="Remove photo" aria-label="Remove photo ${idx + 1}">
+              <button type="button" class="remove-photo-btn bg-stone-900/80 hover:bg-rose-600 text-white rounded-md p-1 transition-colors shrink-0 cursor-pointer" data-id="${escapeHtml(photo.id)}" title="Remove photo" aria-label="Remove photo ${idx + 1}">
                 <i data-lucide="x" class="w-3.5 h-3.5"></i>
               </button>
             </div>
             <div class="flex flex-col gap-1.5">
               <div class="flex items-center justify-between gap-1">
-                <select class="angle-type-select w-full bg-stone-900/90 text-white text-[10px] font-bold rounded-md px-1.5 py-1 border border-white/20 outline-none cursor-pointer" data-id="${photo.id}" title="Designate angle perspective">
+                  <select class="angle-type-select w-full bg-stone-900/90 text-white text-[10px] font-bold rounded-md px-1.5 py-1 border border-white/20 outline-none cursor-pointer" data-id="${escapeHtml(photo.id)}" title="Designate angle perspective">
                   <option value="front" ${photo.angleType === 'front' ? 'selected' : ''}>Front View</option>
                   <option value="side" ${photo.angleType === 'side' ? 'selected' : ''}>Side Profile</option>
                   <option value="top" ${photo.angleType === 'top' ? 'selected' : ''}>Overhead (Top)</option>
@@ -1704,6 +1704,14 @@ document.addEventListener('DOMContentLoaded', () => {
   // Submit & Grade
   gradeLoafBtn.addEventListener('click', async () => {
     if (isGradingActive) return;
+    if (!window.loafedAgeConfirmed) {
+      showToast({
+        type: 'warning',
+        title: '18+ Confirmation Required',
+        message: 'Confirm that you are 18 or older before using Gemini-powered evaluation.'
+      });
+      return;
+    }
     if (state.isExamplePreset || state.canSubmit === false) {
       showToast({
         type: 'warning',
@@ -1731,6 +1739,7 @@ document.addEventListener('DOMContentLoaded', () => {
     startLoadingAnimation();
 
     const formData = new FormData();
+    formData.append('age_confirmed', 'true');
     const trimmedCatName = catNameInput ? catNameInput.value.trim() : '';
     if (trimmedCatName) {
       formData.append('cat_name', trimmedCatName);
@@ -2012,7 +2021,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const cleanTip = tip.replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, '').trim();
       const li = document.createElement('li');
       li.className = 'flex items-start gap-2.5';
-      li.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-orange-500 mt-1.5 shrink-0"></span><span>${cleanTip}</span>`;
+      li.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-orange-500 mt-1.5 shrink-0"></span><span>${escapeHtml(cleanTip)}</span>`;
       tipsList.appendChild(li);
     });
 
@@ -2058,7 +2067,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const cleanObs = obs.replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, '').trim();
       const li = document.createElement('li');
       li.className = 'flex items-start gap-2';
-      li.innerHTML = `<span class="w-1 h-1 rounded-full bg-orange-400 mt-1.5 shrink-0"></span><span>${cleanObs}</span>`;
+      li.innerHTML = `<span class="w-1 h-1 rounded-full bg-orange-400 mt-1.5 shrink-0"></span><span>${escapeHtml(cleanObs)}</span>`;
       obsList.appendChild(li);
     });
   }
@@ -2088,9 +2097,9 @@ document.addEventListener('DOMContentLoaded', () => {
           <span class="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.5 rounded border border-emerald-200">Inspected</span>
         </div>
         <div class="w-full h-36 sm:h-40 overflow-hidden rounded-xl border border-orange-200 bg-stone-900/5 relative">
-          <img src="${photo.previewUrl}" class="w-full h-full object-cover ortho-photo-img" alt="${label}">
-        </div>
-        <p class="text-[11px] text-stone-600 leading-snug">${(note || 'Evaluated in composite score telemetry.').replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, '')}</p>
+        <img src="${escapeHtml(photo.previewUrl)}" class="w-full h-full object-cover ortho-photo-img" alt="${label}">
+      </div>
+        <p class="text-[11px] text-stone-600 leading-snug">${escapeHtml((note || 'Evaluated in composite score telemetry.').replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, ''))}</p>
       `;
       grid.appendChild(card);
     });
@@ -3666,19 +3675,19 @@ Certified by Loafed Inspection Engine`;
         : '';
 
       return `
-        <div class="p-3.5 rounded-xl border border-orange-200/90 bg-orange-50/40 hover:bg-orange-50/80 transition-colors flex items-center justify-between gap-3 shadow-2xs" data-id="${item.id}">
+        <div class="p-3.5 rounded-xl border border-orange-200/90 bg-orange-50/40 hover:bg-orange-50/80 transition-colors flex items-center justify-between gap-3 shadow-2xs" data-id="${escapeHtml(item.id)}">
           <div class="flex items-center gap-3 min-w-0">
             <div class="w-11 h-11 rounded-lg bg-white border border-orange-200 flex flex-col items-center justify-center shrink-0 shadow-xs">
-              <span class="text-xs font-black text-orange-700">${item.overall_score}</span>
-              <span class="text-[9px] font-bold text-orange-900/60 leading-none">${item.grade_letter}</span>
+              <span class="text-xs font-black text-orange-700">${escapeHtml(item.overall_score)}</span>
+              <span class="text-[9px] font-bold text-orange-900/60 leading-none">${escapeHtml(item.grade_letter)}</span>
             </div>
             <div class="min-w-0">
               <div class="text-xs font-bold text-stone-900 truncate flex items-center gap-1.5 flex-wrap">
-                <span class="truncate">${item.cat_name}</span>
+                <span class="truncate">${escapeHtml(item.cat_name)}</span>
                 ${photoTag}
                 ${leaderboardTag}
               </div>
-              <div class="text-[11px] text-stone-600 truncate">${item.loaf_rank} &bull; ${item.bread_classification}</div>
+              <div class="text-[11px] text-stone-600 truncate">${escapeHtml(item.loaf_rank)} &bull; ${escapeHtml(item.bread_classification)}</div>
               <div class="text-[10px] text-stone-400 mt-0.5">${formattedDate}</div>
             </div>
           </div>
@@ -3849,27 +3858,27 @@ Certified by Loafed Inspection Engine`;
   const privacyPolicyContent = `
     <div>
       <h4 class="font-bold text-stone-900 text-xs mb-1">1. Voluntary Leaderboard & Authentication</h4>
-      <p class="text-stone-600 leading-relaxed">Loafed AI is freeware created strictly for feline appreciation and recreational entertainment by <a href="https://redersoft.com" target="_blank" rel="noopener noreferrer" class="text-orange-700 underline font-semibold">RederSoft</a>. You may inspect your cat loaves completely anonymously without creating an account. If you voluntarily choose to publish your cat's loaf to the public Leaderboard, authentication is handled securely via AWS Cognito (supporting Google Sign-In or email). We store solely your public baker display name, email (for account ownership), certified loaf score, and the submitted cat photo.</p>
+      <p class="text-stone-600 leading-relaxed">Loafed AI is a recreational cat-loaf scoring service operated by <a href="https://redersoft.com" target="_blank" rel="noopener noreferrer" class="text-orange-700 underline font-semibold">RederSoft</a>. Anonymous grading is available. If you choose to publish, we store your account identifier, email for account management, public baker name, cat name, scorecard, timestamps, and submitted image versions in AWS. The public leaderboard exposes the baker name, cat name, score, scorecard, and photos—not your account email.</p>
     </div>
     <div>
-      <h4 class="font-bold text-stone-900 text-xs mb-1">2. Complete User Control & Immediate Deletion</h4>
-      <p class="text-stone-600 leading-relaxed">You maintain 100% ownership of your submissions. You can delete any individual loaf submission at any time, or permanently delete your entire account and all associated media from our cloud storage with a single click in your Account settings.</p>
+      <h4 class="font-bold text-stone-900 text-xs mb-1">2. Deletion Controls</h4>
+      <p class="text-stone-600 leading-relaxed">You can delete individual public submissions or request account deletion in Account settings. Cloud deletion can fail temporarily; if the app reports a problem, retry or contact <a href="mailto:privacy@redersoft.com" class="text-orange-700 underline">privacy@redersoft.com</a>. Local browser history is separate and must be cleared in the app or browser.</p>
     </div>
     <div>
-      <h4 class="font-bold text-stone-900 text-xs mb-1">3. In-Memory Evaluation for Non-Leaderboard Loaves</h4>
-      <p class="text-stone-600 leading-relaxed">Unless you explicitly opt in and click "Submit to Leaderboard", uploaded cat photographs are streamed in-memory to Google Gemini Vision API solely to generate your real-time posture audit. Unsubmitted photos are never retained on server disks or shared.</p>
+      <h4 class="font-bold text-stone-900 text-xs mb-1">3. Photos, Browser Storage & AI Processing</h4>
+      <p class="text-stone-600 leading-relaxed">For grading, photos are sent to Loafed's backend and then to Google Gemini. Loafed does not intend to retain non-published originals after processing, though images may be temporarily handled by Loafed and Google. This browser stores inspection history and photo copies in IndexedDB until you clear them. Published photos are stored in AWS and displayed publicly. Google’s current terms say content sent through unpaid Gemini API services may be used to improve Google products and may be reviewed by people; paid-service prompts and responses are not used for product improvement but may be logged for a limited time for safety, security, and legal purposes. Loafed may not know the billing status of a user-provided key. Do not upload sensitive, confidential, or personal information. See the <a href="https://ai.google.dev/gemini-api/terms" target="_blank" rel="noopener noreferrer" class="text-orange-700 underline">current Gemini API terms</a> and our <a href="/privacy.html" class="text-orange-700 underline">full Privacy Policy</a>.</p>
     </div>
     <div>
-      <h4 class="font-bold text-stone-900 text-xs mb-1">4. Animal Silhouette Analysis & Zero Human Biometrics</h4>
-      <p class="text-stone-600 leading-relaxed">Loafed AI processes animal posture contours exclusively. Our system does not scan, extract, retain, or identify human facial geometry, biometric signatures, or personal identity vectors, even if an individual appears incidentally in the background of an audited photograph.</p>
+      <h4 class="font-bold text-stone-900 text-xs mb-1">4. Account & Device Data</h4>
+      <p class="text-stone-600 leading-relaxed">Authentication is provided by AWS Cognito, with Google sign-in and email/password options. The browser stores authentication tokens and, if you enter one, your Gemini API key in local storage. Sign out to remove authentication tokens; remove your API key in settings or clear this site's browser storage. Google Fonts is loaded from Google's servers. We do not intend to identify people, but incidental people or background details in a photo may be processed by the AI provider.</p>
     </div>
     <div>
-      <h4 class="font-bold text-stone-900 text-xs mb-1">5. No Tracking, Profiling, or Advertising</h4>
-      <p class="text-stone-600 leading-relaxed">We do not employ third-party advertising trackers, cross-site profiling pixels, or marketing analytics. Your browsing activity on this service remains private.</p>
+      <h4 class="font-bold text-stone-900 text-xs mb-1">5. Advertising & Operational Data</h4>
+      <p class="text-stone-600 leading-relaxed">The app contains no advertising pixels or marketing analytics. Operational services may process technical request data for authentication, abuse prevention, delivery, security notifications, and error logging. We do not claim that third-party providers retain no data.</p>
     </div>
     <div>
       <h4 class="font-bold text-stone-900 text-xs mb-1">6. Third-Party AI & Cloud Services</h4>
-      <p class="text-stone-600 leading-relaxed">Visual inspection is processed via Google Gemini API in accordance with Google API terms. Authentication and leaderboard storage are hosted on AWS infrastructure (Cognito, DynamoDB, and S3).</p>
+      <p class="text-stone-600 leading-relaxed">Grading uses Google Gemini. AWS services support hosting, authentication, leaderboard storage, image delivery, and sign-in security emails (including Cognito, DynamoDB, S3, and SES). Google Fonts is loaded from Google's servers. Contact RederSoft at <a href="mailto:privacy@redersoft.com" class="text-orange-700 underline">privacy@redersoft.com</a> for access, correction, deletion, or privacy questions.</p>
     </div>
   `;
 
@@ -3883,8 +3892,8 @@ Certified by Loafed Inspection Engine`;
       <p class="text-stone-600 leading-relaxed">The analysis generated by this engine does not constitute veterinary medical diagnosis, musculoskeletal evaluation, orthopedic assessment, or health advice. If your cat demonstrates sudden changes in resting posture, abnormal weight loss, or tucks its limbs due to pain or illness, please consult a licensed veterinarian immediately.</p>
     </div>
     <div>
-      <h4 class="font-bold text-stone-900 text-xs mb-1">3. Age Requirements & Children's Privacy (COPPA / GDPR-K)</h4>
-      <p class="text-stone-600 leading-relaxed">This service is intended for users 13 years of age and older (16 in the EEA/UK). If you are under 13, you may only use Loafed AI under direct parental or guardian supervision without creating an account or submitting personal data.</p>
+      <h4 class="font-bold text-stone-900 text-xs mb-1">3. Age & Provider Requirements</h4>
+      <p class="text-stone-600 leading-relaxed">Gemini-powered evaluation is restricted to users 18 and older. The age gate is a self-declaration, not identity verification. Google’s current API terms also state the APIs are for professional or business developer purposes, not consumer use, and prohibit clients directed to or likely accessed by under-18s. Loafed is presented as a recreational consumer service, so the age gate does not resolve the separate consumer-use restriction. The operator must confirm that this integration is permitted with Google or change providers before claiming full compliance. Do not upload sensitive, confidential, or personal information. See <a href="https://ai.google.dev/gemini-api/terms" target="_blank" rel="noopener noreferrer" class="text-orange-700 underline">Google's current API terms</a> and our <a href="/terms.html" class="text-orange-700 underline">full Terms of Service</a>.</p>
     </div>
     <div>
       <h4 class="font-bold text-stone-900 text-xs mb-1">4. Permitted Content</h4>
@@ -3892,7 +3901,7 @@ Certified by Loafed Inspection Engine`;
     </div>
     <div>
       <h4 class="font-bold text-stone-900 text-xs mb-1">5. Fair Use & Abuse Prevention</h4>
-      <p class="text-stone-600 leading-relaxed">To ensure this service remains 100% free for everyone, automated scraping, bot submissions, high-frequency script attacks, or attempts to circumvent rate-limiting guardrails are prohibited.</p>
+      <p class="text-stone-600 leading-relaxed">Automated scraping, bot submissions, high-frequency script attacks, and attempts to circumvent service safeguards are prohibited. Server-funded grading has shared hourly-per-network and UTC-daily limits. If you provide your own Gemini API key, Google’s quotas, billing, and terms apply separately; Loafed does not guarantee a provider-side spending cap.</p>
     </div>
     <div>
       <h4 class="font-bold text-stone-900 text-xs mb-1">6. Disclaimer of Warranty ("As-Is")</h4>
@@ -4478,7 +4487,7 @@ Certified by Loafed Inspection Engine`;
         const data = await res.json();
         renderLeaderboardList(data.entries || [], true);
       } catch (err) {
-        leaderboardList.innerHTML = `<p class="py-8 text-center text-xs text-red-500">${err.message}</p>`;
+        leaderboardList.innerHTML = `<p class="py-8 text-center text-xs text-red-500">${escapeHtml(formatUserFacingError(err))}</p>`;
       }
       return;
     }
@@ -4489,7 +4498,7 @@ Certified by Loafed Inspection Engine`;
       const data = await res.json();
       renderLeaderboardList(data.entries || [], false);
     } catch (err) {
-      leaderboardList.innerHTML = `<p class="py-8 text-center text-xs text-red-500">${err.message}</p>`;
+      leaderboardList.innerHTML = `<p class="py-8 text-center text-xs text-red-500">${escapeHtml(formatUserFacingError(err))}</p>`;
     }
   }
 

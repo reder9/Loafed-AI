@@ -27,6 +27,7 @@
 
   <!-- Twitter Cards -->
   <meta name="twitter:card" content="summary_large_image">
+  <meta id="twitterUrl" name="twitter:url" content="https://loafed.redersoft.com/loaf">
   <meta id="twitterTitle" name="twitter:title" content="Certified Cat Loaf Inspection Scorecard — Loafed AI">
   <meta id="twitterDescription" name="twitter:description" content="Certified feline loaf audit results, aerodynamic drag analysis, and official posture score breakdown.">
   <meta id="twitterImage" name="twitter:image" content="https://loafed.redersoft.com/static/logo.png">
@@ -35,7 +36,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" media="print" onload="this.media='all'">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" media="print" data-async-fonts>
   <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"></noscript>
 
   <!-- Preload Critical Header Mascot Asset -->
@@ -81,6 +82,7 @@
 
   <!-- Self-Hosted Lucide Icons -->
   <script src="/static/lucide.min.js" defer></script>
+  <script src="/static/age-gate.js?v=20261008b" defer></script>
 </head>
 <body class="text-stone-800 antialiased selection:bg-orange-200 selection:text-orange-900 pb-16 min-h-screen flex flex-col">
 
@@ -538,8 +540,8 @@
       <div class="flex items-center gap-4 text-stone-500">
         <a href="/" class="hover:text-stone-800 transition-colors">Inspector</a>
         <a href="/leaderboard" class="hover:text-stone-800 transition-colors">Leaderboard</a>
-        <a href="/?legal=privacy" class="hover:text-stone-800 transition-colors">Privacy Policy</a>
-        <a href="/?legal=terms" class="hover:text-stone-800 transition-colors">Terms of Service</a>
+        <a href="/privacy.html" class="hover:text-stone-800 transition-colors">Privacy Policy</a>
+        <a href="/terms.html" class="hover:text-stone-800 transition-colors">Terms of Service</a>
       </div>
     </div>
   </footer>
@@ -565,6 +567,6 @@
   <!-- Hidden Canvas for Certificate Generation (1200 x 800 Archival Resolution) -->
   <canvas id="certificateCanvas" class="hidden" width="1200" height="800"></canvas>
 
-  <script src="/static/loaf.min.js?v=20261005a" defer></script>
+  <script src="/static/loaf.js?v=20261008a" defer></script>
 </body>
 </html>

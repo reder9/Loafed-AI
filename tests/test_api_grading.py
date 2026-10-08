@@ -9,15 +9,21 @@ import app
 class TestApiGrading:
     """Tests the POST /api/grade endpoint including honeypot, validation, example cat rejection, and AI mock responses."""
 
+    def test_age_confirmation_required_before_photo_processing(self, client, sample_image_bytes):
+        files = [("images", ("cat.jpg", io.BytesIO(sample_image_bytes), "image/jpeg"))]
+        res = client.post("/api/grade", files=files)
+        assert res.status_code == 403
+        assert "18 or older" in res.json()["detail"]
+
     def test_honeypot_bot_submission_rejected(self, client, sample_image_bytes):
         files = [("images", ("cat.jpg", io.BytesIO(sample_image_bytes), "image/jpeg"))]
-        data = {"website_url_check": "http://spambot.com"}
+        data = {"website_url_check": "http://spambot.com", "age_confirmed": "true"}
         res = client.post("/api/grade", data=data, files=files)
         assert res.status_code == 400
         assert "Automated submission blocked" in res.text
 
     def test_no_images_uploaded_raises_400(self, client):
-        res = client.post("/api/grade", data={"cat_name": "Ghost Cat"})
+        res = client.post("/api/grade", data={"cat_name": "Ghost Cat", "age_confirmed": "true"})
         assert res.status_code == 400
         assert "upload between 1 and 5" in res.text
 
@@ -38,14 +44,14 @@ class TestApiGrading:
             
             # Mock read_and_validate_image so it accepts our bytes
             with patch("app.read_and_validate_image", return_value=(fake_bytes, "image/jpeg")):
-                res = client.post("/api/grade", files=files)
+                res = client.post("/api/grade", data={"age_confirmed": "true"}, files=files)
                 assert res.status_code == 400
                 assert "Benchmark example cats" in res.text
 
     def test_rate_limit_exceeded_raises_429(self, client, sample_image_bytes):
         with patch("app.check_free_tier_limits", return_value=(False, "Daily limit reached for today")):
             files = [("images", ("cat.jpg", io.BytesIO(sample_image_bytes), "image/jpeg"))]
-            res = client.post("/api/grade", files=files)
+            res = client.post("/api/grade", data={"age_confirmed": "true"}, files=files)
             assert res.status_code == 429
             assert "Daily limit reached" in res.text
 
@@ -83,7 +89,7 @@ class TestApiGrading:
              patch("app.check_free_tier_limits", return_value=(True, "")):
             
             files = [("images", ("mochi.jpg", io.BytesIO(sample_image_bytes), "image/jpeg"))]
-            data = {"cat_name": "Mochi"}
+            data = {"cat_name": "Mochi", "age_confirmed": "true"}
             res = client.post("/api/grade", data=data, files=files)
             
             assert res.status_code == 200
@@ -144,6 +150,6 @@ class TestApiGrading:
              patch("app.get_server_api_keys", return_value=["key1", "key2"]):
             
             files = [("images", ("cat.jpg", io.BytesIO(sample_image_bytes), "image/jpeg"))]
-            res = client.post("/api/grade", files=files)
+            res = client.post("/api/grade", data={"age_confirmed": "true"}, files=files)
             assert res.status_code == 200
             assert res.json()["result"]["cat_name"] == "Secondary Key Cat"

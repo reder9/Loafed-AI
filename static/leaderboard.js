@@ -70,8 +70,8 @@ document.addEventListener('DOMContentLoaded', () => {
         <i data-lucide="${iconName}" class="w-4 h-4"></i>
       </div>
       <div class="flex-1 min-w-0 pr-5">
-        ${title ? `<div class="text-xs font-bold text-stone-900 mb-0.5 tracking-tight">${title}</div>` : ''}
-        <div class="text-xs text-stone-600 leading-relaxed break-words">${message}</div>
+        ${title ? `<div class="text-xs font-bold text-stone-900 mb-0.5 tracking-tight">${escapeHtml(title)}</div>` : ''}
+        <div class="text-xs text-stone-600 leading-relaxed break-words">${escapeHtml(message)}</div>
       </div>
       <button class="toast-close-btn absolute top-2.5 right-2.5 text-stone-400 hover:text-stone-700 transition-colors p-1 rounded-md hover:bg-stone-100" aria-label="Dismiss">
         <i data-lucide="x" class="w-3.5 h-3.5"></i>
@@ -380,9 +380,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (res.ok) {
           closeReportModal();
           showToast({
-            type: 'success',
-            title: 'Report Submitted',
-            message: 'Thank you for helping keep Loafed authentic and family friendly!'
+            type: data.already_reported ? 'info' : 'success',
+            title: data.already_reported ? 'Already Reported' : 'Report Submitted',
+            message: data.message || 'Thank you for helping keep Loafed authentic and family friendly!'
           });
           loadLeaderboard(state.period);
         } else {
@@ -1575,7 +1575,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const btn = document.createElement('button');
             btn.type = 'button';
             btn.className = `px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5 shrink-0 transition-all cursor-pointer ${idx === 0 ? 'bg-orange-600 text-white shadow-2xs' : 'bg-white text-stone-700 border border-stone-200 hover:bg-orange-50'}`;
-            btn.innerHTML = `<i data-lucide="${icon}" class="w-3 h-3"></i><span>${label}</span>`;
+            btn.innerHTML = `<i data-lucide="${icon}" class="w-3 h-3"></i><span>${escapeHtml(label)}</span>`;
 
             btn.onclick = () => {
               if (loafDetailsPhoto) {
@@ -2010,11 +2010,16 @@ document.addEventListener('DOMContentLoaded', () => {
               method: 'DELETE',
               headers: { 'Authorization': `Bearer ${state.idToken}` }
             });
+            const data = await res.json().catch(() => ({}));
             if (res.ok) {
               showToast({ type: 'info', title: 'Loaf Removed', message: 'Leaderboard submission removed.' });
               loadLeaderboard('mine');
             } else {
-              showToast({ type: 'error', title: 'Delete Error', message: 'Failed to delete submission.' });
+              showToast({
+                type: 'error',
+                title: 'Delete Error',
+                message: formatUserFacingError(data, 'The submission could not be removed. Please try again shortly.')
+              });
             }
           } catch (err) {
             showToast({ type: 'error', title: 'Delete Error', message: err.message });
@@ -2085,7 +2090,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (leaderboardCountText) leaderboardCountText.textContent = `${entries.length} of your loaves`;
         renderList(entries, true);
       } catch (err) {
-        leaderboardEntriesList.innerHTML = `<p class="py-10 text-center text-xs text-red-500">${err.message}</p>`;
+        leaderboardEntriesList.innerHTML = `<p class="py-10 text-center text-xs text-red-500">${escapeHtml(formatUserFacingError(err))}</p>`;
       }
       return;
     }
@@ -2101,7 +2106,7 @@ document.addEventListener('DOMContentLoaded', () => {
       renderPodium(entries);
       renderList(entries, false);
     } catch (err) {
-      leaderboardEntriesList.innerHTML = `<p class="py-10 text-center text-xs text-red-500">${err.message}</p>`;
+      leaderboardEntriesList.innerHTML = `<p class="py-10 text-center text-xs text-red-500">${escapeHtml(formatUserFacingError(err))}</p>`;
     }
   }
 

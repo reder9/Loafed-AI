@@ -34,6 +34,7 @@ class TestCognitoJwtVerification:
             "sub": "user_verified_uuid",
             "iss": f"https://cognito-idp.{app.AWS_REGION}.amazonaws.com/{app.COGNITO_USER_POOL_ID}",
             "client_id": app.COGNITO_CLIENT_ID,
+            "token_use": "access",
             "email": "verified@loafed.com",
             "exp": int(time.time()) + 3600
         }
@@ -52,6 +53,7 @@ class TestCognitoJwtVerification:
             "sub": "user_verified_uuid",
             "iss": "https://attacker-issuer.com/fake_pool",
             "client_id": app.COGNITO_CLIENT_ID,
+            "token_use": "access",
             "exp": int(time.time()) + 3600
         }
         token = jwt.encode(claims, priv_key, algorithm="RS256", headers=headers)
@@ -69,6 +71,7 @@ class TestCognitoJwtVerification:
             "sub": "user_verified_uuid",
             "iss": f"https://cognito-idp.{app.AWS_REGION}.amazonaws.com/{app.COGNITO_USER_POOL_ID}",
             "client_id": "different_unauthorized_app_id",
+            "token_use": "access",
             "exp": int(time.time()) + 3600
         }
         token = jwt.encode(claims, priv_key, algorithm="RS256", headers=headers)
@@ -78,6 +81,51 @@ class TestCognitoJwtVerification:
                 app.verify_cognito_token(f"Bearer {token}")
             assert exc_info.value.status_code == 401
             assert "client" in exc_info.value.detail.lower()
+
+    def test_valid_id_token_uses_audience_claim(self, rsa_keypair):
+        priv_key, jwk = rsa_keypair
+        claims = {
+            "sub": "user_verified_uuid",
+            "iss": f"https://cognito-idp.{app.AWS_REGION}.amazonaws.com/{app.COGNITO_USER_POOL_ID}",
+            "aud": app.COGNITO_CLIENT_ID,
+            "token_use": "id",
+            "exp": int(time.time()) + 3600
+        }
+        token = jwt.encode(claims, priv_key, algorithm="RS256", headers={"kid": jwk["kid"]})
+
+        with patch("app.get_cognito_jwks", return_value={"keys": [jwk]}):
+            assert app.verify_cognito_token(f"Bearer {token}")["sub"] == "user_verified_uuid"
+
+    def test_token_without_client_claim_is_rejected(self, rsa_keypair):
+        priv_key, jwk = rsa_keypair
+        claims = {
+            "sub": "user_verified_uuid",
+            "iss": f"https://cognito-idp.{app.AWS_REGION}.amazonaws.com/{app.COGNITO_USER_POOL_ID}",
+            "token_use": "access",
+            "exp": int(time.time()) + 3600
+        }
+        token = jwt.encode(claims, priv_key, algorithm="RS256", headers={"kid": jwk["kid"]})
+
+        with patch("app.get_cognito_jwks", return_value={"keys": [jwk]}):
+            with pytest.raises(HTTPException) as exc_info:
+                app.verify_cognito_token(f"Bearer {token}")
+            assert exc_info.value.status_code == 401
+            assert "client" in exc_info.value.detail.lower()
+
+    def test_token_without_token_use_is_rejected(self, rsa_keypair):
+        priv_key, jwk = rsa_keypair
+        claims = {
+            "sub": "user_verified_uuid",
+            "iss": f"https://cognito-idp.{app.AWS_REGION}.amazonaws.com/{app.COGNITO_USER_POOL_ID}",
+            "client_id": app.COGNITO_CLIENT_ID,
+            "exp": int(time.time()) + 3600
+        }
+        token = jwt.encode(claims, priv_key, algorithm="RS256", headers={"kid": jwk["kid"]})
+
+        with patch("app.get_cognito_jwks", return_value={"keys": [jwk]}):
+            with pytest.raises(HTTPException) as exc_info:
+                app.verify_cognito_token(f"Bearer {token}")
+            assert exc_info.value.status_code == 401
 
     def test_token_missing_kid_header_raises_401(self, rsa_keypair):
         priv_key, _ = rsa_keypair

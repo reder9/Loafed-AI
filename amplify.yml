@@ -4,6 +4,7 @@ frontend:
     build:
       commands:
         - echo "Deploying Loafed AI frontend..."
+        - cp customHttp.yml static/customHttp.yml
   artifacts:
     baseDirectory: static
     files:

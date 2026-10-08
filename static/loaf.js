@@ -16,6 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const toastContainer = document.getElementById('toastContainer');
   function showToast({ title = '', message = '', type = 'info', duration = 4500 } = {}) {
     if (!toastContainer) return;
+    message = formatUserFacingError(message, 'Something went wrong. Please try again.');
 
     const toast = document.createElement('div');
     toast.className = 'toast-card w-full p-3.5 rounded-xl shadow-lg border flex items-start gap-3 relative overflow-hidden bg-white text-stone-800';
@@ -45,8 +46,8 @@ document.addEventListener('DOMContentLoaded', () => {
         <i data-lucide="${iconName}" class="w-4 h-4"></i>
       </div>
       <div class="flex-1 min-w-0 pr-5">
-        ${title ? `<div class="text-xs font-bold text-stone-900 mb-0.5 tracking-tight">${title}</div>` : ''}
-        <div class="text-xs text-stone-600 leading-relaxed break-words">${message}</div>
+        ${title ? `<div class="text-xs font-bold text-stone-900 mb-0.5 tracking-tight">${escapeHtml(title)}</div>` : ''}
+        <div class="text-xs text-stone-600 leading-relaxed break-words">${escapeHtml(message)}</div>
       </div>
       <button class="toast-close-btn absolute top-2.5 right-2.5 text-stone-400 hover:text-stone-700 transition-colors p-1 rounded-md hover:bg-stone-100" aria-label="Dismiss">
         <i data-lucide="x" class="w-3.5 h-3.5"></i>
@@ -87,6 +88,24 @@ document.addEventListener('DOMContentLoaded', () => {
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#039;');
+  }
+
+  function formatUserFacingError(value, fallback = 'Something went wrong. Please try again.') {
+    if (value instanceof Error) return formatUserFacingError(value.message, fallback);
+    if (typeof value === 'string' && value.trim() && value.trim() !== '[object Object]') return value.trim();
+    if (Array.isArray(value)) {
+      const messages = value.map(item => formatUserFacingError(item, '')).filter(Boolean);
+      return messages.length ? messages.join(' ') : fallback;
+    }
+    if (value && typeof value === 'object') {
+      for (const key of ['detail', 'message', 'msg', 'error', 'reason']) {
+        if (value[key] !== undefined) {
+          const message = formatUserFacingError(value[key], '');
+          if (message) return message;
+        }
+      }
+    }
+    return fallback;
   }
 
   // DOM Elements
@@ -741,7 +760,33 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Update Page Metadata
       const catName = data.cat_name || 'Anonymous Loaf';
-      document.title = `${catName} Loaf Scorecard (${data.overall_score || 0} ${data.grade_letter || ''}) — Loafed AI`;
+      const score = data.overall_score || 0;
+      const grade = data.grade_letter || '';
+      const pageTitle = `${catName} Loaf Scorecard (${score} ${grade}) — Loafed AI`;
+      const pageDescription = `${catName} scored ${score}/100 (${grade}) in a Loafed AI cat-loaf inspection. View the scorecard, posture notes, and certified loaf details.`;
+      const canonicalUrl = `${currentOrigin}/loaf?id=${encodeURIComponent(data.entry_id || entryId)}`;
+      document.title = pageTitle;
+      const canonicalLink = document.querySelector('link[rel="canonical"]');
+      if (canonicalLink) canonicalLink.href = canonicalUrl;
+      const descriptionMeta = document.querySelector('meta[name="description"]');
+      if (descriptionMeta) descriptionMeta.content = pageDescription;
+      for (const selector of ['meta[property="og:url"]', 'meta[name="twitter:url"]']) {
+        const meta = document.querySelector(selector);
+        if (meta) meta.content = canonicalUrl;
+      }
+      for (const selector of ['meta[property="og:title"]', 'meta[name="twitter:title"]']) {
+        const meta = document.querySelector(selector);
+        if (meta) meta.content = pageTitle;
+      }
+      for (const selector of ['meta[property="og:description"]', 'meta[name="twitter:description"]']) {
+        const meta = document.querySelector(selector);
+        if (meta) meta.content = pageDescription;
+      }
+      const previewImage = data.thumbnail_url || '/static/logo.webp';
+      for (const selector of ['meta[property="og:image"]', 'meta[name="twitter:image"]']) {
+        const meta = document.querySelector(selector);
+        if (meta) meta.content = new URL(previewImage, currentOrigin).href;
+      }
 
       // Verification Badge
       if (loafVerificationId) {
@@ -818,7 +863,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const btn = document.createElement('button');
             btn.type = 'button';
             btn.className = `px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 shrink-0 transition-all cursor-pointer ${idx === 0 ? 'bg-orange-600 text-white shadow-2xs' : 'bg-white text-stone-700 border border-stone-200 hover:bg-orange-50'}`;
-            btn.innerHTML = `<i data-lucide="${icon}" class="w-3.5 h-3.5"></i><span>${label}</span>`;
+            btn.innerHTML = `<i data-lucide="${icon}" class="w-3.5 h-3.5"></i><span>${escapeHtml(label)}</span>`;
 
             btn.onclick = () => {
               if (loafPhoto) loafPhoto.src = url;

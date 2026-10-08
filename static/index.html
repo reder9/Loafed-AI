@@ -41,7 +41,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" media="print" onload="this.media='all'">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" media="print" data-async-fonts>
   <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"></noscript>
 
   <!-- Preload Critical Above-The-Fold Mascot & Hero Benchmark Assets -->
@@ -75,10 +75,19 @@
     }
   }
   </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "Loafed AI",
+    "alternateName": "Loafed",
+    "url": "https://loafed.redersoft.com/"
+  }
+  </script>
 
   <!-- Self-Hosted Lucide Icons (Deferred for non-blocking render) -->
   <script src="/static/lucide.min.js" defer></script>
-  <script>try{if(localStorage.getItem('loafed_id_token')){document.documentElement.classList.add('user-logged-in');}}catch(e){}</script>
+  <script src="/static/age-gate.js?v=20261008b" defer></script>
 </head>
 <body class="text-stone-800 antialiased selection:bg-orange-200 selection:text-orange-900 pb-16">
 
@@ -420,11 +429,11 @@
         <div class="mt-4 p-3 sm:p-3.5 rounded-2xl bg-amber-50/80 border border-amber-200/90 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 text-xs text-stone-700 shadow-2xs">
           <div class="flex items-center gap-2">
             <i data-lucide="shield-check" class="w-4 h-4 text-emerald-600 shrink-0"></i>
-            <span><strong>Zero Photo Retention &amp; AI Transparency:</strong> Photos are processed in-memory via Google Gemini AI solely for posture evaluation and are never stored on our servers.</span>
+            <span><strong>Local History &amp; AI Transparency:</strong> Loafed does not intentionally persist non-published originals on its backend, but inspection history and photos can remain in this browser. Photos are sent to Google Gemini for evaluation; provider handling depends on the API service and key used.</span>
           </div>
           <div class="flex items-center gap-1.5 text-stone-500 text-[11px] shrink-0">
             <i data-lucide="info" class="w-3.5 h-3.5 text-amber-600 shrink-0"></i>
-            <span>Photos are only retained if you choose to publish them to the Leaderboard.</span>
+            <span>Unpublished photos may remain in this browser's inspection history; publishing stores photos for public display.</span>
           </div>
         </div>
       </div>
@@ -1061,15 +1070,17 @@
         <button id="openTermsBtn" class="hover:text-orange-900 underline underline-offset-2 transition-colors" aria-label="Open Terms of Service">
           Terms of Service
         </button>
+        <a href="/privacy.html" class="hover:text-orange-900 underline underline-offset-2 transition-colors">Full privacy policy</a>
+        <a href="/terms.html" class="hover:text-orange-900 underline underline-offset-2 transition-colors">Full terms</a>
       </div>
     </div>
 
     <!-- Persistent Veterinary Medical & Age Disclaimer -->
     <div class="max-w-5xl mx-auto px-4 sm:px-6 pt-4 mt-4 border-t border-orange-200/50 flex flex-col sm:flex-row items-center justify-between text-[11px] text-stone-500 gap-2 text-center sm:text-left">
       <p class="leading-relaxed">
-        <strong class="font-bold text-stone-700">Disclaimer:</strong> Loafed AI is a novelty entertainment experiment and does not constitute veterinary medical, musculoskeletal, or orthopedic advice. Intended for users 13+.
+        <strong class="font-bold text-stone-700">Disclaimer:</strong> Loafed AI is a novelty entertainment experiment and does not constitute veterinary medical, musculoskeletal, or orthopedic advice. Use the AI service only as permitted by its provider terms.
       </p>
-      <span class="shrink-0 text-stone-400">Animal silhouette geometric analysis only &bull; Zero human biometrics</span>
+      <span class="shrink-0 text-stone-400">AI-assisted animal posture estimates &bull; Not veterinary advice</span>
     </div>
   </footer>
 
@@ -1219,7 +1230,7 @@
       </div>
 
       <div class="mt-4 pt-3 border-t border-orange-100 flex items-center justify-between text-[11px] text-stone-400">
-        <span>Zero tracking cookies &bull; Zero data retention &bull; 100% Freeware</span>
+        <span>No ad trackers &bull; Local history controls &bull; Public posts are opt-in</span>
         <button id="dismissLegalBtn" class="px-3.5 py-1.5 rounded-lg bg-orange-100/80 hover:bg-orange-200 text-orange-950 font-semibold text-xs transition-colors" aria-label="Dismiss legal notice">
           Dismiss
         </button>
@@ -1361,7 +1372,7 @@
         <div class="p-3.5 bg-amber-50/80 rounded-xl border border-amber-200/90 mb-3.5 flex items-start gap-2.5 text-xs text-amber-950 shadow-2xs">
           <i data-lucide="shield-check" class="w-4 h-4 text-emerald-600 shrink-0 mt-0.5"></i>
           <div class="leading-relaxed text-[11px] text-amber-900">
-            <strong class="font-extrabold text-amber-950">Leaderboard Data Retention Only:</strong> Your cat photos are never saved during regular audits. By publishing, only this photo, your cat's name, and their loaf score are kept exclusively for the public leaderboard. You can remove your entry or delete your account at any time from your profile.
+            <strong class="font-extrabold text-amber-950">Leaderboard Publication:</strong> Regular audit history and photos may remain in this browser. Publishing makes your baker name, cat name, scorecard, and photos public and stores them in AWS until removal. Your account email is not shown on the leaderboard. If deletion fails, contact <a href="mailto:privacy@redersoft.com" class="underline">privacy@redersoft.com</a> so we can help.
           </div>
         </div>
 
@@ -1469,7 +1480,7 @@
               <span id="authPendingLoafBadge" class="hidden text-[10px] font-extrabold bg-orange-200 text-orange-950 px-2 py-0.5 rounded-full border border-orange-300">Ready to Publish</span>
             </div>
             <p class="text-amber-800 leading-relaxed text-[11px]">
-              We <strong>never save or store</strong> your cat pictures during loaf audits. Creating an account is only needed if you want to publish your cat to the public leaderboard. When you publish, only your cat's photo, name, and loaf score are kept <strong>exclusively for leaderboard ranking and display</strong>. You can delete your entries or account at any time!
+            Inspection history and photos can remain in this browser until you clear them. Creating an account is required to publish to the public leaderboard. Publishing makes your baker name, cat name, scorecard, and photos public and stores them in AWS until deletion. Account email is not shown publicly. Deletion controls are available in your profile; if a deletion request fails, contact <a href="mailto:privacy@redersoft.com" class="underline">privacy@redersoft.com</a>.
             </p>
           </div>
         </div>
@@ -1925,6 +1936,6 @@
   <canvas id="certificateCanvas" class="hidden" width="1200" height="800"></canvas>
   <canvas id="storyCanvas" class="hidden" width="1080" height="1920"></canvas>
 
-  <script src="/static/app.min.js?v=20261006b" defer></script>
+  <script src="/static/app.js?v=20261008a" defer></script>
 </body>
 </html>

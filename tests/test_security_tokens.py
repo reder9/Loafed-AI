@@ -32,6 +32,12 @@ class TestGradeTokenSecurity:
         assert verified["can_submit"] is True
         assert verified["image_sha256"] == "sha256_mock_hash"
 
+    def test_grade_token_signing_fails_closed_without_secret(self, sample_data, monkeypatch):
+        monkeypatch.setattr(app, "SIGNATURE_SECRET", "")
+        with pytest.raises(HTTPException) as exc_info:
+            app.generate_grade_token(sample_data)
+        assert exc_info.value.status_code == 503
+
     def test_example_cat_token_has_can_submit_false(self, sample_data):
         token = app.generate_grade_token(sample_data, can_submit=False)
         verified = app.verify_grade_token(token)

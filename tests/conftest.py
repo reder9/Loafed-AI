@@ -9,6 +9,7 @@ from starlette.testclient import TestClient
 os.environ["GEMINI_API_KEY"] = "mock_primary_key_12345678"
 os.environ["GEMINI_API_KEY_SECONDARY"] = "mock_secondary_key_87654321"
 os.environ["SIGNATURE_SECRET"] = "test_signature_secret_for_unit_tests_32chars"
+os.environ["ADMIN_SECRET"] = "test_admin_secret_for_unit_tests_32chars"
 os.environ["DYNAMODB_TABLE"] = "Test-Loafed-Leaderboard"
 os.environ["S3_THUMBNAILS_BUCKET"] = "test-loafed-thumbnails"
 os.environ["COGNITO_USER_POOL_ID"] = "us-east-1_TestPool"
@@ -75,4 +76,4 @@ def valid_loaf_analysis():
 @pytest.fixture
 def sample_grade_token(valid_loaf_analysis):
     """Generates a valid HMAC-signed grade token for testing."""
-    return app.generate_grade_token(valid_loaf_analysis, client_ip="testclient")
+    return app.generate_grade_token(valid_loaf_analysis)

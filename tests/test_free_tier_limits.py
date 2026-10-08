@@ -1,53 +1,86 @@
-import time
-from datetime import datetime, timezone
+from unittest.mock import MagicMock
+
 import pytest
+from botocore.exceptions import ClientError
+from fastapi import HTTPException
+from starlette.requests import Request
+
 import app
 
 
 class TestFreeTierLimits:
-    """Tests the in-memory anti-spam and daily capacity rate limiter."""
+    """Tests shared, atomic DynamoDB quotas for server-funded Gemini requests."""
 
-    def setup_method(self):
-        # Reset tracker before each test
-        app.daily_counter["date"] = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-        app.daily_counter["count"] = 0
-        app.ip_history.clear()
+    def make_table(self, monkeypatch):
+        table = MagicMock()
+        session = MagicMock()
+        session.resource.return_value.Table.return_value = table
+        monkeypatch.setattr(app, "get_boto3_session", lambda: session)
+        return table
 
-    def test_custom_user_key_bypasses_limits(self):
-        allowed, msg = app.check_free_tier_limits("1.2.3.4", is_server_key=False)
+    def test_custom_user_key_bypasses_shared_limits(self, monkeypatch):
+        session = MagicMock()
+        monkeypatch.setattr(app, "get_boto3_session", lambda: session)
+        allowed, message = app.check_free_tier_limits("1.2.3.4", is_server_key=False)
         assert allowed is True
-        assert msg == ""
+        assert message == ""
+        session.resource.assert_not_called()
 
-    def test_normal_server_key_request_increments_counter(self):
-        allowed, msg = app.check_free_tier_limits("1.2.3.4", is_server_key=True)
+    def test_server_key_request_increments_shared_counters(self, monkeypatch):
+        table = self.make_table(monkeypatch)
+        allowed, message = app.check_free_tier_limits("1.2.3.4", is_server_key=True)
         assert allowed is True
-        assert app.daily_counter["count"] == 1
-        assert len(app.ip_history["1.2.3.4"]) == 1
+        assert message == ""
+        assert table.update_item.call_count == 2
+        ip_update, daily_update = table.update_item.call_args_list
+        assert ip_update.kwargs["Key"]["pk"].startswith("LIMIT#IP#")
+        assert ip_update.kwargs["Key"]["sk"].startswith("CLIENT#")
+        assert "#count < :limit" in ip_update.kwargs["ConditionExpression"]
+        assert daily_update.kwargs["Key"]["pk"].startswith("LIMIT#DAILY#")
+        assert "#count < :limit" in daily_update.kwargs["ConditionExpression"]
 
-    def test_ip_hourly_limit_exceeded(self):
-        # Simulate reaching the hourly cap
-        client_ip = "192.168.1.100"
-        now = time.time()
-        app.ip_history[client_ip] = [now - 100] * app.IP_HOURLY_LIMIT
-
-        allowed, msg = app.check_free_tier_limits(client_ip, is_server_key=True)
+    def test_hourly_limit_blocks_without_incrementing_daily_total(self, monkeypatch):
+        table = self.make_table(monkeypatch)
+        table.update_item.side_effect = ClientError(
+            {"Error": {"Code": "ConditionalCheckFailedException", "Message": "limit reached"}},
+            "UpdateItem",
+        )
+        allowed, message = app.check_free_tier_limits("192.168.1.100", is_server_key=True)
         assert allowed is False
-        assert "Rate limit reached" in msg
+        assert "Rate limit reached" in message
+        assert table.update_item.call_count == 1
 
-    def test_daily_global_cap_exceeded(self):
-        # Simulate reaching global daily cap
-        app.daily_counter["count"] = app.DAILY_MAX_LOAVES
-
-        allowed, msg = app.check_free_tier_limits("10.0.0.1", is_server_key=True)
+    def test_daily_limit_is_enforced_atomically(self, monkeypatch):
+        table = self.make_table(monkeypatch)
+        table.update_item.side_effect = [None, ClientError(
+            {"Error": {"Code": "ConditionalCheckFailedException", "Message": "limit reached"}},
+            "UpdateItem",
+        )]
+        allowed, message = app.check_free_tier_limits("10.0.0.1", is_server_key=True)
         assert allowed is False
-        assert "maximum capacity" in msg
+        assert "maximum capacity" in message
+        assert table.update_item.call_count == 2
 
-    def test_new_utc_day_resets_counters(self):
-        app.daily_counter["date"] = "2020-01-01"  # Old day
-        app.daily_counter["count"] = 999
-        app.ip_history["some_ip"] = [time.time()]
+    def test_quota_storage_failure_fails_closed(self, monkeypatch):
+        table = self.make_table(monkeypatch)
+        table.update_item.side_effect = RuntimeError("DynamoDB unavailable")
+        with pytest.raises(HTTPException) as exc:
+            app.check_free_tier_limits("10.0.0.1", is_server_key=True)
+        assert exc.value.status_code == 503
 
-        allowed, msg = app.check_free_tier_limits("some_ip", is_server_key=True)
-        assert allowed is True
-        # Counter should have reset to 1 (for current request)
-        assert app.daily_counter["count"] == 1
+    def test_forwarded_ip_is_ignored_unless_trusted_proxy_is_enabled(self, monkeypatch):
+        request = Request({
+            "type": "http",
+            "method": "GET",
+            "path": "/",
+            "headers": [(b"x-forwarded-for", b"198.51.100.77, 203.0.113.5")],
+            "client": ("192.0.2.10", 443),
+            "server": ("loafed.test", 443),
+            "scheme": "https",
+        })
+
+        monkeypatch.setattr(app, "TRUST_PROXY_HEADERS", False)
+        assert app.get_client_ip(request) == "192.0.2.10"
+
+        monkeypatch.setattr(app, "TRUST_PROXY_HEADERS", True)
+        assert app.get_client_ip(request) == "203.0.113.5"

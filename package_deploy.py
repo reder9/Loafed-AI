@@ -16,6 +16,13 @@ def package():
                 static_alias = f"static/{rel_posix}"
                 zf.write(file_path, arcname=static_alias)
 
+        # Amplify Hosting reads this file from the artifact root for response
+        # security headers. The build pipeline copies it into static/; include
+        # it explicitly for the manual deployment path as well.
+        custom_headers_file = Path("customHttp.yml")
+        if custom_headers_file.is_file():
+            zf.write(custom_headers_file, arcname=custom_headers_file.name)
+
     # Verification: check all entries use forward slash and no backslash
     with zipfile.ZipFile(zip_path, "r") as zf:
         for info in zf.infolist():

@@ -14,6 +14,7 @@ import urllib.parse
 from typing import Optional, List, Dict, Any
 from pathlib import Path
 from decimal import Decimal
+import warnings
 
 from PIL import Image, UnidentifiedImageError
 import boto3
@@ -101,9 +102,11 @@ app.add_middleware(
         "http://localhost:3000",
         "http://localhost:5173",
     ],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    # The browser app uses bearer tokens, not cross-site cookies. Keep the
+    # cross-origin surface explicit rather than granting wildcard capabilities.
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "X-Gemini-API-Key"],
 )
 
 @app.middleware("http")
@@ -126,9 +129,20 @@ async def add_security_headers(request: Request, call_next):
     log_method = logger.error if status >= 500 else logger.warning if status >= 400 else logger.debug
     log_method("Request completed method=%s path=%s status=%s duration_ms=%.1f", request.method, request.url.path, status, elapsed_ms)
     response.headers["X-Content-Type-Options"] = "nosniff"
-    response.headers["X-Frame-Options"] = "SAMEORIGIN"
+    response.headers["X-Frame-Options"] = "DENY"
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
     response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+    response.headers["Content-Security-Policy"] = (
+        "default-src 'self'; "
+        "script-src 'self'; "
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+        "font-src 'self' data: https://fonts.gstatic.com; "
+        "img-src 'self' data: blob: https:; "
+        "connect-src 'self' https://cognito-idp.*.amazonaws.com; "
+        "object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'"
+    )
+    if request.url.scheme == "https":
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
     response.headers["X-Request-ID"] = request_id
     REQUEST_ID.reset(token)
     return response
@@ -140,61 +154,97 @@ SAMPLES_DIR = STATIC_DIR / "samples"
 # Safety & Free-Tier Guardrails
 import time
 from datetime import datetime, timezone
-from collections import defaultdict
-
-DAILY_MAX_LOAVES = int(os.getenv("DAILY_MAX_LOAVES", 1400)) # Safe buffer below Google's 1,500 daily free limit
-IP_HOURLY_LIMIT = int(os.getenv("IP_HOURLY_LIMIT", 10))     # Max 10 loaves per IP per hour to prevent spam
-
-daily_counter = {
-    "date": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
-    "count": 0
-}
-ip_history = defaultdict(list)
+DAILY_MAX_LOAVES = max(1, int(os.getenv("DAILY_MAX_LOAVES", 1400)))
+IP_HOURLY_LIMIT = max(1, int(os.getenv("IP_HOURLY_LIMIT", 10)))
 
 def get_client_ip(request: Request) -> str:
-    forwarded = request.headers.get("x-forwarded-for")
-    if forwarded:
-        return forwarded.split(",")[0].strip()
-    return request.client.host if request.client else "unknown"
+    # ASGI adapters such as Mangum expose API Gateway's source IP as
+    # request.client.host. Only trust X-Forwarded-For when the deployment has
+    # explicitly enabled it and its trusted proxy appends the client address.
+    client_host = request.client.host if request.client else "unknown"
+    if not TRUST_PROXY_HEADERS:
+        return client_host
+
+    forwarded = request.headers.get("x-forwarded-for", "")
+    forwarded_ips = [part.strip() for part in forwarded.split(",") if part.strip()]
+    return forwarded_ips[-1] if forwarded_ips else client_host
 
 def check_free_tier_limits(client_ip: str, is_server_key: bool):
-    """Guarantees the server stays 100% within free limits without surprise costs."""
+    """Enforce shared, atomic DynamoDB limits for requests using server-funded keys."""
     if not is_server_key:
         return True, "" # Personal client keys bypass server shared quota
 
-    now = time.time()
-    today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    now = datetime.now(timezone.utc)
+    hour_bucket = now.strftime("%Y-%m-%dT%H")
+    day_bucket = now.strftime("%Y-%m-%d")
+    ip_digest = hmac.new(
+        require_configured_secret(SIGNATURE_SECRET, "SIGNATURE_SECRET").encode("utf-8"),
+        client_ip.encode("utf-8"),
+        hashlib.sha256,
+    ).hexdigest()
+    session = get_boto3_session()
+    table = session.resource("dynamodb").Table(DYNAMODB_TABLE_NAME)
 
-    # Reset counter if a new UTC day has started
-    if daily_counter["date"] != today_str:
-        daily_counter["date"] = today_str
-        daily_counter["count"] = 0
-        ip_history.clear()
+    # The hourly item is keyed by a keyed hash, not a raw address. Bucketing
+    # gives each address at most one small item per hour and bounds its lifetime
+    # when DynamoDB TTL is enabled for expires_at.
+    try:
+        table.update_item(
+            Key={"pk": f"LIMIT#IP#{hour_bucket}", "sk": f"CLIENT#{ip_digest}"},
+            UpdateExpression="SET #count = if_not_exists(#count, :zero) + :one, expires_at = :expires",
+            ConditionExpression="attribute_not_exists(#count) OR #count < :limit",
+            ExpressionAttributeNames={"#count": "count"},
+            ExpressionAttributeValues={
+                ":zero": 0,
+                ":one": 1,
+                ":limit": IP_HOURLY_LIMIT,
+                ":expires": int(now.timestamp()) + 2 * 24 * 60 * 60,
+            },
+        )
+    except ClientError as err:
+        error_code = err.response.get("Error", {}).get("Code")
+        if error_code == "ConditionalCheckFailedException":
+            return False, f"Rate limit reached: You have inspected {IP_HOURLY_LIMIT} loaves this hour. Please wait for the next hourly window before submitting another evaluation."
+        logger.error("Hourly grading quota update failed client=%s error_code=%s", safe_identifier(client_ip), error_code, exc_info=True)
+        raise HTTPException(status_code=503, detail="We could not verify the grading limit right now. Please try again shortly.")
+    except Exception as err:
+        logger.error("Hourly grading quota unavailable client=%s error_type=%s", safe_identifier(client_ip), type(err).__name__, exc_info=True)
+        raise HTTPException(status_code=503, detail="We could not verify the grading limit right now. Please try again shortly.")
 
-    # Prune timestamps older than 1 hour (3600 seconds)
-    ip_history[client_ip] = [t for t in ip_history[client_ip] if now - t < 3600]
+    try:
+        table.update_item(
+            Key={"pk": f"LIMIT#DAILY#{day_bucket}", "sk": "COUNT"},
+            UpdateExpression="SET #count = if_not_exists(#count, :zero) + :one, expires_at = :expires",
+            ConditionExpression="attribute_not_exists(#count) OR #count < :limit",
+            ExpressionAttributeNames={"#count": "count"},
+            ExpressionAttributeValues={
+                ":zero": 0,
+                ":one": 1,
+                ":limit": DAILY_MAX_LOAVES,
+                ":expires": int(now.timestamp()) + 3 * 24 * 60 * 60,
+            },
+        )
+    except ClientError as err:
+        error_code = err.response.get("Error", {}).get("Code")
+        if error_code == "ConditionalCheckFailedException":
+            return False, "The bakery ovens are currently at maximum capacity for today. Daily public evaluation slots have been filled. Please check back tomorrow, or explore the certified benchmark dataset."
+        logger.error("Daily grading quota update failed client=%s error_code=%s", safe_identifier(client_ip), error_code, exc_info=True)
+        raise HTTPException(status_code=503, detail="We could not verify the grading limit right now. Please try again shortly.")
+    except Exception as err:
+        logger.error("Daily grading quota unavailable client=%s error_type=%s", safe_identifier(client_ip), type(err).__name__, exc_info=True)
+        raise HTTPException(status_code=503, detail="We could not verify the grading limit right now. Please try again shortly.")
 
-    # Check per-IP spam limit
-    if len(ip_history[client_ip]) >= IP_HOURLY_LIMIT:
-        return False, "Rate limit reached: You have inspected 10 loaves this hour. Please wait a few minutes before submitting another evaluation."
-
-    # Check global daily free-tier cap
-    if daily_counter["count"] >= DAILY_MAX_LOAVES:
-        return False, "The bakery ovens are currently at maximum capacity for today. Daily public evaluation slots have been filled. Please check back tomorrow when fresh slots open up, or explore Flash's certified benchmark dataset below!"
-
-    # Record loaf inspection
-    daily_counter["count"] += 1
-    ip_history[client_ip].append(now)
     return True, ""
 
 
 # Upload validation limits
 MAX_IMAGES = 5
 MAX_IMAGE_BYTES = 8 * 1024 * 1024        # 8 MB per image
-MAX_IMAGE_DIMENSION = 12000              # px per side
+MAX_IMAGE_DIMENSION = 8192               # px per side
+MAX_IMAGE_PIXELS = 40_000_000            # bound decoded memory use as well as upload size
 ALLOWED_IMAGE_FORMATS = {"JPEG": "image/jpeg", "PNG": "image/png", "WEBP": "image/webp"}
 MAX_CAT_NAME_LENGTH = 40
-Image.MAX_IMAGE_PIXELS = 100_000_000     # decompression-bomb guard (Pillow errors above 2x this)
+Image.MAX_IMAGE_PIXELS = MAX_IMAGE_PIXELS
 
 # Cryptographic hashes of official benchmark reference cats (Buttercup, Chonks, Flash)
 SAMPLE_IMAGE_HASHES = {
@@ -480,16 +530,22 @@ async def read_and_validate_image(upload: UploadFile):
     if not content:
         return b"", ""
     try:
-        with Image.open(io.BytesIO(content)) as probe:
-            fmt = probe.format
-            width, height = probe.size
-            probe.verify()
+        # Pillow warns at half its configured threshold. Enforce our own cap
+        # from the image header before doing any expensive decode.
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", Image.DecompressionBombWarning)
+            with Image.open(io.BytesIO(content)) as probe:
+                fmt = probe.format
+                width, height = probe.size
+                if width > MAX_IMAGE_DIMENSION or height > MAX_IMAGE_DIMENSION:
+                    raise HTTPException(status_code=400, detail=f"Photos may be at most {MAX_IMAGE_DIMENSION} pixels per side.")
+                if width * height > MAX_IMAGE_PIXELS:
+                    raise HTTPException(status_code=400, detail="Photos are too large to process safely. Please use an image with fewer pixels.")
+                probe.verify()
     except (UnidentifiedImageError, Image.DecompressionBombError, OSError, SyntaxError, ValueError):
         raise HTTPException(status_code=400, detail="One of the uploaded files is not a valid JPEG, PNG or WebP image.")
     if fmt not in ALLOWED_IMAGE_FORMATS:
         raise HTTPException(status_code=400, detail="Only JPEG, PNG and WebP photos are supported.")
-    if width > MAX_IMAGE_DIMENSION or height > MAX_IMAGE_DIMENSION:
-        raise HTTPException(status_code=400, detail=f"Photos may be at most {MAX_IMAGE_DIMENSION} pixels per side.")
     return content, ALLOWED_IMAGE_FORMATS[fmt]
 
 
@@ -500,7 +556,17 @@ COGNITO_DOMAIN = os.getenv("COGNITO_DOMAIN", "auth.redersoft.com")
 AWS_REGION = os.getenv("AWS_REGION", "us-east-1")
 DYNAMODB_TABLE_NAME = os.getenv("DYNAMODB_TABLE", "Loafed-Leaderboard")
 S3_BUCKET_NAME = os.getenv("S3_THUMBNAILS_BUCKET", "loafed-thumbnails-686255947626")
-SIGNATURE_SECRET = os.getenv("SIGNATURE_SECRET", "c0afed7a89b4e5f61234567890abcdefc0afed7a89b4e5f61234567890abcdef")
+SIGNATURE_SECRET = os.getenv("SIGNATURE_SECRET", "").strip()
+ADMIN_SECRET = os.getenv("ADMIN_SECRET", "").strip()
+TRUST_PROXY_HEADERS = os.getenv("TRUST_PROXY_HEADERS", "false").strip().lower() in {"1", "true", "yes"}
+
+
+def require_configured_secret(secret: str, setting_name: str) -> str:
+    """Fail closed rather than silently using a public or weak default secret."""
+    if len(secret) < 32:
+        logger.error("Required secret configuration is missing or too short setting=%s", setting_name)
+        raise HTTPException(status_code=503, detail="A required security setting is unavailable. Please contact the site administrator.")
+    return secret
 
 _BOTO3_SESSION_CACHE: Optional[Any] = None
 _BOTO3_SESSION_CACHED_AT = 0.0
@@ -605,8 +671,15 @@ def verify_cognito_token(auth_header: Optional[str]) -> dict:
         if not user_id:
             raise HTTPException(status_code=401, detail="Missing user identifier in token claims.")
 
-        token_client_id = claims.get("aud") or claims.get("client_id")
-        if COGNITO_CLIENT_ID and token_client_id and token_client_id != COGNITO_CLIENT_ID:
+        token_use = claims.get("token_use")
+        if token_use == "id":
+            token_client_id = claims.get("aud")
+        elif token_use == "access":
+            token_client_id = claims.get("client_id")
+        else:
+            raise HTTPException(status_code=401, detail="Invalid token type.")
+
+        if not token_client_id or token_client_id != COGNITO_CLIENT_ID:
             raise HTTPException(status_code=401, detail="Token not issued for Loafed application client.")
 
         return claims
@@ -624,6 +697,7 @@ def generate_grade_token(
     best_thumbnail_index: Optional[int] = 0,
     can_submit: bool = True
 ) -> str:
+    signing_secret = require_configured_secret(SIGNATURE_SECRET, "SIGNATURE_SECRET")
     hashes_list = image_hashes or ([image_hash] if image_hash else [])
     payload = {
         "cat_name": result_data.get("cat_name", "Anonymous Loaf"),
@@ -651,18 +725,19 @@ def generate_grade_token(
         "salt": uuid.uuid4().hex[:12]
     }
     encoded = base64.urlsafe_b64encode(json.dumps(payload, sort_keys=True).encode()).decode()
-    signature = hmac.new(SIGNATURE_SECRET.encode(), encoded.encode(), hashlib.sha256).hexdigest()
+    signature = hmac.new(signing_secret.encode(), encoded.encode(), hashlib.sha256).hexdigest()
     return f"{encoded}.{signature}"
 
 
 def verify_grade_token(grade_token: str) -> dict:
+    signing_secret = require_configured_secret(SIGNATURE_SECRET, "SIGNATURE_SECRET")
     if not grade_token or "." not in grade_token:
         raise HTTPException(status_code=400, detail="Invalid grade evaluation token.")
     parts = grade_token.rsplit(".", 1)
     if len(parts) != 2:
         raise HTTPException(status_code=400, detail="Malformed grade token structure.")
     encoded, signature = parts
-    expected_sig = hmac.new(SIGNATURE_SECRET.encode(), encoded.encode(), hashlib.sha256).hexdigest()
+    expected_sig = hmac.new(signing_secret.encode(), encoded.encode(), hashlib.sha256).hexdigest()
     if not hmac.compare_digest(signature, expected_sig):
         raise HTTPException(status_code=400, detail="Tampered or invalid evaluation token.")
     try:
@@ -1003,6 +1078,44 @@ LEADERBOARD_CACHE_TTL_SECONDS = 10
 def clear_leaderboard_cache():
     LEADERBOARD_CACHE.clear()
 
+
+def query_user_entries(table, user_id: str) -> List[dict]:
+    """Read every UserIndex page and deduplicate mirrored records by entry ID."""
+    query_args = {
+        "IndexName": "UserIndex",
+        "KeyConditionExpression": Key("user_id").eq(user_id),
+        "ScanIndexForward": False,
+    }
+    entries_by_id: Dict[str, dict] = {}
+    while True:
+        response = table.query(**query_args)
+        for item in response.get("Items", []):
+            entry_id = item.get("entry_id")
+            if entry_id:
+                entries_by_id.setdefault(entry_id, item)
+        last_key = response.get("LastEvaluatedKey")
+        if not isinstance(last_key, dict) or not last_key:
+            break
+        query_args["ExclusiveStartKey"] = last_key
+    return list(entries_by_id.values())
+
+
+def delete_entry_media(s3_client, entry_id: str) -> None:
+    """Delete all stored images for an entry, including any paginated results."""
+    continuation_token = None
+    while True:
+        request_args = {"Bucket": S3_BUCKET_NAME, "Prefix": f"thumbnails/{entry_id}"}
+        if continuation_token:
+            request_args["ContinuationToken"] = continuation_token
+        response = s3_client.list_objects_v2(**request_args)
+        for s3_obj in response.get("Contents", []):
+            s3_client.delete_object(Bucket=S3_BUCKET_NAME, Key=s3_obj["Key"])
+        if response.get("IsTruncated") is not True:
+            break
+        continuation_token = response.get("NextContinuationToken")
+        if not isinstance(continuation_token, str) or not continuation_token:
+            raise RuntimeError("S3 returned a truncated listing without a continuation token")
+
 @app.get("/robots.txt", response_class=PlainTextResponse)
 async def get_robots():
     """Serves robots.txt crawler directives."""
@@ -1010,17 +1123,11 @@ async def get_robots():
 
 @app.get("/sitemap.xml", response_class=Response)
 async def get_sitemap():
-    """Serves sitemap.xml for search engines."""
-    content = """<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>https://loafed.redersoft.com/</loc>
-    <lastmod>2026-10-04</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>1.0</priority>
-  </url>
-</urlset>"""
-    return Response(content=content, media_type="application/xml")
+    """Serve the maintained static sitemap rather than a stale one-URL copy."""
+    sitemap_file = STATIC_DIR / "sitemap.xml"
+    if sitemap_file.exists():
+        return FileResponse(str(sitemap_file), media_type="application/xml")
+    raise HTTPException(status_code=404, detail="Sitemap not found")
 
 @app.get("/api/samples")
 async def get_samples():
@@ -1256,6 +1363,7 @@ CRITICAL FORMATTING & TONE:
 async def grade_loaf(
     request: Request,
     cat_name: Optional[str] = Form(None),
+    age_confirmed: bool = Form(False),
     model: Optional[str] = Form("gemini-3.8-flash"),
     front: Optional[UploadFile] = File(None),
     side: Optional[UploadFile] = File(None),
@@ -1270,6 +1378,10 @@ async def grade_loaf(
     if website_url_check:
         logger.warning("Automated bot submission dropped via honeypot.")
         raise HTTPException(status_code=400, detail="Automated submission blocked.")
+
+    if not age_confirmed:
+        logger.warning("Grading blocked: 18+ declaration missing client=%s", safe_identifier(get_client_ip(request)))
+        raise HTTPException(status_code=403, detail="Confirm that you are 18 or older before using Gemini-powered evaluation.")
 
     # Resolve available keys to try from request header, form field, or server key pool
     client_supplied_key = api_key or x_gemini_api_key
@@ -2704,11 +2816,9 @@ async def get_loaf_details(entry_id: str):
             angles = []
 
     photo_urls = item.get("photo_urls") or [a["url"] for a in angles]
-    user_id = item.get("user_id")
 
     return {
         "entry_id": entry_id,
-        "user_id": user_id,
         "cat_name": cat_name,
         "display_name": display_name,
         "overall_score": overall_score,
@@ -2735,9 +2845,58 @@ async def get_loaf_details(entry_id: str):
 
 
 class LeaderboardReportRequest(BaseModel):
-    entry_id: str
+    entry_id: str = Field(..., min_length=1, max_length=64)
     score: Optional[int] = None
-    reason: Optional[str] = None
+    reason: Optional[str] = Field(None, max_length=120)
+
+
+def _ddb_attribute_map(values: dict) -> dict:
+    """Serialize native Python values for DynamoDB's low-level transaction API."""
+    from boto3.dynamodb.types import TypeSerializer
+
+    serializer = TypeSerializer()
+    return {key: serializer.serialize(value) for key, value in values.items()}
+
+
+def _report_transaction_items(entry_id: str, score_key: str, periods: list, reporter_key: str) -> list:
+    marker_pk = f"REPORT#{entry_id}"
+    marker = {
+        "Put": {
+            "TableName": DYNAMODB_TABLE_NAME,
+            "Item": _ddb_attribute_map({
+                "pk": marker_pk,
+                "sk": f"REPORTER#{reporter_key}",
+                "created_at": datetime.now(timezone.utc).isoformat(),
+                "expires_at": int(time.time()) + 365 * 24 * 60 * 60,
+            }),
+            "ConditionExpression": "attribute_not_exists(pk)",
+        }
+    }
+    record_keys = [("PERIOD#ALL", score_key)]
+    record_keys.extend(
+        (f"PERIOD#{period}", score_key)
+        for period in periods
+        if period and period != "ALL"
+    )
+    record_keys.append((f"ENTRY#{entry_id}", "METADATA"))
+
+    unique_keys = list(dict.fromkeys(record_keys))
+    if len(unique_keys) + 1 > 100:
+        raise ValueError("Too many leaderboard period records to report atomically")
+
+    updates = []
+    for pk, sk in unique_keys:
+        updates.append({
+            "Update": {
+                "TableName": DYNAMODB_TABLE_NAME,
+                "Key": _ddb_attribute_map({"pk": pk, "sk": sk}),
+                "UpdateExpression": "SET #reports = if_not_exists(#reports, :zero) + :one",
+                "ConditionExpression": "attribute_exists(#pk)",
+                "ExpressionAttributeNames": {"#reports": "report_count", "#pk": "pk"},
+                "ExpressionAttributeValues": _ddb_attribute_map({":zero": 0, ":one": 1}),
+            }
+        })
+    return [marker, *updates]
 
 
 @app.post("/api/leaderboard/report")
@@ -2749,51 +2908,109 @@ async def report_leaderboard_entry(
     """Allows users to report an inappropriate or non-cat submission.
     Automatically hides entries that receive 3 or more community reports."""
     entry_id = req.entry_id.strip()
-    if not entry_id:
-        raise HTTPException(status_code=400, detail="Entry ID is required.")
+    if not re.fullmatch(r"[a-zA-Z0-9_-]{1,64}", entry_id):
+        raise HTTPException(status_code=400, detail="Entry ID is invalid.")
 
     client_ip = get_client_ip(request)
+    if authorization:
+        claims = verify_cognito_token(authorization)
+        reporter_source = f"user:{claims['sub']}"
+    else:
+        reporter_source = f"ip:{client_ip}"
+    report_secret = require_configured_secret(SIGNATURE_SECRET, "SIGNATURE_SECRET")
+    reporter_key = hmac.new(report_secret.encode("utf-8"), reporter_source.encode("utf-8"), hashlib.sha256).hexdigest()
     session = get_boto3_session()
     ddb = session.resource("dynamodb")
     table = ddb.Table(DYNAMODB_TABLE_NAME)
 
     matching_item = None
-    if req.score is not None:
-        sk = f"SCORE#{req.score:03d}#{entry_id}"
-        resp = table.get_item(Key={"pk": "PERIOD#ALL", "sk": sk})
-        matching_item = resp.get("Item")
+    try:
+        if req.score is not None:
+            sk = f"SCORE#{req.score:03d}#{entry_id}"
+            resp = table.get_item(Key={"pk": "PERIOD#ALL", "sk": sk})
+            matching_item = resp.get("Item")
 
-    if not matching_item:
-        resp = table.query(
-            KeyConditionExpression=Key("pk").eq("PERIOD#ALL"),
-            FilterExpression=Attr("entry_id").eq(entry_id)
-        )
-        items = resp.get("Items", [])
-        if items:
-            matching_item = items[0]
+        if not matching_item:
+            resp = table.query(
+                KeyConditionExpression=Key("pk").eq("PERIOD#ALL"),
+                FilterExpression=Attr("entry_id").eq(entry_id)
+            )
+            items = resp.get("Items", [])
+            if items:
+                matching_item = items[0]
+    except Exception as err:
+        logger.error("Report entry lookup failed entry_id=%s error_type=%s", entry_id, type(err).__name__, exc_info=True)
+        raise HTTPException(status_code=503, detail="We could not find the submission to report right now. Please try again shortly.")
 
     if not matching_item:
         raise HTTPException(status_code=404, detail="Leaderboard entry not found.")
 
     score = int(matching_item.get("overall_score", 0))
     sk = f"SCORE#{score:03d}#{entry_id}"
-    periods = matching_item.get("periods", ["ALL"])
-    current_reports = int(matching_item.get("report_count", 0)) + 1
-    should_hide = current_reports >= 3
+    periods = matching_item.get("periods") or ["ALL"]
+    if not isinstance(periods, list):
+        periods = ["ALL"]
 
-    for p in periods:
-        pk = "PERIOD#ALL" if p == "ALL" else f"PERIOD#{p}"
-        try:
-            table.update_item(
-                Key={"pk": pk, "sk": sk},
-                UpdateExpression="SET report_count = :rc, is_hidden = :hid",
-                ExpressionAttributeValues={
-                    ":rc": current_reports,
-                    ":hid": should_hide
-                }
-            )
-        except Exception as e:
-            logger.warning(f"Error updating report count on {pk}/{sk}: {e}")
+    try:
+        table.meta.client.transact_write_items(
+            TransactItems=_report_transaction_items(entry_id, sk, periods, reporter_key)
+        )
+    except ClientError as err:
+        error_code = err.response.get("Error", {}).get("Code")
+        if error_code == "TransactionCanceledException":
+            try:
+                marker = table.get_item(
+                    Key={"pk": f"REPORT#{entry_id}", "sk": f"REPORTER#{reporter_key}"},
+                    ConsistentRead=True,
+                ).get("Item")
+                if marker:
+                    current = table.get_item(
+                        Key={"pk": "PERIOD#ALL", "sk": sk}, ConsistentRead=True
+                    ).get("Item") or matching_item
+                    current_reports = int(current.get("report_count", matching_item.get("report_count", 0)))
+                    should_hide = current_reports >= 3 or current.get("is_hidden") is True
+                    return {
+                        "success": True,
+                        "entry_id": entry_id,
+                        "report_count": current_reports,
+                        "is_hidden": should_hide,
+                        "already_reported": True,
+                        "message": "You have already reported this submission. No additional report was added.",
+                    }
+            except Exception as read_err:
+                logger.error("Could not verify whether report was already recorded entry_id=%s error_type=%s", entry_id, type(read_err).__name__, exc_info=True)
+                raise HTTPException(status_code=503, detail="We could not confirm the report status. Please retry shortly.")
+        logger.error("Atomic report transaction failed entry_id=%s client=%s error_code=%s", entry_id, safe_identifier(client_ip), error_code, exc_info=True)
+        raise HTTPException(status_code=503, detail="Your report could not be recorded right now. Please try again shortly.")
+    except Exception as err:
+        logger.error("Atomic report transaction unavailable entry_id=%s client=%s error_type=%s", entry_id, safe_identifier(client_ip), type(err).__name__, exc_info=True)
+        raise HTTPException(status_code=503, detail="Your report could not be recorded right now. Please try again shortly.")
+
+    # The transaction commits the unique reporter marker and increments all
+    # leaderboard copies together. A strong read obtains the authoritative
+    # count; if that read has a transient problem, the committed report remains
+    # successful and the local prior count is used for this response only.
+    current_reports = int(matching_item.get("report_count", 0)) + 1
+    try:
+        current = table.get_item(Key={"pk": "PERIOD#ALL", "sk": sk}, ConsistentRead=True).get("Item")
+        if current:
+            current_reports = int(current.get("report_count", current_reports))
+    except Exception as err:
+        logger.warning("Report committed but count refresh failed entry_id=%s error_type=%s", entry_id, type(err).__name__, exc_info=True)
+
+    should_hide = current_reports >= 3
+    if should_hide:
+        # The count threshold is already enforced by reads. Keep the explicit
+        # moderation flag in sync as a best-effort convenience for operators.
+        for pk, record_sk in [("PERIOD#ALL", sk), *[(f"PERIOD#{period}", sk) for period in periods if period and period != "ALL"], (f"ENTRY#{entry_id}", "METADATA")]:
+            try:
+                table.update_item(
+                    Key={"pk": pk, "sk": record_sk},
+                    UpdateExpression="SET is_hidden = :hidden",
+                    ExpressionAttributeValues={":hidden": True},
+                )
+            except Exception as err:
+                logger.warning("Report threshold reached but hidden flag update failed entry_id=%s period_key=%s error_type=%s", entry_id, safe_identifier(pk), type(err).__name__, exc_info=True)
 
     clear_leaderboard_cache()
     logger.info("Leaderboard entry reported entry_id=%s client=%s report_count=%d hidden=%s", entry_id, safe_identifier(client_ip), current_reports, should_hide)
@@ -2802,6 +3019,7 @@ async def report_leaderboard_entry(
         "entry_id": entry_id,
         "report_count": current_reports,
         "is_hidden": should_hide,
+        "already_reported": False,
         "message": "Thank you for reporting. Our moderation system has recorded your report."
     }
 
@@ -2815,7 +3033,7 @@ class AdminRemoveRequest(BaseModel):
 @app.post("/api/admin/leaderboard/remove")
 async def admin_remove_entry(req: AdminRemoveRequest):
     """Admin endpoint to forcefully purge an offensive submission from DynamoDB and S3."""
-    expected_secret = os.getenv("ADMIN_SECRET", SIGNATURE_SECRET)
+    expected_secret = require_configured_secret(ADMIN_SECRET, "ADMIN_SECRET")
     if not req.admin_key or not hmac.compare_digest(req.admin_key, expected_secret):
         raise HTTPException(status_code=403, detail="Unauthorized admin access.")
 
@@ -2826,10 +3044,17 @@ async def admin_remove_entry(req: AdminRemoveRequest):
     s3_client = session.client("s3")
 
     matching_item = None
+    try:
+        metadata_response = table.get_item(Key={"pk": f"ENTRY#{entry_id}", "sk": "METADATA"})
+        matching_item = metadata_response.get("Item")
+    except Exception as e:
+        logger.warning("Admin lookup record read failed entry_id=%s error_type=%s", entry_id, type(e).__name__, exc_info=True)
+
     if req.score is not None:
-        sk = f"SCORE#{req.score:03d}#{entry_id}"
-        resp = table.get_item(Key={"pk": "PERIOD#ALL", "sk": sk})
-        matching_item = resp.get("Item")
+        if not matching_item:
+            sk = f"SCORE#{req.score:03d}#{entry_id}"
+            resp = table.get_item(Key={"pk": "PERIOD#ALL", "sk": sk})
+            matching_item = resp.get("Item")
 
     if not matching_item:
         resp = table.query(
@@ -2847,24 +3072,52 @@ async def admin_remove_entry(req: AdminRemoveRequest):
     sk = f"SCORE#{score:03d}#{entry_id}"
     periods = matching_item.get("periods", ["ALL"])
 
-    for p in periods:
+    cleanup_failures = 0
+    try:
+        # Keep the DynamoDB lookup intact if object deletion fails, so a retry
+        # can still find and finish cleaning up this entry.
+        delete_entry_media(s3_client, entry_id)
+    except Exception as e:
+        logger.error("Admin delete media failed entry_id=%s error_type=%s", entry_id, type(e).__name__, exc_info=True)
+        raise HTTPException(status_code=503, detail="The entry photos could not be removed. Please retry or contact the site administrator.")
+
+    for p in (period for period in periods if period != "ALL"):
         pk = "PERIOD#ALL" if p == "ALL" else f"PERIOD#{p}"
         try:
             table.delete_item(Key={"pk": pk, "sk": sk})
         except Exception as e:
-            logger.warning(f"Admin delete item error {pk}/{sk}: {e}")
+            cleanup_failures += 1
+            logger.error("Admin delete item failed entry_id=%s period=%s error_type=%s", entry_id, p, type(e).__name__, exc_info=True)
+
+    if cleanup_failures:
+        clear_leaderboard_cache()
+        raise HTTPException(status_code=503, detail="The entry could not be fully removed. Please retry or contact the site administrator.")
+
+    primary_hash = matching_item.get("primary_image_hash")
+    user_id = matching_item.get("user_id")
+    if primary_hash and user_id:
+        try:
+            table.delete_item(Key={"pk": f"USER#{user_id}", "sk": f"SUBMISSION#{primary_hash}"})
+        except Exception as e:
+            logger.error("Admin delete deduplication record failed entry_id=%s error_type=%s", entry_id, type(e).__name__, exc_info=True)
+            clear_leaderboard_cache()
+            raise HTTPException(status_code=503, detail="The entry could not be fully removed. Please retry or contact the site administrator.")
+
+    # Keep the ALL-period and metadata records available as retry anchors until
+    # all other cleanup has succeeded; remove metadata last for UserIndex access.
+    try:
+        table.delete_item(Key={"pk": "PERIOD#ALL", "sk": sk})
+    except Exception as e:
+        logger.error("Admin delete all-time item failed entry_id=%s error_type=%s", entry_id, type(e).__name__, exc_info=True)
+        clear_leaderboard_cache()
+        raise HTTPException(status_code=503, detail="The entry could not be fully removed. Please retry or contact the site administrator.")
 
     try:
         table.delete_item(Key={"pk": f"ENTRY#{entry_id}", "sk": "METADATA"})
     except Exception as e:
-        logger.warning(f"Admin delete entry lookup error ENTRY#{entry_id}: {e}")
-
-    try:
-        s3_res = s3_client.list_objects_v2(Bucket=S3_BUCKET_NAME, Prefix=f"thumbnails/{entry_id}")
-        for s3_obj in s3_res.get("Contents", []):
-            s3_client.delete_object(Bucket=S3_BUCKET_NAME, Key=s3_obj["Key"])
-    except Exception as e:
-        logger.warning(f"Admin delete S3 thumbnail error for {entry_id}: {e}")
+        logger.error("Admin delete lookup failed entry_id=%s error_type=%s", entry_id, type(e).__name__, exc_info=True)
+        clear_leaderboard_cache()
+        raise HTTPException(status_code=503, detail="The entry could not be fully removed. Please retry or contact the site administrator.")
 
     clear_leaderboard_cache()
     logger.info("Admin successfully purged leaderboard entry entry_id=%s", entry_id)
@@ -2884,15 +3137,10 @@ async def get_my_entries(authorization: Optional[str] = Header(None)):
     table = ddb.Table(DYNAMODB_TABLE_NAME)
 
     try:
-        response = table.query(
-            IndexName="UserIndex",
-            KeyConditionExpression=Key("user_id").eq(user_id),
-            ScanIndexForward=False
-        )
-        items = response.get("Items", [])
+        items = query_user_entries(table, user_id)
     except Exception as e:
-        logger.error(f"DynamoDB UserIndex query error: {e}", exc_info=True)
-        items = []
+        logger.error("DynamoDB UserIndex query failed user=%s error_type=%s", safe_identifier(user_id), type(e).__name__, exc_info=True)
+        raise HTTPException(status_code=503, detail="Your submissions could not be loaded right now. Please try again shortly.")
 
     entries = []
     for it in items:
@@ -2923,11 +3171,13 @@ async def delete_leaderboard_entry(entry_id: str, authorization: Optional[str] =
     table = ddb.Table(DYNAMODB_TABLE_NAME)
     s3_client = session.client("s3")
 
-    res = table.query(
-        IndexName="UserIndex",
-        KeyConditionExpression=Key("user_id").eq(user_id)
-    )
-    matching_item = next((it for it in res.get("Items", []) if it.get("entry_id") == entry_id), None)
+    try:
+        user_entries = query_user_entries(table, user_id)
+    except Exception as e:
+        logger.error("Could not list entries for deletion user=%s error_type=%s", safe_identifier(user_id), type(e).__name__, exc_info=True)
+        raise HTTPException(status_code=503, detail="Your submission could not be removed right now. Please try again shortly.")
+
+    matching_item = next((it for it in user_entries if it.get("entry_id") == entry_id), None)
     if not matching_item:
         raise HTTPException(status_code=404, detail="Entry not found or you are not authorized to delete it.")
 
@@ -2935,17 +3185,22 @@ async def delete_leaderboard_entry(entry_id: str, authorization: Optional[str] =
     sk = f"SCORE#{score:03d}#{entry_id}"
     periods = matching_item.get("periods", ["ALL"])
 
-    for p in periods:
+    cleanup_failures = 0
+    try:
+        # Do not remove the ownership/index records until S3 cleanup succeeds;
+        # those records are needed to retry a partial deletion.
+        delete_entry_media(s3_client, entry_id)
+    except Exception as e:
+        logger.error("Submission media deletion failed entry_id=%s error_type=%s", entry_id, type(e).__name__, exc_info=True)
+        raise HTTPException(status_code=503, detail="The submission photos could not be removed. Please retry shortly.")
+
+    for p in (period for period in periods if period != "ALL"):
         pk = "PERIOD#ALL" if p == "ALL" else f"PERIOD#{p}"
         try:
             table.delete_item(Key={"pk": pk, "sk": sk})
         except Exception as e:
-            logger.warning(f"Error deleting item {pk}/{sk}: {e}")
-
-    try:
-        table.delete_item(Key={"pk": f"ENTRY#{entry_id}", "sk": "METADATA"})
-    except Exception as e:
-        logger.warning(f"Error deleting entry lookup item ENTRY#{entry_id}: {e}")
+            cleanup_failures += 1
+            logger.error("Submission record deletion failed entry_id=%s period=%s error_type=%s", entry_id, p, type(e).__name__, exc_info=True)
 
     # Remove submission dedup record if present
     primary_hash = matching_item.get("primary_image_hash")
@@ -2953,16 +3208,31 @@ async def delete_leaderboard_entry(entry_id: str, authorization: Optional[str] =
         try:
             table.delete_item(Key={"pk": f"USER#{user_id}", "sk": f"SUBMISSION#{primary_hash}"})
         except Exception as e:
-            logger.warning(f"Error deleting dedup item: {e}")
+            cleanup_failures += 1
+            logger.error("Submission deduplication record deletion failed entry_id=%s error_type=%s", entry_id, type(e).__name__, exc_info=True)
+
+    if cleanup_failures:
+        clear_leaderboard_cache()
+        raise HTTPException(status_code=503, detail="The submission could not be fully removed. Please retry or contact support.")
+
+    # Preserve a UserIndex lookup record until every other DDB deletion has
+    # succeeded, so an interrupted request can be retried by the owner.
+    try:
+        table.delete_item(Key={"pk": "PERIOD#ALL", "sk": sk})
+    except Exception as e:
+        logger.error("Submission all-time record deletion failed entry_id=%s error_type=%s", entry_id, type(e).__name__, exc_info=True)
+        clear_leaderboard_cache()
+        raise HTTPException(status_code=503, detail="The submission could not be fully removed. Please retry or contact support.")
 
     try:
-        s3_res = s3_client.list_objects_v2(Bucket=S3_BUCKET_NAME, Prefix=f"thumbnails/{entry_id}")
-        for s3_obj in s3_res.get("Contents", []):
-            s3_client.delete_object(Bucket=S3_BUCKET_NAME, Key=s3_obj["Key"])
+        table.delete_item(Key={"pk": f"ENTRY#{entry_id}", "sk": "METADATA"})
     except Exception as e:
-        logger.warning(f"Error deleting S3 thumbnails for {entry_id}: {e}")
+        logger.error("Submission lookup deletion failed entry_id=%s error_type=%s", entry_id, type(e).__name__, exc_info=True)
+        clear_leaderboard_cache()
+        raise HTTPException(status_code=503, detail="The submission could not be fully removed. Please retry or contact support.")
 
     clear_leaderboard_cache()
+    logger.info("Leaderboard submission deleted user=%s entry_id=%s", safe_identifier(user_id), entry_id)
     return {"success": True, "deleted_id": entry_id, "message": "Leaderboard entry removed."}
 
 
@@ -3046,11 +3316,7 @@ async def update_user_profile(
 
     # 2. Update existing submissions in DynamoDB so all leaderboard loaves reflect the new display name
     try:
-        res = table.query(
-            IndexName="UserIndex",
-            KeyConditionExpression=Key("user_id").eq(user_id)
-        )
-        user_entries = res.get("Items", [])
+        user_entries = query_user_entries(table, user_id)
         for item in user_entries:
             entry_id = item.get("entry_id")
             score = int(item.get("overall_score", 0))
@@ -3091,32 +3357,71 @@ async def delete_user_account(authorization: Optional[str] = Header(None)):
     s3_client = session.client("s3")
     cognito_client = session.client("cognito-idp")
 
-    # Find and delete all user loaf records
+    # Read all pages before deleting anything. If the index cannot be read,
+    # do not claim success or delete the authentication account prematurely.
     try:
-        res = table.query(
-            IndexName="UserIndex",
-            KeyConditionExpression=Key("user_id").eq(user_id)
-        )
-        items = res.get("Items", [])
+        items = query_user_entries(table, user_id)
     except Exception as e:
-        logger.error(f"Error querying UserIndex for account deletion: {e}", exc_info=True)
-        items = []
+        logger.error("Account deletion could not enumerate submissions user=%s error_type=%s", safe_identifier(user_id), type(e).__name__, exc_info=True)
+        raise HTTPException(status_code=503, detail="We could not safely list all of your submissions. Your account was not deleted; please try again shortly.")
 
-    for it in items:
-        entry_id = it.get("entry_id")
-        score = int(it.get("overall_score", 0))
+    cleanup_failures = 0
+    for item in items:
+        entry_failure_start = cleanup_failures
+        entry_id = item.get("entry_id")
+        if not entry_id:
+            continue
+        score = int(item.get("overall_score", 0))
         sk = f"SCORE#{score:03d}#{entry_id}"
-        periods = it.get("periods", ["ALL"])
-        for p in periods:
-            pk = "PERIOD#ALL" if p == "ALL" else f"PERIOD#{p}"
+        periods = item.get("periods", ["ALL"])
+        try:
+            # Preserve the searchable DynamoDB record if S3 fails so a later
+            # account-deletion retry can find and remove this entry's media.
+            delete_entry_media(s3_client, entry_id)
+        except Exception as e:
+            cleanup_failures += 1
+            logger.error("Account deletion media failed user=%s entry_id=%s error_type=%s", safe_identifier(user_id), entry_id, type(e).__name__, exc_info=True)
+            continue
+
+        for period in (period for period in periods if period != "ALL"):
+            pk = "PERIOD#ALL" if period == "ALL" else f"PERIOD#{period}"
             try:
                 table.delete_item(Key={"pk": pk, "sk": sk})
             except Exception as e:
-                logger.warning(f"Error deleting item {pk}/{sk}: {e}")
+                cleanup_failures += 1
+                logger.error("Account deletion record failed user=%s entry_id=%s period=%s error_type=%s", safe_identifier(user_id), entry_id, period, type(e).__name__, exc_info=True)
+        if cleanup_failures > entry_failure_start:
+            continue
+
+        primary_hash = item.get("primary_image_hash")
+        if primary_hash:
+            try:
+                table.delete_item(Key={"pk": f"USER#{user_id}", "sk": f"SUBMISSION#{primary_hash}"})
+            except Exception as e:
+                cleanup_failures += 1
+                logger.error("Account deletion dedup record failed user=%s entry_id=%s error_type=%s", safe_identifier(user_id), entry_id, type(e).__name__, exc_info=True)
+
+        if cleanup_failures > entry_failure_start:
+            continue
+
         try:
-            s3_client.delete_object(Bucket=S3_BUCKET_NAME, Key=f"thumbnails/{entry_id}.webp")
+            table.delete_item(Key={"pk": "PERIOD#ALL", "sk": sk})
         except Exception as e:
-            logger.warning(f"Error deleting S3 thumbnail: {e}")
+            cleanup_failures += 1
+            logger.error("Account deletion all-time record failed user=%s entry_id=%s error_type=%s", safe_identifier(user_id), entry_id, type(e).__name__, exc_info=True)
+            continue
+
+        # This record includes user_id in the UserIndex and is deliberately
+        # deleted last, after it has served as a retry anchor.
+        try:
+            table.delete_item(Key={"pk": f"ENTRY#{entry_id}", "sk": "METADATA"})
+        except Exception as e:
+            cleanup_failures += 1
+            logger.error("Account deletion lookup failed user=%s entry_id=%s error_type=%s", safe_identifier(user_id), entry_id, type(e).__name__, exc_info=True)
+    clear_leaderboard_cache()
+    if cleanup_failures:
+        logger.error("Account deletion stopped before Cognito removal user=%s failed_operations=%d", safe_identifier(user_id), cleanup_failures)
+        raise HTTPException(status_code=503, detail="Some submissions or photos could not be removed, so your account was not deleted. Please retry or contact support.")
 
     # Delete Cognito user
     username = user_claims.get("cognito:username") or user_claims.get("username") or user_id
@@ -3134,7 +3439,9 @@ async def delete_user_account(authorization: Optional[str] = Header(None)):
             )
         except Exception as fallback_err:
             logger.error("Fallback Cognito account deletion failed user=%s error=%s", safe_identifier(user_id), fallback_err, exc_info=True)
+            raise HTTPException(status_code=503, detail="Your saved submissions were removed, but the account could not be deleted. Please contact support to finish the request.")
 
+    logger.info("User account and submitted content deleted user=%s entries=%d", safe_identifier(user_id), len(items))
     return {
         "success": True,
         "message": "Your account and all associated submissions have been permanently removed."
@@ -3159,6 +3466,16 @@ async def serve_leaderboard():
 @app.get("/loaf/{entry_id}")
 async def serve_loaf_page(entry_id: Optional[str] = None):
     return FileResponse(str(STATIC_DIR / "loaf.html"))
+
+@app.get("/terms")
+@app.get("/terms.html")
+async def serve_terms_page():
+    return FileResponse(str(STATIC_DIR / "terms.html"))
+
+@app.get("/privacy")
+@app.get("/privacy.html")
+async def serve_privacy_page():
+    return FileResponse(str(STATIC_DIR / "privacy.html"))
 
 @app.get("/robots.txt", response_class=PlainTextResponse)
 async def serve_robots():

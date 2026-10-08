@@ -100,3 +100,16 @@ class TestReadAndValidateImage:
             await app.read_and_validate_image(file)
         assert exc_info.value.status_code == 400
         assert "pixels per side" in exc_info.value.detail.lower()
+
+    @pytest.mark.anyio
+    async def test_excessive_pixel_count_rejected(self, monkeypatch):
+        monkeypatch.setattr(app, "MAX_IMAGE_PIXELS", 100)
+        img = Image.new("RGB", (11, 10), color=(255, 255, 255))
+        buf = io.BytesIO()
+        img.save(buf, format="JPEG")
+
+        file = UploadFile(filename="huge_pixel_count.jpg", file=io.BytesIO(buf.getvalue()))
+        with pytest.raises(HTTPException) as exc_info:
+            await app.read_and_validate_image(file)
+        assert exc_info.value.status_code == 400
+        assert "too large to process safely" in exc_info.value.detail.lower()

@@ -91,7 +91,7 @@ class TestAuthAdvanced:
 
             res = client.post("/api/admin/leaderboard/remove", json={
                 "entry_id": "loaf_purge_1",
-                "admin_key": app.SIGNATURE_SECRET,
+                "admin_key": app.ADMIN_SECRET,
                 "score": 85
             })
             assert res.status_code == 200
@@ -99,6 +99,19 @@ class TestAuthAdvanced:
             assert data["success"] is True
             assert data["purged_id"] == "loaf_purge_1"
             assert mock_table.delete_item.call_count >= 2
+
+    def test_admin_remove_fails_closed_without_dedicated_secret(self, client, monkeypatch):
+        monkeypatch.setattr(app, "ADMIN_SECRET", "")
+        with patch("app.get_boto3_session") as mock_session:
+            res = client.post("/api/admin/leaderboard/remove", json={
+                "entry_id": "loaf_purge_1",
+                "admin_key": app.SIGNATURE_SECRET,
+                "score": 85
+            })
+
+        assert res.status_code == 503
+        assert "security setting" in res.json()["detail"].lower()
+        mock_session.assert_not_called()
 
     def test_delete_user_account_success(self, client):
         mock_claims = {"sub": "user_delete_123", "cognito:username": "test_baker"}
@@ -131,7 +144,58 @@ class TestAuthAdvanced:
             assert res.status_code == 200
             assert res.json()["success"] is True
             mock_cognito.admin_delete_user.assert_called_once()
-            mock_table.delete_item.assert_called_once()
+            assert mock_table.delete_item.call_count >= 2
+
+    def test_account_delete_stops_if_entries_cannot_be_enumerated(self, client):
+        mock_claims = {"sub": "user_delete_123", "cognito:username": "test_baker"}
+        mock_table = MagicMock()
+        mock_table.query.side_effect = RuntimeError("temporary index failure")
+        mock_dynamo = MagicMock()
+        mock_dynamo.Table.return_value = mock_table
+        mock_cognito = MagicMock()
+
+        with patch("app.verify_cognito_token", return_value=mock_claims), \
+             patch("app.get_boto3_session") as mock_session:
+            mock_sess_inst = MagicMock()
+            mock_sess_inst.client.return_value = mock_cognito
+            mock_sess_inst.resource.return_value = mock_dynamo
+            mock_session.return_value = mock_sess_inst
+
+            res = client.delete("/api/user/account", headers={"Authorization": "Bearer mock_jwt"})
+
+        assert res.status_code == 503
+        assert "account was not deleted" in res.json()["detail"].lower()
+        mock_cognito.admin_delete_user.assert_not_called()
+
+    def test_account_delete_preserves_lookup_records_when_photo_cleanup_fails(self, client):
+        mock_claims = {"sub": "user_delete_123", "cognito:username": "test_baker"}
+        mock_table = MagicMock()
+        mock_table.query.return_value = {
+            "Items": [{
+                "entry_id": "loaf_user_del_1",
+                "overall_score": 91,
+                "periods": ["ALL", "2026-10"],
+                "primary_image_hash": "image-hash"
+            }]
+        }
+        mock_s3 = MagicMock()
+        mock_s3.list_objects_v2.side_effect = RuntimeError("temporary S3 failure")
+        mock_cognito = MagicMock()
+        mock_dynamo = MagicMock()
+        mock_dynamo.Table.return_value = mock_table
+
+        with patch("app.verify_cognito_token", return_value=mock_claims), \
+             patch("app.get_boto3_session") as mock_session:
+            mock_sess_inst = MagicMock()
+            mock_sess_inst.client.side_effect = lambda service, **kwargs: mock_s3 if service == "s3" else mock_cognito
+            mock_sess_inst.resource.return_value = mock_dynamo
+            mock_session.return_value = mock_sess_inst
+
+            res = client.delete("/api/user/account", headers={"Authorization": "Bearer mock_jwt"})
+
+        assert res.status_code == 503
+        assert mock_table.delete_item.call_count == 0
+        mock_cognito.admin_delete_user.assert_not_called()
 
     def test_send_google_signin_notification_with_valid_token(self):
         # Create unverified mock JWT with Google identity
