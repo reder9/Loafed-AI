@@ -1688,8 +1688,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  window.loafedOpenLoafDetails = openLoafDetails;
-
   async function shareLoafLink(entryId, catName, score, grade) {
     const shareUrl = `${window.location.origin}/loaf?id=${encodeURIComponent(entryId)}`;
     const shareData = {
@@ -1839,6 +1837,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const third = entries[2];
 
     const createPodiumContent = (entry, placeTitle, placeNumber, medalIcon, badgeClass, pillarClass, pillarLabel, isFirst = false) => {
+      const entryId = escapeHtml(String(entry.entry_id || ''));
       const catName = escapeHtml(entry.cat_name || 'Anonymous Loaf');
       const bakerName = escapeHtml(entry.display_name || 'Baker');
       const thumb = entry.thumbnail_url || '/static/logo.png';
@@ -1847,7 +1846,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const rankTitle = escapeHtml(entry.loaf_rank || 'Artisan Loaf');
 
       return `
-        <div class="pedestal-card cursor-pointer" onclick="window.loafedOpenLoafDetails('${entry.entry_id}')" title="Click to view full inspection scorecard for ${catName}">
+        <div class="pedestal-card cursor-pointer" data-entry-id="${entryId}" role="button" tabindex="0" aria-label="View ${catName} scorecard" title="Click to view full inspection scorecard for ${catName}">
           <div class="pedestal-badge ${badgeClass}">
             <i data-lucide="${medalIcon}" class="w-3.5 h-3.5"></i>
             <span>${placeTitle}</span>
@@ -1874,6 +1873,19 @@ document.addEventListener('DOMContentLoaded', () => {
     podiumThird.innerHTML = createPodiumContent(third, '3rd Place', '3', 'medal', 'pedestal-badge-bronze', 'pedestal-pillar-3', 'Bronze Loaf');
 
     podiumContainer.classList.remove('hidden');
+    podiumContainer.querySelectorAll('.pedestal-card').forEach((card) => {
+      const openScorecard = () => {
+        const entryId = card.getAttribute('data-entry-id');
+        if (entryId) openLoafDetails(entryId);
+      };
+      card.addEventListener('click', openScorecard);
+      card.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          openScorecard();
+        }
+      });
+    });
     refreshIcons();
   }
 
@@ -1917,6 +1929,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       const thumb = entry.thumbnail_url || '/static/logo.png';
+      const entryId = escapeHtml(String(entry.entry_id || ''));
       const catName = escapeHtml(entry.cat_name || 'Anonymous Loaf');
       const bakerName = escapeHtml(entry.display_name || 'Baker');
       const score = entry.overall_score || 0;
@@ -1927,22 +1940,22 @@ document.addEventListener('DOMContentLoaded', () => {
       let actionBtns = '';
       if (isMine) {
         actionBtns = `
-          <div class="flex items-center gap-1 shrink-0" onclick="event.stopPropagation()">
-            <button class="share-loaf-btn p-1.5 sm:p-2 rounded-xl text-stone-400 hover:text-orange-600 hover:bg-orange-50 transition-colors" data-id="${entry.entry_id}" data-name="${catName}" data-score="${score}" data-grade="${gradeLetter}" aria-label="Share ${catName} loaf link" title="Share link to this cat loaf">
+          <div class="flex items-center gap-1 shrink-0">
+            <button class="share-loaf-btn p-1.5 sm:p-2 rounded-xl text-stone-400 hover:text-orange-600 hover:bg-orange-50 transition-colors" data-id="${entryId}" data-name="${catName}" data-score="${score}" data-grade="${gradeLetter}" aria-label="Share ${catName} loaf link" title="Share link to this cat loaf">
               <i data-lucide="share-2" class="w-4 h-4 text-orange-600"></i>
             </button>
-            <button class="delete-loaf-btn p-1.5 sm:p-2 rounded-xl text-stone-400 hover:text-red-600 hover:bg-red-50 transition-colors" data-id="${entry.entry_id}" data-name="${catName}" aria-label="Delete ${catName} submission" title="Delete submission">
+            <button class="delete-loaf-btn p-1.5 sm:p-2 rounded-xl text-stone-400 hover:text-red-600 hover:bg-red-50 transition-colors" data-id="${entryId}" data-name="${catName}" aria-label="Delete ${catName} submission" title="Delete submission">
               <i data-lucide="trash-2" class="w-4 h-4"></i>
             </button>
           </div>
         `;
       } else {
         actionBtns = `
-          <div class="flex items-center gap-1 shrink-0" onclick="event.stopPropagation()">
-            <button class="share-loaf-btn p-1.5 sm:p-2 rounded-xl text-stone-400 hover:text-orange-600 hover:bg-orange-50 transition-colors" data-id="${entry.entry_id}" data-name="${catName}" data-score="${score}" data-grade="${gradeLetter}" aria-label="Share ${catName} loaf link" title="Share link to this cat loaf">
+          <div class="flex items-center gap-1 shrink-0">
+            <button class="share-loaf-btn p-1.5 sm:p-2 rounded-xl text-stone-400 hover:text-orange-600 hover:bg-orange-50 transition-colors" data-id="${entryId}" data-name="${catName}" data-score="${score}" data-grade="${gradeLetter}" aria-label="Share ${catName} loaf link" title="Share link to this cat loaf">
               <i data-lucide="share-2" class="w-4 h-4 text-orange-600"></i>
             </button>
-            <button class="report-loaf-btn p-1.5 sm:p-2 rounded-xl text-stone-300 hover:text-amber-700 hover:bg-orange-50 transition-colors" data-id="${entry.entry_id}" data-score="${score}" data-name="${catName}" aria-label="Report ${catName} submission" title="Report submission as inappropriate or non-cat">
+            <button class="report-loaf-btn p-1.5 sm:p-2 rounded-xl text-stone-300 hover:text-amber-700 hover:bg-orange-50 transition-colors" data-id="${entryId}" data-score="${score}" data-name="${catName}" aria-label="Report ${catName} submission" title="Report submission as inappropriate or non-cat">
               <i data-lucide="flag" class="w-4 h-4"></i>
             </button>
           </div>
@@ -1950,7 +1963,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       return `
-        <div id="loaf-row-${entry.entry_id}" class="leaderboard-entry-row p-3 sm:p-4 rounded-2xl bg-white border border-orange-200/90 hover:border-amber-400 shadow-2xs hover:shadow-xs transition-all flex items-center gap-2.5 sm:gap-4 group cursor-pointer" onclick="window.loafedOpenLoafDetails('${entry.entry_id}')" title="Click to view full inspection scorecard for ${catName}">
+        <div id="loaf-row-${entryId}" class="leaderboard-entry-row p-3 sm:p-4 rounded-2xl bg-white border border-orange-200/90 hover:border-amber-400 shadow-2xs hover:shadow-xs transition-all flex items-center gap-2.5 sm:gap-4 group cursor-pointer" data-entry-id="${entryId}" role="button" tabindex="0" aria-label="View ${catName} scorecard" title="Click to view full inspection scorecard for ${catName}">
           <div class="shrink-0 flex items-center justify-center">
             ${rankBadge}
           </div>
@@ -1977,6 +1990,21 @@ document.addEventListener('DOMContentLoaded', () => {
     }).join('');
 
     refreshIcons();
+
+    leaderboardEntriesList.querySelectorAll('.leaderboard-entry-row').forEach((row) => {
+      const openScorecard = () => {
+        const entryId = row.getAttribute('data-entry-id');
+        if (entryId) openLoafDetails(entryId);
+      };
+      row.addEventListener('click', openScorecard);
+      row.addEventListener('keydown', (event) => {
+        if (event.target !== row) return;
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          openScorecard();
+        }
+      });
+    });
 
     leaderboardEntriesList.querySelectorAll('.share-loaf-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {

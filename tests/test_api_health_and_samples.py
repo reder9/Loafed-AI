@@ -92,4 +92,4 @@ def test_page_routes(client):
     res_privacy_alias = client.get("/privacy")
     assert res_privacy_alias.status_code == 200
 
-    assert "/static/age-gate.js" in res_root.text
+    assert "/static/site-bootstrap.js" in res_root.text

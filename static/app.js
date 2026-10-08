@@ -1704,14 +1704,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // Submit & Grade
   gradeLoafBtn.addEventListener('click', async () => {
     if (isGradingActive) return;
-    if (!window.loafedAgeConfirmed) {
-      showToast({
-        type: 'warning',
-        title: '18+ Confirmation Required',
-        message: 'Confirm that you are 18 or older before using Gemini-powered evaluation.'
-      });
-      return;
-    }
     if (state.isExamplePreset || state.canSubmit === false) {
       showToast({
         type: 'warning',
@@ -1739,7 +1731,6 @@ document.addEventListener('DOMContentLoaded', () => {
     startLoadingAnimation();
 
     const formData = new FormData();
-    formData.append('age_confirmed', 'true');
     const trimmedCatName = catNameInput ? catNameInput.value.trim() : '';
     if (trimmedCatName) {
       formData.append('cat_name', trimmedCatName);
@@ -3893,7 +3884,7 @@ Certified by Loafed Inspection Engine`;
     </div>
     <div>
       <h4 class="font-bold text-stone-900 text-xs mb-1">3. Age & Provider Requirements</h4>
-      <p class="text-stone-600 leading-relaxed">Gemini-powered evaluation is restricted to users 18 and older. The age gate is a self-declaration, not identity verification. Google’s current API terms also state the APIs are for professional or business developer purposes, not consumer use, and prohibit clients directed to or likely accessed by under-18s. Loafed is presented as a recreational consumer service, so the age gate does not resolve the separate consumer-use restriction. The operator must confirm that this integration is permitted with Google or change providers before claiming full compliance. Do not upload sensitive, confidential, or personal information. See <a href="https://ai.google.dev/gemini-api/terms" target="_blank" rel="noopener noreferrer" class="text-orange-700 underline">Google's current API terms</a> and our <a href="/terms.html" class="text-orange-700 underline">full Terms of Service</a>.</p>
+      <p class="text-stone-600 leading-relaxed">Gemini-powered evaluation is intended for adults 18 and older. Google’s current API terms also limit use to professional or business purposes and prohibit API clients directed to or likely accessed by under-18s. Loafed is presented as a consumer service, so the operator should confirm that this integration is permitted or change providers. Do not upload sensitive, confidential, or personal information. See <a href="https://ai.google.dev/gemini-api/terms" target="_blank" rel="noopener noreferrer" class="text-orange-700 underline">Google's current API terms</a> and our <a href="/terms.html" class="text-orange-700 underline">full Terms of Service</a>.</p>
     </div>
     <div>
       <h4 class="font-bold text-stone-900 text-xs mb-1">4. Permitted Content</h4>

@@ -138,7 +138,7 @@ async def add_security_headers(request: Request, call_next):
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
         "font-src 'self' data: https://fonts.gstatic.com; "
         "img-src 'self' data: blob: https:; "
-        "connect-src 'self' https://cognito-idp.*.amazonaws.com; "
+        "connect-src 'self' https://cognito-idp.us-east-1.amazonaws.com; "
         "object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'"
     )
     if request.url.scheme == "https":
@@ -1363,7 +1363,6 @@ CRITICAL FORMATTING & TONE:
 async def grade_loaf(
     request: Request,
     cat_name: Optional[str] = Form(None),
-    age_confirmed: bool = Form(False),
     model: Optional[str] = Form("gemini-3.8-flash"),
     front: Optional[UploadFile] = File(None),
     side: Optional[UploadFile] = File(None),
@@ -1378,10 +1377,6 @@ async def grade_loaf(
     if website_url_check:
         logger.warning("Automated bot submission dropped via honeypot.")
         raise HTTPException(status_code=400, detail="Automated submission blocked.")
-
-    if not age_confirmed:
-        logger.warning("Grading blocked: 18+ declaration missing client=%s", safe_identifier(get_client_ip(request)))
-        raise HTTPException(status_code=403, detail="Confirm that you are 18 or older before using Gemini-powered evaluation.")
 
     # Resolve available keys to try from request header, form field, or server key pool
     client_supplied_key = api_key or x_gemini_api_key
