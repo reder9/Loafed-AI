@@ -46,7 +46,7 @@
 
   <!-- Core Styles -->
   <link rel="stylesheet" href="/static/tailwind.min.css">
-  <link rel="stylesheet" href="/static/style.min.css?v=20261005a">
+  <link rel="stylesheet" href="/static/style.min.css?v=20261009a">
 
   <!-- Structured Data (JSON-LD) for Search Engines -->
   <script type="application/ld+json">
@@ -191,8 +191,13 @@
         </div>
 
         <div class="leaderboard-status-info">
-          <span id="leaderboardCountText" class="text-stone-700 font-bold">Loading rankings...</span>
-          <span class="inline-block w-2 h-2 rounded-full bg-emerald-500" title="DynamoDB Live Sync"></span>
+          <div class="leaderboard-status-badge" title="DynamoDB Live Sync">
+            <span class="relative flex h-2 w-2 shrink-0">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+            <span id="leaderboardCountText">Loading rankings...</span>
+          </div>
         </div>
       </div>
     </div>
