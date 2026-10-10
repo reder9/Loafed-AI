@@ -149,16 +149,16 @@ test('Frontend Helper - Report Modal Payload Construction', () => {
       entry_id: cleanId,
       reason: reason || 'Not an authentic cat loaf'
     };
-    if (score !== undefined && score !== null && !isNaN(parseInt(score, 10))) {
-      payload.score = parseInt(score, 10);
+    if (score !== undefined && score !== null && !isNaN(parseFloat(score))) {
+      payload.score = parseFloat(score);
     }
     return payload;
   }
 
-  const p1 = buildReportPayload('loaf_abc_123', '95', 'Inappropriate or offensive photograph');
+  const p1 = buildReportPayload('loaf_abc_123', '95.25', 'Inappropriate or offensive photograph');
   assert.deepEqual(p1, {
     entry_id: 'loaf_abc_123',
-    score: 95,
+    score: 95.25,
     reason: 'Inappropriate or offensive photograph'
   });
 
@@ -168,7 +168,20 @@ test('Frontend Helper - Report Modal Payload Construction', () => {
     reason: 'Not an authentic cat loaf'
   });
 
-  const p3 = buildReportPayload('', '80', 'spam');
+  const p3 = buildReportPayload('', '80.50', 'spam');
   assert.equal(p3, null);
+});
+
+test('Frontend Helper - formatScore', () => {
+  function formatScore(score) {
+    if (score === undefined || score === null || isNaN(Number(score))) return '0.00';
+    return Number(score).toFixed(2);
+  }
+  assert.equal(formatScore(92.24), '92.24');
+  assert.equal(formatScore(92), '92.00');
+  assert.equal(formatScore('92.24'), '92.24');
+  assert.equal(formatScore(0), '0.00');
+  assert.equal(formatScore(null), '0.00');
+  assert.equal(formatScore(undefined), '0.00');
 });
 

@@ -114,6 +114,11 @@ document.addEventListener('DOMContentLoaded', () => {
       .replace(/'/g, '&#039;');
   }
 
+  function formatScore(score) {
+    if (score === undefined || score === null || isNaN(Number(score))) return '0.00';
+    return Number(score).toFixed(2);
+  }
+
   // DOM Elements
   const headerSignInBtn = document.getElementById('headerSignInBtn');
   const headerUserMenu = document.getElementById('headerUserMenu');
@@ -372,7 +377,7 @@ document.addEventListener('DOMContentLoaded', () => {
           headers,
           body: JSON.stringify({
             entry_id: id,
-            score: score ? parseInt(score, 10) : undefined,
+            score: score ? parseFloat(score) : undefined,
             reason
           })
         });
@@ -1200,7 +1205,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     ctx.fillStyle = '#7c2d12';
     ctx.font = 'bold 64px -apple-system, BlinkMacSystemFont, sans-serif';
-    ctx.fillText((result.overall_score || 0).toString(), 230, 568);
+    ctx.fillText(formatScore(result.overall_score), 230, 568);
 
     ctx.fillStyle = '#a8a29e';
     ctx.font = 'bold 15px -apple-system, BlinkMacSystemFont, sans-serif';
@@ -1297,7 +1302,7 @@ document.addEventListener('DOMContentLoaded', () => {
       ctx.textAlign = 'right';
       ctx.fillStyle = '#7c2d12';
       ctx.font = 'bold 13.5px -apple-system, BlinkMacSystemFont, sans-serif';
-      ctx.fillText(`${c.score} / 25`, 1112, rowY);
+      ctx.fillText(`${formatScore(c.score)} / 25`, 1112, rowY);
       ctx.textAlign = 'left';
 
       // Dual-tone Gradient Progress Bar
@@ -1457,7 +1462,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (cachedEntry) {
       if (loafDetailsCatName) loafDetailsCatName.textContent = cachedEntry.cat_name || 'Anonymous Loaf';
       if (loafDetailsBakerName) loafDetailsBakerName.textContent = cachedEntry.display_name || 'Anonymous Baker';
-      if (loafDetailsScoreStamp) loafDetailsScoreStamp.textContent = `${cachedEntry.overall_score || 0} ${cachedEntry.grade_letter || ''}`;
+      if (loafDetailsScoreStamp) loafDetailsScoreStamp.textContent = `${formatScore(cachedEntry.overall_score)} ${cachedEntry.grade_letter || ''}`;
       if (loafDetailsRank) loafDetailsRank.textContent = cachedEntry.loaf_rank || 'Artisan Loaf';
       if (loafDetailsPhoto && cachedEntry.thumbnail_url) {
         loafDetailsPhoto.src = cachedEntry.thumbnail_url;
@@ -1500,7 +1505,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (loafDetailsCatName) loafDetailsCatName.textContent = data.cat_name || 'Anonymous Loaf';
       if (loafDetailsBakerName) loafDetailsBakerName.textContent = data.display_name || 'Anonymous Baker';
-      if (loafDetailsScoreStamp) loafDetailsScoreStamp.textContent = `${data.overall_score || 0} ${data.grade_letter || ''}`;
+      if (loafDetailsScoreStamp) loafDetailsScoreStamp.textContent = `${formatScore(data.overall_score)} ${data.grade_letter || ''}`;
 
       const photoUrl = data.thumbnail_url || '/static/logo.png';
       if (loafDetailsPhoto) {
@@ -1613,22 +1618,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // 4 Pillars Breakdown
       const pt = data.paw_tuck || {};
-      if (loafDetailsPawScore) loafDetailsPawScore.textContent = `${pt.score !== undefined ? pt.score : 20}/25`;
+      if (loafDetailsPawScore) loafDetailsPawScore.textContent = `${formatScore(pt.score !== undefined ? pt.score : 20)}/25`;
       if (loafDetailsPawStatus) loafDetailsPawStatus.textContent = pt.status || 'Paw Concealment';
       if (loafDetailsPawCritique) loafDetailsPawCritique.textContent = pt.critique || 'Perimeter inspected.';
 
       const tt = data.tail_tuck || {};
-      if (loafDetailsTailScore) loafDetailsTailScore.textContent = `${tt.score !== undefined ? tt.score : 20}/25`;
+      if (loafDetailsTailScore) loafDetailsTailScore.textContent = `${formatScore(tt.score !== undefined ? tt.score : 20)}/25`;
       if (loafDetailsTailStatus) loafDetailsTailStatus.textContent = tt.status || 'Tail Tuck';
       if (loafDetailsTailCritique) loafDetailsTailCritique.textContent = tt.critique || 'Tail alignment inspected.';
 
       const ec = data.elbow_compactness || {};
-      if (loafDetailsElbowScore) loafDetailsElbowScore.textContent = `${ec.score !== undefined ? ec.score : 20}/25`;
+      if (loafDetailsElbowScore) loafDetailsElbowScore.textContent = `${formatScore(ec.score !== undefined ? ec.score : 20)}/25`;
       if (loafDetailsElbowStatus) loafDetailsElbowStatus.textContent = ec.status || 'Elbow Compactness';
       if (loafDetailsElbowCritique) loafDetailsElbowCritique.textContent = ec.critique || 'Elbow fold inspected.';
 
       const cs = data.crust_symmetry || {};
-      if (loafDetailsCrustScore) loafDetailsCrustScore.textContent = `${cs.score !== undefined ? cs.score : 20}/25`;
+      if (loafDetailsCrustScore) loafDetailsCrustScore.textContent = `${formatScore(cs.score !== undefined ? cs.score : 20)}/25`;
       if (loafDetailsCrustStatus) loafDetailsCrustStatus.textContent = cs.status || 'Crust Symmetry';
       if (loafDetailsCrustCritique) loafDetailsCrustCritique.textContent = cs.critique || 'Dorsal coat inspected.';
 
@@ -1692,7 +1697,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const shareUrl = `${window.location.origin}/loaf?id=${encodeURIComponent(entryId)}`;
     const shareData = {
       title: `${catName || 'Cat Loaf'} — Loafed AI Certified Feline`,
-      text: `Check out ${catName || 'this cat loaf'} audited by Loafed AI with a verified score of ${score || ''} ${grade || ''}!`,
+      text: `Check out ${catName || 'this cat loaf'} audited by Loafed AI with a verified score of ${formatScore(score)} ${grade || ''}!`,
       url: shareUrl
     };
 
@@ -1853,7 +1858,7 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
           <div class="pedestal-photo-frame">
             <img src="${thumb}" alt="${catName}" loading="lazy" decoding="async">
-            <span class="pedestal-stamp">${score} ${grade}</span>
+            <span class="pedestal-stamp">${formatScore(score)} ${grade}</span>
           </div>
           <div class="w-full">
             <h3 class="font-black ${isFirst ? 'text-base sm:text-lg' : 'text-sm sm:text-base'} text-stone-900 truncate max-w-full">${catName}</h3>
@@ -1941,7 +1946,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (isMine) {
         actionBtns = `
           <div class="flex items-center gap-1 shrink-0">
-            <button class="share-loaf-btn p-1.5 sm:p-2 rounded-xl text-stone-400 hover:text-orange-600 hover:bg-orange-50 transition-colors" data-id="${entryId}" data-name="${catName}" data-score="${score}" data-grade="${gradeLetter}" aria-label="Share ${catName} loaf link" title="Share link to this cat loaf">
+            <button class="share-loaf-btn p-1.5 sm:p-2 rounded-xl text-stone-400 hover:text-orange-600 hover:bg-orange-50 transition-colors" data-id="${entryId}" data-name="${catName}" data-score="${formatScore(score)}" data-grade="${gradeLetter}" aria-label="Share ${catName} loaf link" title="Share link to this cat loaf">
               <i data-lucide="share-2" class="w-4 h-4 text-orange-600"></i>
             </button>
             <button class="delete-loaf-btn p-1.5 sm:p-2 rounded-xl text-stone-400 hover:text-red-600 hover:bg-red-50 transition-colors" data-id="${entryId}" data-name="${catName}" aria-label="Delete ${catName} submission" title="Delete submission">
@@ -1952,10 +1957,10 @@ document.addEventListener('DOMContentLoaded', () => {
       } else {
         actionBtns = `
           <div class="flex items-center gap-1 shrink-0">
-            <button class="share-loaf-btn p-1.5 sm:p-2 rounded-xl text-stone-400 hover:text-orange-600 hover:bg-orange-50 transition-colors" data-id="${entryId}" data-name="${catName}" data-score="${score}" data-grade="${gradeLetter}" aria-label="Share ${catName} loaf link" title="Share link to this cat loaf">
+            <button class="share-loaf-btn p-1.5 sm:p-2 rounded-xl text-stone-400 hover:text-orange-600 hover:bg-orange-50 transition-colors" data-id="${entryId}" data-name="${catName}" data-score="${formatScore(score)}" data-grade="${gradeLetter}" aria-label="Share ${catName} loaf link" title="Share link to this cat loaf">
               <i data-lucide="share-2" class="w-4 h-4 text-orange-600"></i>
             </button>
-            <button class="report-loaf-btn p-1.5 sm:p-2 rounded-xl text-stone-300 hover:text-amber-700 hover:bg-orange-50 transition-colors" data-id="${entryId}" data-score="${score}" data-name="${catName}" aria-label="Report ${catName} submission" title="Report submission as inappropriate or non-cat">
+            <button class="report-loaf-btn p-1.5 sm:p-2 rounded-xl text-stone-300 hover:text-amber-700 hover:bg-orange-50 transition-colors" data-id="${entryId}" data-score="${formatScore(score)}" data-name="${catName}" aria-label="Report ${catName} submission" title="Report submission as inappropriate or non-cat">
               <i data-lucide="flag" class="w-4 h-4"></i>
             </button>
           </div>
@@ -1982,7 +1987,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
           </div>
           <div class="shrink-0 flex flex-col sm:flex-row items-end sm:items-center gap-1.5 sm:gap-3">
-            <span class="stamp text-xs font-black text-orange-700 bg-white border-orange-700 shrink-0">${score} ${gradeLetter}</span>
+            <span class="stamp text-xs font-black text-orange-700 bg-white border-orange-700 shrink-0">${formatScore(score)} ${gradeLetter}</span>
             ${actionBtns}
           </div>
         </div>

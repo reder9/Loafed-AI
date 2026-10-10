@@ -350,3 +350,53 @@ class TestApiLeaderboard:
             assert res_json["already_submitted"] is True
             assert res_json["entry_id"] == "existing_123"
             assert "already been published" in res_json["detail"]
+
+    def test_successful_submit_to_leaderboard_decimal_score(self, client, sample_image_bytes):
+        img_hash = hashlib.sha256(sample_image_bytes).hexdigest()
+        data = {
+            "cat_name": "Oliver",
+            "overall_score": 92.24,
+            "grade_letter": "A",
+            "loaf_rank": "Grandmaster Artisan Loaf",
+            "bread_classification": "Golden Brioche",
+            "summary_critique": "Terrific posture with precision curvature.",
+            "can_submit": True,
+            "image_sha256": img_hash,
+            "image_hashes": [img_hash]
+        }
+        token = app.generate_grade_token(data, image_hash=img_hash, can_submit=True)
+
+        mock_s3 = MagicMock()
+        mock_dynamo = MagicMock()
+        mock_table = MagicMock()
+        mock_dynamo.Table.return_value = mock_table
+
+        with patch("app.verify_cognito_token", return_value={"sub": "user_456", "name": "OliverDad"}), \
+             patch("app.get_boto3_session") as mock_session:
+
+            mock_sess_inst = MagicMock()
+            mock_sess_inst.client.return_value = mock_s3
+            mock_sess_inst.resource.return_value = mock_dynamo
+            mock_session.return_value = mock_sess_inst
+
+            files = [("photos", ("oliver.jpg", io.BytesIO(sample_image_bytes), "image/jpeg"))]
+            form = {
+                "grade_token": token,
+                "cat_name": "Oliver",
+                "display_name": "OliverDad"
+            }
+            res = client.post("/api/leaderboard/submit", data=form, files=files, headers={"Authorization": "Bearer valid_token"})
+            assert res.status_code == 200
+            res_json = res.json()
+            assert res_json["success"] is True
+            assert res_json["score"] == 92.24
+
+            # Verify DynamoDB put_item was called with decimal-formatted sk
+            put_calls = mock_table.put_item.call_args_list
+            assert len(put_calls) > 0
+            # Check PERIOD#ALL item's sk
+            all_time_put = [call for call in put_calls if call.kwargs.get("Item", {}).get("pk") == "PERIOD#ALL"]
+            assert len(all_time_put) == 1
+            sk = all_time_put[0].kwargs["Item"]["sk"]
+            assert sk.startswith("SCORE#092.24#")
+

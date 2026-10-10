@@ -250,6 +250,11 @@ document.addEventListener('DOMContentLoaded', () => {
       .replace(/'/g, '&#039;');
   }
 
+  function formatScore(score) {
+    if (score === undefined || score === null || isNaN(Number(score))) return '0.00';
+    return Number(score).toFixed(2);
+  }
+
   // API validation errors can be strings, arrays of field errors, or nested
   // objects. Passing those directly to Error/string templates produces
   // "[object Object]" in the UI.
@@ -442,7 +447,7 @@ document.addEventListener('DOMContentLoaded', () => {
           headers,
           body: JSON.stringify({
             entry_id: id,
-            score: score ? parseInt(score, 10) : undefined,
+            score: score ? parseFloat(score) : undefined,
             reason
           })
         });
@@ -2024,7 +2029,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (result.is_cat === false) {
         a11yEl.textContent = `Inspection completed. Subject was disqualified: ${result.rejection_reason || 'Non-feline subject detected'}.`;
       } else {
-        a11yEl.textContent = `Inspection completed! ${result.cat_name || 'Subject'} scored ${result.overall_score} out of 100, Grade ${result.grade_letter}, classified as ${result.loaf_rank}.`;
+        a11yEl.textContent = `Inspection completed! ${result.cat_name || 'Subject'} scored ${formatScore(result.overall_score)} out of 100, Grade ${result.grade_letter}, classified as ${result.loaf_rank}.`;
       }
     }
 
@@ -2045,7 +2050,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function renderSubScore(prefix, sub) {
-    document.getElementById(`${prefix}ScoreNum`).textContent = sub.score;
+    document.getElementById(`${prefix}ScoreNum`).textContent = formatScore(sub.score);
     document.getElementById(`${prefix}StatusTag`).textContent = (sub.status || '').replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, '').trim();
     document.getElementById(`${prefix}Critique`).textContent = (sub.critique || '').replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, '').trim();
     
@@ -2195,21 +2200,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const numEl = document.getElementById('scoreNumber');
     const circleEl = document.getElementById('scoreMeterCircle');
     const circumference = 2 * Math.PI * 90;
+    const numTarget = typeof target === 'number' ? target : parseFloat(target) || 0;
 
     if (circleEl) circleEl.style.strokeDashoffset = circumference;
-    if (numEl) numEl.textContent = '0';
+    if (numEl) numEl.textContent = '0.00';
 
-    if (!target || target <= 0) {
-      if (numEl) numEl.textContent = '0';
+    if (!numTarget || numTarget <= 0) {
+      if (numEl) numEl.textContent = '0.00';
       if (typeof onComplete === 'function') onComplete();
       return;
     }
 
     // Respect Reduced Motion Preferences
     if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      if (numEl) numEl.textContent = target;
+      if (numEl) numEl.textContent = formatScore(numTarget);
       if (circleEl) {
-        const offset = circumference - (circumference * (target / 100));
+        const offset = circumference - (circumference * (numTarget / 100));
         circleEl.style.strokeDashoffset = offset;
       }
       if (typeof onComplete === 'function') onComplete();
@@ -2224,9 +2230,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const elapsed = currTime - startTime;
       const progress = Math.min(elapsed / duration, 1);
       const ease = 1 - Math.pow(1 - progress, 3);
-      const currentScore = Math.round(start + (target - start) * ease);
+      const currentScore = start + (numTarget - start) * ease;
 
-      if (numEl) numEl.textContent = currentScore;
+      if (numEl) numEl.textContent = currentScore.toFixed(2);
 
       if (circleEl) {
         const offset = circumference - (circumference * (currentScore / 100));
@@ -2236,7 +2242,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (progress < 1) {
         requestAnimationFrame(step);
       } else {
-        if (numEl) numEl.textContent = target;
+        if (numEl) numEl.textContent = formatScore(numTarget);
         if (typeof onComplete === 'function') {
           onComplete();
         }
@@ -2348,15 +2354,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const cleanCritique = (r.summary_critique || '').replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, '');
     const summary = `FELINE POSTURE & LOAF INSPECTION REPORT
 Subject: ${r.cat_name}
-Composite Loaf Score: ${r.overall_score}/100 (Grade: ${r.grade_letter})
+Composite Loaf Score: ${formatScore(r.overall_score)}/100 (Grade: ${r.grade_letter})
 Classification: ${r.loaf_rank}
 Morphology Index: ${r.bread_classification}
 
 CRITERIA BREAKDOWN:
-- Paw Concealment: ${r.paw_tuck.score}/25 (${r.paw_tuck.status})
-- Tail Aerodynamics: ${r.tail_tuck.score}/25 (Drag Coeff: ${r.drag_coefficient})
-- Flank Compression: ${r.elbow_compactness.score}/25 (${r.elbow_compactness.status})
-- Dorsal Symmetry: ${r.crust_symmetry.score}/25 (${r.crust_symmetry.status})
+- Paw Concealment: ${formatScore(r.paw_tuck.score)}/25 (${r.paw_tuck.status})
+- Tail Aerodynamics: ${formatScore(r.tail_tuck.score)}/25 (Drag Coeff: ${r.drag_coefficient})
+- Flank Compression: ${formatScore(r.elbow_compactness.score)}/25 (${r.elbow_compactness.status})
+- Dorsal Symmetry: ${formatScore(r.crust_symmetry.score)}/25 (${r.crust_symmetry.status})
 
 AUDITOR SUMMARY:
 "${cleanCritique}"
@@ -2394,7 +2400,7 @@ Certified by Loafed Inspection Engine`;
         : window.location.origin;
       const shareData = {
         title: `${r.cat_name || 'My Cat'} — Official Loaf Score`,
-        text: `My cat ${r.cat_name || 'loaf'} scored ${r.overall_score}/100 (${r.grade_letter} — ${r.loaf_rank}) on Loafed AI! Can your cat beat this loaf?`,
+        text: `My cat ${r.cat_name || 'loaf'} scored ${formatScore(r.overall_score)}/100 (${r.grade_letter} — ${r.loaf_rank}) on Loafed AI! Can your cat beat this loaf?`,
         url: shareUrl
       };
       if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
@@ -2751,7 +2757,7 @@ Certified by Loafed Inspection Engine`;
 
     ctx.fillStyle = '#7c2d12';
     ctx.font = 'bold 64px -apple-system, BlinkMacSystemFont, sans-serif';
-    ctx.fillText(result.overall_score.toString(), 230, 568);
+    ctx.fillText(formatScore(result.overall_score), 230, 568);
 
     ctx.fillStyle = '#a8a29e';
     ctx.font = 'bold 15px -apple-system, BlinkMacSystemFont, sans-serif';
@@ -2844,7 +2850,7 @@ Certified by Loafed Inspection Engine`;
       ctx.textAlign = 'right';
       ctx.fillStyle = '#7c2d12';
       ctx.font = 'bold 13.5px -apple-system, BlinkMacSystemFont, sans-serif';
-      ctx.fillText(`${c.score} / 25`, 1112, rowY);
+      ctx.fillText(`${formatScore(c.score)} / 25`, 1112, rowY);
       ctx.textAlign = 'left';
 
       // Dual-tone Gradient Progress Bar
@@ -3135,11 +3141,13 @@ Certified by Loafed Inspection Engine`;
     ctx.fillStyle = '#9a3412';
     ctx.font = '900 84px -apple-system, sans-serif';
     ctx.textAlign = 'left';
-    ctx.fillText(`${result.overall_score || 0}`, scoreBoxX + 50, scoreBoxY + 115);
+    const scoreFormatted = formatScore(result.overall_score);
+    ctx.fillText(scoreFormatted, scoreBoxX + 50, scoreBoxY + 115);
 
+    const scoreMetrics = ctx.measureText(scoreFormatted);
     ctx.fillStyle = '#78350f';
     ctx.font = 'bold 28px -apple-system, sans-serif';
-    ctx.fillText('/ 100', scoreBoxX + 190, scoreBoxY + 115);
+    ctx.fillText('/ 100', scoreBoxX + 50 + scoreMetrics.width + 16, scoreBoxY + 115);
 
     // Grade Rubber Stamp on the right
     ctx.save();
@@ -3620,7 +3628,7 @@ Certified by Loafed Inspection Engine`;
     if (history && history.length > 0) {
       const maxScore = Math.max(...history.map(h => h.overall_score || 0));
       const bestEntry = history.find(h => (h.overall_score || 0) === maxScore) || history[0];
-      bakeryTopScoreEl.textContent = `${maxScore}/100`;
+      bakeryTopScoreEl.textContent = `${formatScore(maxScore)}/100`;
       bakeryTotalAuditsEl.textContent = history.length;
       bakeryTopCrustEl.textContent = bestEntry.loaf_rank || bestEntry.bread_classification || 'Artisan Loaf';
       bakeryTopCrustEl.title = bakeryTopCrustEl.textContent;
@@ -3669,7 +3677,7 @@ Certified by Loafed Inspection Engine`;
         <div class="p-3.5 rounded-xl border border-orange-200/90 bg-orange-50/40 hover:bg-orange-50/80 transition-colors flex items-center justify-between gap-3 shadow-2xs" data-id="${escapeHtml(item.id)}">
           <div class="flex items-center gap-3 min-w-0">
             <div class="w-11 h-11 rounded-lg bg-white border border-orange-200 flex flex-col items-center justify-center shrink-0 shadow-xs">
-              <span class="text-xs font-black text-orange-700">${escapeHtml(item.overall_score)}</span>
+              <span class="text-xs font-black text-orange-700">${escapeHtml(formatScore(item.overall_score))}</span>
               <span class="text-[9px] font-bold text-orange-900/60 leading-none">${escapeHtml(item.grade_letter)}</span>
             </div>
             <div class="min-w-0">
@@ -4243,7 +4251,7 @@ Certified by Loafed Inspection Engine`;
         authModalSubtitle.textContent = `Sign in or create an account to publish ${state.currentResult.cat_name || 'your cat'} to the public leaderboard!`;
       }
       if (authPendingLoafBadge) {
-        authPendingLoafBadge.textContent = `${state.currentResult.cat_name || 'Loaf'} • ${state.currentResult.overall_score || 0} ${state.currentResult.grade_letter || ''}`;
+        authPendingLoafBadge.textContent = `${state.currentResult.cat_name || 'Loaf'} • ${formatScore(state.currentResult.overall_score)} ${state.currentResult.grade_letter || ''}`;
         authPendingLoafBadge.classList.remove('hidden');
       }
     } else {
@@ -4363,7 +4371,7 @@ Certified by Loafed Inspection Engine`;
         `;
       } else {
         actionBtn = `
-          <button class="report-loaf-btn p-1.5 rounded-lg text-stone-300 hover:text-amber-700 hover:bg-orange-50 transition-colors ml-2" data-id="${entry.entry_id}" data-score="${score}" data-name="${catName}" aria-label="Report ${catName} submission" title="Report submission as inappropriate or non-cat">
+          <button class="report-loaf-btn p-1.5 rounded-lg text-stone-300 hover:text-amber-700 hover:bg-orange-50 transition-colors ml-2" data-id="${entry.entry_id}" data-score="${formatScore(score)}" data-name="${catName}" aria-label="Report ${catName} submission" title="Report submission as inappropriate or non-cat">
             <i data-lucide="flag" class="w-4 h-4"></i>
           </button>
         `;
@@ -4378,7 +4386,7 @@ Certified by Loafed Inspection Engine`;
           <div class="flex-1 min-w-0">
             <div class="flex items-center justify-between gap-1">
               <h4 class="font-extrabold text-xs sm:text-sm text-stone-900 truncate">${catName}</h4>
-              <span class="stamp text-[11px] font-black text-orange-700 bg-white border-orange-700 shrink-0">${score} ${gradeLetter}</span>
+              <span class="stamp text-[11px] font-black text-orange-700 bg-white border-orange-700 shrink-0">${formatScore(score)} ${gradeLetter}</span>
             </div>
             <div class="flex items-center gap-1.5 text-[11px] text-stone-500 mt-0.5 truncate">
               <span class="text-orange-950 font-bold truncate">${loafRank}</span>
@@ -4850,7 +4858,7 @@ Certified by Loafed Inspection Engine`;
     if (alreadySubmittedId) {
       const shareUrl = `${window.location.origin}/loaf?id=${encodeURIComponent(alreadySubmittedId)}`;
       if (submitSuccessCatName) submitSuccessCatName.textContent = state.currentResult.cat_name || 'Your Cat';
-      if (submitSuccessScoreBadge) submitSuccessScoreBadge.textContent = `${state.currentResult.overall_score} ${state.currentResult.grade_letter || ''}`;
+      if (submitSuccessScoreBadge) submitSuccessScoreBadge.textContent = `${formatScore(state.currentResult.overall_score)} ${state.currentResult.grade_letter || ''}`;
       if (submitSuccessRank) submitSuccessRank.textContent = state.currentResult.loaf_rank || 'Artisan Loaf';
       if (submitSuccessShareUrl) submitSuccessShareUrl.value = shareUrl;
       if (submitSuccessViewLeaderboardBtn) submitSuccessViewLeaderboardBtn.href = `/loaf?id=${encodeURIComponent(alreadySubmittedId)}`;
@@ -4870,7 +4878,7 @@ Certified by Loafed Inspection Engine`;
       : '';
     if (submitCatNameInput) submitCatNameInput.value = initialCatName;
     if (submitModalCatName) submitModalCatName.textContent = initialCatName || 'Cat Name';
-    if (submitModalScoreBadge) submitModalScoreBadge.textContent = `${state.currentResult.overall_score} ${state.currentResult.grade_letter}`;
+    if (submitModalScoreBadge) submitModalScoreBadge.textContent = `${formatScore(state.currentResult.overall_score)} ${state.currentResult.grade_letter}`;
     if (submitModalRank) submitModalRank.textContent = state.currentResult.loaf_rank || 'Artisan Loaf';
     if (submitModalBread) submitModalBread.textContent = state.currentResult.bread_classification || 'Brioche';
     syncSubmitDisplayNameField();
@@ -5129,7 +5137,7 @@ Certified by Loafed Inspection Engine`;
           const shareUrl = `${window.location.origin}/loaf?id=${encodeURIComponent(existingId)}`;
           if (submitSuccessCatName) submitSuccessCatName.textContent = validation.catName;
           if (submitSuccessThumb) submitSuccessThumb.src = (submitModalThumbnail ? submitModalThumbnail.src : '/static/logo.webp');
-          if (submitSuccessScoreBadge) submitSuccessScoreBadge.textContent = `${(subData && subData.score) || (state.currentResult ? state.currentResult.overall_score : 90)} ${state.currentResult ? state.currentResult.grade_letter : ''}`;
+          if (submitSuccessScoreBadge) submitSuccessScoreBadge.textContent = `${formatScore((subData && subData.score) || (state.currentResult ? state.currentResult.overall_score : 90))} ${state.currentResult ? state.currentResult.grade_letter : ''}`;
           if (submitSuccessRank) submitSuccessRank.textContent = state.currentResult ? state.currentResult.loaf_rank : 'Artisan Loaf';
           if (submitSuccessShareUrl) submitSuccessShareUrl.value = shareUrl;
           if (submitSuccessViewLeaderboardBtn) submitSuccessViewLeaderboardBtn.href = `/loaf?id=${encodeURIComponent(existingId)}`;
@@ -5221,7 +5229,7 @@ Certified by Loafed Inspection Engine`;
         if (!state.submittedEntryId) return;
         const shareUrl = `${window.location.origin}/loaf?id=${encodeURIComponent(state.submittedEntryId)}`;
         const cat = (state.currentResult && state.currentResult.cat_name) || 'My Cat';
-        const score = (state.currentResult && state.currentResult.overall_score) || '';
+        const score = (state.currentResult && formatScore(state.currentResult.overall_score)) || '';
         const grade = (state.currentResult && state.currentResult.grade_letter) || '';
         const shareData = {
           title: `${cat} — Official Loaf Score`,

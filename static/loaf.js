@@ -90,6 +90,11 @@ document.addEventListener('DOMContentLoaded', () => {
       .replace(/'/g, '&#039;');
   }
 
+  function formatScore(score) {
+    if (score === undefined || score === null || isNaN(Number(score))) return '0.00';
+    return Number(score).toFixed(2);
+  }
+
   function formatUserFacingError(value, fallback = 'Something went wrong. Please try again.') {
     if (value instanceof Error) return formatUserFacingError(value.message, fallback);
     if (typeof value === 'string' && value.trim() && value.trim() !== '[object Object]') return value.trim();
@@ -509,7 +514,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     ctx.fillStyle = '#7c2d12';
     ctx.font = 'bold 64px -apple-system, BlinkMacSystemFont, sans-serif';
-    ctx.fillText((result.overall_score || 0).toString(), 230, 568);
+    ctx.fillText(formatScore(result.overall_score), 230, 568);
 
     ctx.fillStyle = '#a8a29e';
     ctx.font = 'bold 15px -apple-system, BlinkMacSystemFont, sans-serif';
@@ -604,7 +609,7 @@ document.addEventListener('DOMContentLoaded', () => {
       ctx.textAlign = 'right';
       ctx.fillStyle = '#7c2d12';
       ctx.font = 'bold 13.5px -apple-system, BlinkMacSystemFont, sans-serif';
-      ctx.fillText(`${c.score} / 25`, 1112, rowY);
+      ctx.fillText(`${formatScore(c.score)} / 25`, 1112, rowY);
       ctx.textAlign = 'left';
 
       const barTrackW = 674;
@@ -760,7 +765,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Update Page Metadata
       const catName = data.cat_name || 'Anonymous Loaf';
-      const score = data.overall_score || 0;
+      const score = formatScore(data.overall_score);
       const grade = data.grade_letter || '';
       const pageTitle = `${catName} Loaf Scorecard (${score} ${grade}) — Loafed AI`;
       const pageDescription = `${catName} scored ${score}/100 (${grade}) in a Loafed AI cat-loaf inspection. View the scorecard, posture notes, and certified loaf details.`;
@@ -810,7 +815,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (loafBreadcrumbCat) loafBreadcrumbCat.textContent = catName;
       if (loafCatName) loafCatName.textContent = catName;
       if (loafBakerName) loafBakerName.textContent = data.display_name || 'Anonymous Baker';
-      if (loafScoreStamp) loafScoreStamp.textContent = `${data.overall_score || 0} ${data.grade_letter || ''}`;
+      if (loafScoreStamp) loafScoreStamp.textContent = `${score} ${data.grade_letter || ''}`;
 
       // Photo and angles
       const photoUrl = data.thumbnail_url || (Array.isArray(data.photo_urls) && data.photo_urls[0]) || '/static/logo.png';
@@ -909,28 +914,28 @@ document.addEventListener('DOMContentLoaded', () => {
       // 4 Kinematic Pillars
       const pt = data.paw_tuck || {};
       const ptScore = pt.score !== undefined ? pt.score : 20;
-      if (loafPawScore) loafPawScore.textContent = `${ptScore}/25`;
+      if (loafPawScore) loafPawScore.textContent = `${formatScore(ptScore)}/25`;
       if (loafPawBar) loafPawBar.style.width = `${Math.min(100, Math.max(10, (ptScore / 25) * 100))}%`;
       if (loafPawStatus) loafPawStatus.textContent = pt.status || 'Paw Concealment';
       if (loafPawCritique) loafPawCritique.textContent = pt.critique || 'Undercarriage perimeter inspected.';
 
       const tt = data.tail_tuck || {};
       const ttScore = tt.score !== undefined ? tt.score : 20;
-      if (loafTailScore) loafTailScore.textContent = `${ttScore}/25`;
+      if (loafTailScore) loafTailScore.textContent = `${formatScore(ttScore)}/25`;
       if (loafTailBar) loafTailBar.style.width = `${Math.min(100, Math.max(10, (ttScore / 25) * 100))}%`;
       if (loafTailStatus) loafTailStatus.textContent = tt.status || 'Tail Tuck & Flank Wrap';
       if (loafTailCritique) loafTailCritique.textContent = tt.critique || 'Flank wrap curvature inspected.';
 
       const ec = data.elbow_compactness || {};
       const ecScore = ec.score !== undefined ? ec.score : 20;
-      if (loafElbowScore) loafElbowScore.textContent = `${ecScore}/25`;
+      if (loafElbowScore) loafElbowScore.textContent = `${formatScore(ecScore)}/25`;
       if (loafElbowBar) loafElbowBar.style.width = `${Math.min(100, Math.max(10, (ecScore / 25) * 100))}%`;
       if (loafElbowStatus) loafElbowStatus.textContent = ec.status || 'Elbow Form & Compactness';
       if (loafElbowCritique) loafElbowCritique.textContent = ec.critique || 'Shoulder joint fold inspected.';
 
       const cs = data.crust_symmetry || {};
       const csScore = cs.score !== undefined ? cs.score : 20;
-      if (loafCrustScore) loafCrustScore.textContent = `${csScore}/25`;
+      if (loafCrustScore) loafCrustScore.textContent = `${formatScore(csScore)}/25`;
       if (loafCrustBar) loafCrustBar.style.width = `${Math.min(100, Math.max(10, (csScore / 25) * 100))}%`;
       if (loafCrustStatus) loafCrustStatus.textContent = cs.status || 'Crust Symmetry & Toast';
       if (loafCrustCritique) loafCrustCritique.textContent = cs.critique || 'Bilateral dorsal coat inspected.';
@@ -1038,7 +1043,7 @@ document.addEventListener('DOMContentLoaded', () => {
   async function shareActiveLoaf() {
     if (!activeLoaf) return;
     const catName = activeLoaf.cat_name || 'Cat Loaf';
-    const score = activeLoaf.overall_score || 0;
+    const score = formatScore(activeLoaf.overall_score);
     const grade = activeLoaf.grade_letter || '';
     const shareUrl = `${currentOrigin}/loaf?id=${encodeURIComponent(activeLoaf.entry_id)}`;
 

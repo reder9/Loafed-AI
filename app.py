@@ -699,24 +699,38 @@ def generate_grade_token(
 ) -> str:
     signing_secret = require_configured_secret(SIGNATURE_SECRET, "SIGNATURE_SECRET")
     hashes_list = image_hashes or ([image_hash] if image_hash else [])
+
+    paw_tuck = dict(result_data.get("paw_tuck", {}))
+    if "score" in paw_tuck and paw_tuck["score"] is not None:
+        paw_tuck["score"] = round(float(paw_tuck["score"]), 2)
+    tail_tuck = dict(result_data.get("tail_tuck", {}))
+    if "score" in tail_tuck and tail_tuck["score"] is not None:
+        tail_tuck["score"] = round(float(tail_tuck["score"]), 2)
+    elbow_compactness = dict(result_data.get("elbow_compactness", {}))
+    if "score" in elbow_compactness and elbow_compactness["score"] is not None:
+        elbow_compactness["score"] = round(float(elbow_compactness["score"]), 2)
+    crust_symmetry = dict(result_data.get("crust_symmetry", {}))
+    if "score" in crust_symmetry and crust_symmetry["score"] is not None:
+        crust_symmetry["score"] = round(float(crust_symmetry["score"]), 2)
+
     payload = {
         "cat_name": result_data.get("cat_name", "Anonymous Loaf"),
-        "overall_score": int(result_data.get("overall_score", 0)),
+        "overall_score": round(float(result_data.get("overall_score", 0)), 2),
         "grade_letter": str(result_data.get("grade_letter", "")),
         "loaf_rank": str(result_data.get("loaf_rank", "")),
         "bread_classification": str(result_data.get("bread_classification", "")),
         "summary_critique": str(result_data.get("summary_critique", "")),
-        "paw_tuck": result_data.get("paw_tuck", {}),
-        "tail_tuck": result_data.get("tail_tuck", {}),
-        "elbow_compactness": result_data.get("elbow_compactness", {}),
-        "crust_symmetry": result_data.get("crust_symmetry", {}),
+        "paw_tuck": paw_tuck,
+        "tail_tuck": tail_tuck,
+        "elbow_compactness": elbow_compactness,
+        "crust_symmetry": crust_symmetry,
         "drag_coefficient": float(result_data.get("drag_coefficient", 0.15)) if result_data.get("drag_coefficient") is not None else 0.15,
         "badges": result_data.get("badges", []),
         "fun_tips_for_cat": result_data.get("fun_tips_for_cat", []),
         "angle_notes": result_data.get("angle_notes", {}),
         "oar_detected": bool(result_data.get("oar_detected", False)),
         "face_loaf": bool(result_data.get("face_loaf", False)),
-        "multi_angle_bonus": int(result_data.get("multi_angle_bonus", 0)),
+        "multi_angle_bonus": round(float(result_data.get("multi_angle_bonus", 0)), 2),
         "image_sha256": image_hash,
         "image_hashes": hashes_list,
         "best_thumbnail_index": int(best_thumbnail_index if best_thumbnail_index is not None else 0),
@@ -776,7 +790,7 @@ class AngleNotes(BaseModel):
     top: Optional[str] = Field(default=None, description="Observation on top view")
 
 class LoafSubScore(BaseModel):
-    score: int = Field(description="Score between 0 and 25")
+    score: float = Field(description="Score between 0.00 and 25.00 with up to 2 decimal places (e.g. 23.45)")
     status: str = Field(description="Short concise status label without emojis (e.g., '100% Concealed Peet', 'Slight Flank Swish', 'Tight Dough Fold')")
     critique: str = Field(description="Detailed critique describing what is visible or hidden")
     observations: List[str] = Field(description="2-3 specific visual observations from the images")
@@ -785,26 +799,46 @@ class LoafAnalysisResult(BaseModel):
     is_cat: bool = Field(default=True, description="True if the subject in the photo is genuinely a real domestic cat or feline. False if the image depicts another animal, a human, food, an inanimate object, a vehicle, or contains inappropriate content.")
     rejection_reason: Optional[str] = Field(default=None, description="If is_cat is False, a witty, polite inspection rejection reason explaining why this subject cannot be certified as a feline loaf. Zero emojis.")
     cat_name: str = Field(description="Name of the cat or bread designation if unspecified")
-    overall_score: int = Field(description="Final composite loaf score from 0 to 100")
+    overall_score: float = Field(description="Final composite loaf score from 0.00 to 100.00 with 2 decimal places (e.g. 92.24)")
     grade_letter: str = Field(description="Letter grade: A+, A, B, C, D, or F")
     loaf_rank: str = Field(description="Honorary title without emojis (e.g. 'Grandmaster Artisan Loaf', 'Golden Brioche Perfection', 'Loaf Boat - Oar Detected', 'Underproofed Doughball')")
     bread_classification: str = Field(description="Bread type match without emojis (e.g., 'Toasted Golden Brioche', 'Rustic Sourdough Boule', 'Dark Pumpernickel Loaf', 'Cinnamon Marble Rye')")
     summary_critique: str = Field(description="Culinary and aerodynamic cat loaf critique without emojis (2-3 sentences)")
     
-    paw_tuck: LoafSubScore = Field(description="Front and rear paw concealment evaluation (0-25)")
-    tail_tuck: LoafSubScore = Field(description="Tail wrapping, concealment, and drag analysis (0-25)")
-    elbow_compactness: LoafSubScore = Field(description="Elbow fold, compactness, and rising dough curvature (0-25)")
-    crust_symmetry: LoafSubScore = Field(description="Dorsal symmetry, toast level, coat coloring, and uniformity (0-25)")
+    paw_tuck: LoafSubScore = Field(description="Front and rear paw concealment evaluation (0.00-25.00 with up to 2 decimal places)")
+    tail_tuck: LoafSubScore = Field(description="Tail wrapping, concealment, and drag analysis (0.00-25.00 with up to 2 decimal places)")
+    elbow_compactness: LoafSubScore = Field(description="Elbow fold, compactness, and rising dough curvature (0.00-25.00 with up to 2 decimal places)")
+    crust_symmetry: LoafSubScore = Field(description="Dorsal symmetry, toast level, coat coloring, and uniformity (0.00-25.00 with up to 2 decimal places)")
     
     drag_coefficient: float = Field(description="Aerodynamic drag coefficient (0.01 to 0.99, lower is tighter)")
     oar_detected: bool = Field(description="True if one paw sticks out forward like an oar (Loaf Boat)")
     face_loaf: bool = Field(description="True if head/nose is tucked low or flat into the chest")
-    multi_angle_bonus: int = Field(description="Bonus points awarded for submitting multiple angles (0 to 5)")
+    multi_angle_bonus: float = Field(default=0.0, description="Bonus points awarded for submitting multiple angles (0.00 to 5.00)")
     badges: List[str] = Field(description="3-5 honor badges or demerits awarded to this cat. Never include emojis.")
     fun_tips_for_cat: List[str] = Field(description="2-3 tips for the cat to improve its loaf next time. Never include emojis.")
     angle_notes: AngleNotes = Field(description="Quick notes per submitted angle (front, side, top)")
     best_thumbnail_index: Optional[int] = Field(default=0, description="0-based index of the best front or side photo for the primary leaderboard portrait. Avoid overhead/top-down views.")
     angle_classifications: Optional[List[str]] = Field(default_factory=list, description="Classifications for each submitted photo index ('front', 'side', 'top', or 'other').")
+
+def floats_to_decimals(obj):
+    """Recursively converts all Python floats to Decimals for DynamoDB serialization."""
+    if isinstance(obj, float):
+        return Decimal(str(round(obj, 2)))
+    if isinstance(obj, dict):
+        return {k: floats_to_decimals(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [floats_to_decimals(i) for i in obj]
+    return obj
+
+def decimals_to_floats(obj):
+    """Recursively converts all DynamoDB Decimals to Python floats."""
+    if isinstance(obj, Decimal):
+        return round(float(obj), 2)
+    if isinstance(obj, dict):
+        return {k: decimals_to_floats(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [decimals_to_floats(i) for i in obj]
+    return obj
 
 # Pre-baked analysis for official benchmark reference cats (Flash 92A, Chonks 79C+, Chonks 68C)
 PRESET_FLASH = {
@@ -1287,61 +1321,62 @@ Your very first duty before any grading is to verify that the photo genuinely de
 CRITICAL DIRECTIVE ON GRADING STRICTNESS & CURVE:
 In past inspections you were far too generous. Real feline loafing is an exacting, competitive discipline! Most household cats DO NOT achieve an A or scores in the 90s.
 You must grade on a demanding, realistic curve:
-- 90 to 100 (A to A+): THE SACRED CRUST. Masterclass artisan perfection (top 2% of all feline loaves). Reserved ONLY for near-flawless loaves: ALL FOUR paws 100% invisible beneath the chest from all visible angles, tail completely tucked or wrapped flush against the flank, zero chicken-wing flare, and immaculate dorsal symmetry. (Do NOT give 90+ unless the cat truly earns it!)
-- 80 to 89 (B to B+): Solid artisan loaf. Minor micro-imperfections (e.g., 2mm toe peek or slightly relaxed tail tip).
-- 65 to 79 (C to C+): Average, mediocre household loaf. Noticeable flaws: visible front paw pads, loose elbows, lopsided posture, or casually wandering tail. (This is where most typical household cats should land!)
-- 45 to 64 (D to D+): Poor, sloppy, or heavily compromised loaf. Major infractions: one or both legs sticking out (Loaf Boat / Oar), sprawling tail, heavy chicken-winging, or melting off furniture like liquid dough.
-- 0 to 44 (F): Failed loaf / Audit Disqualification. The cat is standing, sitting upright on paws (Sphinx Imposter), laying on its side, splooting, or refusing to fold limbs.
+- 90.00 to 100.00 (A to A+): THE SACRED CRUST. Masterclass artisan perfection (top 2% of all feline loaves). Reserved ONLY for near-flawless loaves: ALL FOUR paws 100% invisible beneath the chest from all visible angles, tail completely tucked or wrapped flush against the flank, zero chicken-wing flare, and immaculate dorsal symmetry. (Do NOT give 90+ unless the cat truly earns it!)
+- 80.00 to 89.99 (B to B+): Solid artisan loaf. Minor micro-imperfections (e.g., 2mm toe peek or slightly relaxed tail tip).
+- 65.00 to 79.99 (C to C+): Average, mediocre household loaf. Noticeable flaws: visible front paw pads, loose elbows, lopsided posture, or casually wandering tail. (This is where most typical household cats should land!)
+- 45.00 to 64.99 (D to D+): Poor, sloppy, or heavily compromised loaf. Major infractions: one or both legs sticking out (Loaf Boat / Oar), sprawling tail, heavy chicken-winging, or melting off furniture like liquid dough.
+- 0.00 to 44.99 (F): Failed loaf / Audit Disqualification. The cat is standing, sitting upright on paws (Sphinx Imposter), laying on its side, splooting, or refusing to fold limbs.
 
 RIGID DEDUCTION PENALTIES (Apply these strictly):
-1. PAW TUCK (0-25 Points):
-   - 24-25: 100% stealth peet concealment. Absolute zero paw, toe bean, or wrist visibility from any angle.
-   - 16-20: Minor toe peek (tip of 1 paw or toe beans slightly peeking out).
-   - 10-15: Whole paw or wrist clearly visible outside the body perimeter. Deduct at least 10 points!
-   - 5-9: "Loaf Boat" / Deployed Oar (one front leg extended forward while resting). Set oar_detected = True!
-   - 0-4: Cat is standing or sitting upright like an Egyptian Sphinx statue.
+1. PAW TUCK (0.00-25.00 Points):
+   - 24.00-25.00: 100% stealth peet concealment. Absolute zero paw, toe bean, or wrist visibility from any angle.
+   - 16.00-23.99: Minor toe peek (tip of 1 paw or toe beans slightly peeking out).
+   - 10.00-15.99: Whole paw or wrist clearly visible outside the body perimeter. Deduct at least 10 points!
+   - 5.00-9.99: "Loaf Boat" / Deployed Oar (one front leg extended forward while resting). Set oar_detected = True!
+   - 0.00-4.99: Cat is standing or sitting upright like an Egyptian Sphinx statue.
 
-2. TAIL TUCK (0-25 Points):
-   - 24-25: Tail curled tight and flush against flank or coiled underneath like a cinnamon roll.
-   - 18-22: Tail wrapped but tip sticks out or curls awkwardly.
-   - 11-17: Tail trailing behind body, draping over furniture edge, or actively swishing.
-   - 0-10: Sprawled tail with massive aerodynamic drag (drag_coefficient > 0.60).
+2. TAIL TUCK (0.00-25.00 Points):
+   - 24.00-25.00: Tail curled tight and flush against flank or coiled underneath like a cinnamon roll.
+   - 18.00-23.99: Tail wrapped but tip sticks out or curls awkwardly.
+   - 11.00-17.99: Tail trailing behind body, draping over furniture edge, or actively swishing.
+   - 0.00-10.99: Sprawled tail with massive aerodynamic drag (drag_coefficient > 0.60).
 
-3. LOAF FORM & COMPACTNESS (0-25 Points):
-   - 24-25: Tight, compact boule. Elbows tucked deep against ribcage, tight dough boundary.
-   - 17-21: Decent fold, but elbows slightly relaxed or slight chicken-wing bulge.
-   - 10-16: Loose, melting dough. Body sagging laterally, chicken-wings flared outward.
+3. LOAF FORM & COMPACTNESS (0.00-25.00 Points):
+   - 24.00-25.00: Tight, compact boule. Elbows tucked deep against ribcage, tight dough boundary.
+   - 17.00-23.99: Decent fold, but elbows slightly relaxed or slight chicken-wing bulge.
+   - 10.00-16.99: Loose, melting dough. Body sagging laterally, chicken-wings flared outward.
    - Note: If the cat's nose or face is rested completely flat into the carpet or chest, set face_loaf = True (Face Loaf recognition!).
 
-4. CRUST SYMMETRY & TOASTINESS (0-25 Points):
-   - 24-25: Perfect bilateral dorsal symmetry, balanced dough rise, evenly baked coat.
-   - 16-21: Slight tilt to one side, uneven spine curve, or lopsided bread rise.
-   - 8-15: Heavily asymmetrical resting posture or chaotic dough lump.
+4. CRUST SYMMETRY & TOASTINESS (0.00-25.00 Points):
+   - 24.00-25.00: Perfect bilateral dorsal symmetry, balanced dough rise, evenly baked coat.
+   - 16.00-23.99: Slight tilt to one side, uneven spine curve, or lopsided bread rise.
+   - 8.00-15.99: Heavily asymmetrical resting posture or chaotic dough lump.
    - Bread classification: Assign an accurate, funny artisanal bread type (e.g. 'Underproofed Sourdough', 'Over-Risen Brioche', 'Rustic Baguette', 'Golden Cinnamon Swirl', 'Dark Rye Boule').
 
 SCORE ARITHMETIC & MULTI-IMAGE CALIBRATION:
-- overall_score MUST be the true sum: paw_tuck.score + tail_tuck.score + elbow_compactness.score + crust_symmetry.score + multi_angle_bonus (capped at 100).
+- overall_score MUST be the true sum: paw_tuck.score + tail_tuck.score + elbow_compactness.score + crust_symmetry.score + multi_angle_bonus (capped at 100.00).
+- SCIENTIFIC DECIMAL SCORING: All scores (paw_tuck.score, tail_tuck.score, elbow_compactness.score, crust_symmetry.score, and composite overall_score) MUST be precise decimal values with 2 decimal places (e.g., subscores like 23.45, 22.18, 21.80, 24.81 and overall_score like 92.24). Do NOT output whole integers. Two-decimal precision prevents ties and establishes a discerning, scientific evaluation standard!
 - STRICT SINGLE-PHOTO PENALTY:
   When only 1 photo is submitted, you ONLY have visual evidence for a single 2D perspective. You CANNOT verify if paws or claws are peeking out on the unseen side, whether the tail is trailing awkwardly behind the body, or if rear haunches are splayed.
-  Therefore, IT IS VERY HARD TO GIVE A HIGH SCORE (80+) WITH JUST ONE PICTURE!
-  Unless that single picture is an extraordinary, unobstructed angle that definitively proves 100% paw concealment, tight tail tuck, and symmetry all at once, a 1-photo loaf score MUST be heavily conservative (typically capped in the 65 to 78 range, C to C+).
-  Set multi_angle_bonus = 0.
+  Therefore, IT IS VERY HARD TO GIVE A HIGH SCORE (80.00+) WITH JUST ONE PICTURE!
+  Unless that single picture is an extraordinary, unobstructed angle that definitively proves 100% paw concealment, tight tail tuck, and symmetry all at once, a 1-photo loaf score MUST be heavily conservative (typically capped in the 65.00 to 78.50 range, C to C+).
+  Set multi_angle_bonus = 0.00.
   Explicitly state in the critique or tips: 'Single-photo inspection limitation applied: Without side or overhead telemetry, hidden peet infractions on unobserved flanks cannot be definitively ruled out.'
 - MULTI-IMAGE BONUS (The more photos, the better the telemetry!):
-  * 1 photo: 0 bonus points. Conservative single-plane grading.
-  * 2 photos: +2 bonus points. Dual-plane telemetry.
-  * 3 photos (ideally covering front, side, and top): +3 to +4 bonus points. High confidence 360-degree verification.
-  * 4 to 5 photos: +5 bonus points (maximum multi-angle telemetry bonus unlocked).
+  * 1 photo: 0.00 bonus points. Conservative single-plane grading.
+  * 2 photos: +2.00 bonus points. Dual-plane telemetry.
+  * 3 photos (ideally covering front, side, and top): +3.00 to +4.00 bonus points. High confidence 360-degree verification.
+  * 4 to 5 photos: +5.00 bonus points (maximum multi-angle telemetry bonus unlocked).
 - Align grade_letter strictly with overall_score:
-  * 95-100: A+
-  * 90-94: A
-  * 85-89: B+
-  * 80-84: B
-  * 75-79: C+
-  * 65-74: C
-  * 55-64: D+
-  * 45-54: D
-  * 0-44: F
+  * 95.00-100.00: A+
+  * 90.00-94.99: A
+  * 85.00-89.99: B+
+  * 80.00-84.99: B
+  * 75.00-79.99: C+
+  * 65.00-74.99: C
+  * 55.00-64.99: D+
+  * 45.00-54.99: D
+  * 0.00-44.99: F
 
 CAT NAME HANDLING:
 - If a Cat Name is provided, use that exact name in cat_name.
@@ -1488,9 +1523,10 @@ async def grade_loaf(
             
         contents_parts.append(
             "Please perform the official Cat Loaf Audit on this cat according to the 4 criteria: "
-            "Paw Tuck (0-25), Tail Tuck (0-25), Elbow Form & Compactness (0-25), Crust/Symmetry/Toastiness (0-25). "
+            "Paw Tuck (0.00-25.00), Tail Tuck (0.00-25.00), Elbow Form & Compactness (0.00-25.00), Crust/Symmetry/Toastiness (0.00-25.00). "
             "Be a strictly critical, discerning judge. Deduct points firmly for visible paws, flared elbows, or trailing tails. "
-            "Calculate overall_score (0-100), bread classification, honorary loaf rank, drag coefficient, and witty constructive feedback."
+            "Score with 2-decimal-place precision (e.g. 92.24, subscores like 23.45) to ensure a scientific, fine-grained evaluation and prevent ties. "
+            "Calculate overall_score (0.00-100.00), bread classification, honorary loaf rank, drag coefficient, and witty constructive feedback."
         )
 
         target_model = model or "gemini-3.8-flash"
@@ -1587,6 +1623,15 @@ async def grade_loaf(
             )
 
         analysis_data = json.loads(response.text)
+        if "overall_score" in analysis_data and analysis_data["overall_score"] is not None:
+            analysis_data["overall_score"] = round(float(analysis_data["overall_score"]), 2)
+        for sub_key in ["paw_tuck", "tail_tuck", "elbow_compactness", "crust_symmetry"]:
+            sub_dict = analysis_data.get(sub_key)
+            if isinstance(sub_dict, dict) and "score" in sub_dict and sub_dict["score"] is not None:
+                sub_dict["score"] = round(float(sub_dict["score"]), 2)
+        if "multi_angle_bonus" in analysis_data and analysis_data["multi_angle_bonus"] is not None:
+            analysis_data["multi_angle_bonus"] = round(float(analysis_data["multi_angle_bonus"]), 2)
+
         is_cat = bool(analysis_data.get("is_cat", True))
 
         if not is_cat:
@@ -2436,7 +2481,7 @@ async def submit_to_leaderboard(
                 "already_submitted": True,
                 "entry_id": existing_entry_id,
                 "cat_name": validated_cat_name,
-                "score": int(score_data.get("overall_score", 0)),
+                "score": round(float(score_data.get("overall_score", 0)), 2),
                 "detail": f"This cat loaf has already been published to the leaderboard! (Entry #{existing_entry_id})",
                 "message": f"This cat loaf has already been published to the leaderboard! (Entry #{existing_entry_id})"
             }
@@ -2490,8 +2535,8 @@ async def submit_to_leaderboard(
     month_str = now.strftime("%Y-%m")
     week_str = now.strftime("%Y-W%W")
 
-    score = int(score_data.get("overall_score", 0))
-    sk = f"SCORE#{score:03d}#{entry_id}"
+    score = round(float(score_data.get("overall_score", 0)), 2)
+    sk = f"SCORE#{score:06.2f}#{entry_id}"
 
     ddb = session.resource("dynamodb")
     table = ddb.Table(DYNAMODB_TABLE_NAME)
@@ -2510,7 +2555,7 @@ async def submit_to_leaderboard(
         "user_email": user_claims.get("email", ""),
         "display_name": validated_display_name,
         "cat_name": validated_cat_name,
-        "overall_score": score,
+        "overall_score": Decimal(str(f"{score:.2f}")),
         "grade_letter": score_data.get("grade_letter", ""),
         "loaf_rank": score_data.get("loaf_rank", ""),
         "bread_classification": score_data.get("bread_classification", ""),
@@ -2532,11 +2577,13 @@ async def submit_to_leaderboard(
         "fun_tips_for_cat": score_data.get("fun_tips_for_cat", []),
         "oar_detected": bool(score_data.get("oar_detected", False)),
         "face_loaf": bool(score_data.get("face_loaf", False)),
-        "multi_angle_bonus": int(score_data.get("multi_angle_bonus", 0)),
+        "multi_angle_bonus": Decimal(str(round(float(score_data.get("multi_angle_bonus", 0)), 2))),
         "primary_image_hash": primary_image_hash,
         "image_hashes": uploaded_hashes,
         "token_salt": score_data.get("salt", "")
     }
+
+    item_all = floats_to_decimals(item_all)
 
     item_month = dict(item_all)
     item_month["pk"] = f"PERIOD#{month_str}"
@@ -2555,7 +2602,7 @@ async def submit_to_leaderboard(
         "sk": f"SUBMISSION#{primary_image_hash}",
         "entry_id": entry_id,
         "cat_name": validated_cat_name,
-        "overall_score": score,
+        "overall_score": Decimal(str(f"{score:.2f}")),
         "created_at": now_iso
     }
 
@@ -2628,7 +2675,7 @@ async def get_leaderboard(period: str = "all", limit: int = 50):
             "entry_id": it.get("entry_id", ""),
             "cat_name": it.get("cat_name", "Anonymous Loaf"),
             "display_name": it.get("display_name", "Anonymous Baker"),
-            "overall_score": int(it.get("overall_score", 0)),
+            "overall_score": round(float(it.get("overall_score", 0)), 2),
             "grade_letter": it.get("grade_letter", ""),
             "loaf_rank": it.get("loaf_rank", ""),
             "bread_classification": it.get("bread_classification", ""),
@@ -2703,7 +2750,7 @@ async def get_loaf_details(entry_id: str):
             "entry_id": entry_id,
             "cat_name": p_cat,
             "display_name": p_baker,
-            "overall_score": p_data["overall_score"],
+            "overall_score": round(float(p_data["overall_score"]), 2),
             "grade_letter": p_data["grade_letter"],
             "loaf_rank": p_data["loaf_rank"],
             "bread_classification": p_data["bread_classification"],
@@ -2726,7 +2773,7 @@ async def get_loaf_details(entry_id: str):
     elif entry_id == "hof_buttercup":
         preset_data = PRESET_FLASH
 
-    overall_score = int(item.get("overall_score", 0))
+    overall_score = round(float(item.get("overall_score", 0)), 2)
     cat_name = item.get("cat_name") or preset_data.get("cat_name", "Anonymous Loaf")
     display_name = item.get("display_name", "Anonymous Baker")
     grade_letter = item.get("grade_letter") or preset_data.get("grade_letter", "B")
@@ -2739,45 +2786,53 @@ async def get_loaf_details(entry_id: str):
     if not summary_critique:
         summary_critique = f"{cat_name} demonstrates authentic domestic feline bakery curvature with commendable perimeter compacting and a distinguished {bread_class} rise."
 
-    paw_tuck = item.get("paw_tuck") or preset_data.get("paw_tuck")
+    paw_tuck = decimals_to_floats(item.get("paw_tuck") or preset_data.get("paw_tuck"))
     if not paw_tuck:
-        pt_score = min(25, max(15, overall_score // 4))
+        pt_score = round(min(25.0, max(15.0, overall_score / 4.0)), 2)
         paw_tuck = {
             "score": pt_score,
             "status": "Commendable Paw Concealment",
             "critique": "Undercarriage perimeter is firmly tucked with minimal paw flaring.",
             "observations": ["Paws withdrawn beneath chest silhouette", "Solid base perimeter"]
         }
+    elif isinstance(paw_tuck, dict) and "score" in paw_tuck and paw_tuck["score"] is not None:
+        paw_tuck["score"] = round(float(paw_tuck["score"]), 2)
 
-    tail_tuck = item.get("tail_tuck") or preset_data.get("tail_tuck")
+    tail_tuck = decimals_to_floats(item.get("tail_tuck") or preset_data.get("tail_tuck"))
     if not tail_tuck:
-        tt_score = min(25, max(15, (overall_score + 2) // 4))
+        tt_score = round(min(25.0, max(15.0, (overall_score + 2.0) / 4.0)), 2)
         tail_tuck = {
             "score": tt_score,
             "status": "Flush Flank Contour",
             "critique": "Tail wraps cleanly along flank line minimizing aerodynamic drag.",
             "observations": ["Tail follows natural lateral curvature", "Flush haunch tuck"]
         }
+    elif isinstance(tail_tuck, dict) and "score" in tail_tuck and tail_tuck["score"] is not None:
+        tail_tuck["score"] = round(float(tail_tuck["score"]), 2)
 
-    elbow_compactness = item.get("elbow_compactness") or preset_data.get("elbow_compactness")
+    elbow_compactness = decimals_to_floats(item.get("elbow_compactness") or preset_data.get("elbow_compactness"))
     if not elbow_compactness:
-        ec_score = min(25, max(15, (overall_score - 1) // 4))
+        ec_score = round(min(25.0, max(15.0, (overall_score - 1.0) / 4.0)), 2)
         elbow_compactness = {
             "score": ec_score,
             "status": "Compact Dough Form",
             "critique": "Elbow joints are compressed inwards to form a tight, aerodynamic loaf silhouette.",
             "observations": ["Zero significant wing protrusion", "Stable dough density"]
         }
+    elif isinstance(elbow_compactness, dict) and "score" in elbow_compactness and elbow_compactness["score"] is not None:
+        elbow_compactness["score"] = round(float(elbow_compactness["score"]), 2)
 
-    crust_symmetry = item.get("crust_symmetry") or preset_data.get("crust_symmetry")
+    crust_symmetry = decimals_to_floats(item.get("crust_symmetry") or preset_data.get("crust_symmetry"))
     if not crust_symmetry:
-        cs_score = min(25, max(10, overall_score - (paw_tuck.get('score', 20) + tail_tuck.get('score', 20) + elbow_compactness.get('score', 20))))
+        cs_score = round(min(25.0, max(10.0, overall_score - (paw_tuck.get('score', 20.0) + tail_tuck.get('score', 20.0) + elbow_compactness.get('score', 20.0)))), 2)
         crust_symmetry = {
             "score": cs_score,
             "status": "Balanced Crust Toastiness",
             "critique": "Coat toastiness is uniform across dorsal spine with pleasing bilateral symmetry.",
             "observations": ["Bilateral spinal alignment", "Even coat toast distribution"]
         }
+    elif isinstance(crust_symmetry, dict) and "score" in crust_symmetry and crust_symmetry["score"] is not None:
+        crust_symmetry["score"] = round(float(crust_symmetry["score"]), 2)
 
     drag_coeff = item.get("drag_coefficient")
     if drag_coeff is None:
@@ -2835,13 +2890,13 @@ async def get_loaf_details(entry_id: str):
         "fun_tips_for_cat": tips,
         "oar_detected": bool(item.get("oar_detected", preset_data.get("oar_detected", False))),
         "face_loaf": bool(item.get("face_loaf", preset_data.get("face_loaf", False))),
-        "multi_angle_bonus": int(item.get("multi_angle_bonus", preset_data.get("multi_angle_bonus", 0)))
+        "multi_angle_bonus": round(float(item.get("multi_angle_bonus", preset_data.get("multi_angle_bonus", 0))), 2)
     }
 
 
 class LeaderboardReportRequest(BaseModel):
     entry_id: str = Field(..., min_length=1, max_length=64)
-    score: Optional[int] = None
+    score: Optional[float] = None
     reason: Optional[str] = Field(None, max_length=120)
 
 
@@ -2921,9 +2976,13 @@ async def report_leaderboard_entry(
     matching_item = None
     try:
         if req.score is not None:
-            sk = f"SCORE#{req.score:03d}#{entry_id}"
+            sk = f"SCORE#{req.score:06.2f}#{entry_id}"
             resp = table.get_item(Key={"pk": "PERIOD#ALL", "sk": sk})
             matching_item = resp.get("Item")
+            if not matching_item:
+                sk_legacy = f"SCORE#{int(req.score):03d}#{entry_id}"
+                resp = table.get_item(Key={"pk": "PERIOD#ALL", "sk": sk_legacy})
+                matching_item = resp.get("Item")
 
         if not matching_item:
             resp = table.query(
@@ -2940,8 +2999,8 @@ async def report_leaderboard_entry(
     if not matching_item:
         raise HTTPException(status_code=404, detail="Leaderboard entry not found.")
 
-    score = int(matching_item.get("overall_score", 0))
-    sk = f"SCORE#{score:03d}#{entry_id}"
+    score = round(float(matching_item.get("overall_score", 0)), 2)
+    sk = matching_item.get("sk") if matching_item.get("sk", "").startswith("SCORE#") else f"SCORE#{score:06.2f}#{entry_id}"
     periods = matching_item.get("periods") or ["ALL"]
     if not isinstance(periods, list):
         periods = ["ALL"]
@@ -3022,7 +3081,7 @@ async def report_leaderboard_entry(
 class AdminRemoveRequest(BaseModel):
     entry_id: str
     admin_key: str
-    score: Optional[int] = None
+    score: Optional[float] = None
 
 
 @app.post("/api/admin/leaderboard/remove")
@@ -3047,9 +3106,13 @@ async def admin_remove_entry(req: AdminRemoveRequest):
 
     if req.score is not None:
         if not matching_item:
-            sk = f"SCORE#{req.score:03d}#{entry_id}"
+            sk = f"SCORE#{req.score:06.2f}#{entry_id}"
             resp = table.get_item(Key={"pk": "PERIOD#ALL", "sk": sk})
             matching_item = resp.get("Item")
+            if not matching_item:
+                sk_legacy = f"SCORE#{int(req.score):03d}#{entry_id}"
+                resp = table.get_item(Key={"pk": "PERIOD#ALL", "sk": sk_legacy})
+                matching_item = resp.get("Item")
 
     if not matching_item:
         resp = table.query(
@@ -3063,8 +3126,9 @@ async def admin_remove_entry(req: AdminRemoveRequest):
     if not matching_item:
         raise HTTPException(status_code=404, detail="Entry not found in DynamoDB.")
 
-    score = int(matching_item.get("overall_score", 0))
-    sk = f"SCORE#{score:03d}#{entry_id}"
+    score = round(float(matching_item.get("overall_score", 0)), 2)
+    sk = matching_item.get("sk") if matching_item.get("sk", "").startswith("SCORE#") else f"SCORE#{score:06.2f}#{entry_id}"
+    sk_legacy = f"SCORE#{int(score):03d}#{entry_id}"
     periods = matching_item.get("periods", ["ALL"])
 
     cleanup_failures = 0
@@ -3080,6 +3144,11 @@ async def admin_remove_entry(req: AdminRemoveRequest):
         pk = "PERIOD#ALL" if p == "ALL" else f"PERIOD#{p}"
         try:
             table.delete_item(Key={"pk": pk, "sk": sk})
+            if sk_legacy != sk:
+                try:
+                    table.delete_item(Key={"pk": pk, "sk": sk_legacy})
+                except Exception:
+                    pass
         except Exception as e:
             cleanup_failures += 1
             logger.error("Admin delete item failed entry_id=%s period=%s error_type=%s", entry_id, p, type(e).__name__, exc_info=True)
@@ -3102,6 +3171,11 @@ async def admin_remove_entry(req: AdminRemoveRequest):
     # all other cleanup has succeeded; remove metadata last for UserIndex access.
     try:
         table.delete_item(Key={"pk": "PERIOD#ALL", "sk": sk})
+        if sk_legacy != sk:
+            try:
+                table.delete_item(Key={"pk": "PERIOD#ALL", "sk": sk_legacy})
+            except Exception:
+                pass
     except Exception as e:
         logger.error("Admin delete all-time item failed entry_id=%s error_type=%s", entry_id, type(e).__name__, exc_info=True)
         clear_leaderboard_cache()
@@ -3143,7 +3217,7 @@ async def get_my_entries(authorization: Optional[str] = Header(None)):
             "entry_id": it.get("entry_id", ""),
             "cat_name": it.get("cat_name", "Anonymous Loaf"),
             "display_name": it.get("display_name", ""),
-            "overall_score": int(it.get("overall_score", 0)),
+            "overall_score": round(float(it.get("overall_score", 0)), 2),
             "grade_letter": it.get("grade_letter", ""),
             "loaf_rank": it.get("loaf_rank", ""),
             "bread_classification": it.get("bread_classification", ""),
@@ -3176,8 +3250,9 @@ async def delete_leaderboard_entry(entry_id: str, authorization: Optional[str] =
     if not matching_item:
         raise HTTPException(status_code=404, detail="Entry not found or you are not authorized to delete it.")
 
-    score = int(matching_item.get("overall_score", 0))
-    sk = f"SCORE#{score:03d}#{entry_id}"
+    score = round(float(matching_item.get("overall_score", 0)), 2)
+    sk = matching_item.get("sk") if matching_item.get("sk", "").startswith("SCORE#") else f"SCORE#{score:06.2f}#{entry_id}"
+    sk_legacy = f"SCORE#{int(score):03d}#{entry_id}"
     periods = matching_item.get("periods", ["ALL"])
 
     cleanup_failures = 0
@@ -3193,6 +3268,11 @@ async def delete_leaderboard_entry(entry_id: str, authorization: Optional[str] =
         pk = "PERIOD#ALL" if p == "ALL" else f"PERIOD#{p}"
         try:
             table.delete_item(Key={"pk": pk, "sk": sk})
+            if sk_legacy != sk:
+                try:
+                    table.delete_item(Key={"pk": pk, "sk": sk_legacy})
+                except Exception:
+                    pass
         except Exception as e:
             cleanup_failures += 1
             logger.error("Submission record deletion failed entry_id=%s period=%s error_type=%s", entry_id, p, type(e).__name__, exc_info=True)
@@ -3214,6 +3294,11 @@ async def delete_leaderboard_entry(entry_id: str, authorization: Optional[str] =
     # succeeded, so an interrupted request can be retried by the owner.
     try:
         table.delete_item(Key={"pk": "PERIOD#ALL", "sk": sk})
+        if sk_legacy != sk:
+            try:
+                table.delete_item(Key={"pk": "PERIOD#ALL", "sk": sk_legacy})
+            except Exception:
+                pass
     except Exception as e:
         logger.error("Submission all-time record deletion failed entry_id=%s error_type=%s", entry_id, type(e).__name__, exc_info=True)
         clear_leaderboard_cache()
@@ -3314,8 +3399,9 @@ async def update_user_profile(
         user_entries = query_user_entries(table, user_id)
         for item in user_entries:
             entry_id = item.get("entry_id")
-            score = int(item.get("overall_score", 0))
-            sk = f"SCORE#{score:03d}#{entry_id}"
+            score = round(float(item.get("overall_score", 0)), 2)
+            sk = item.get("sk") if item.get("sk", "").startswith("SCORE#") else f"SCORE#{score:06.2f}#{entry_id}"
+            sk_legacy = f"SCORE#{int(score):03d}#{entry_id}"
             periods = item.get("periods", ["ALL"])
             for p in periods:
                 pk = "PERIOD#ALL" if p == "ALL" else f"PERIOD#{p}"
@@ -3326,7 +3412,17 @@ async def update_user_profile(
                         ExpressionAttributeValues={":dn": clean_name}
                     )
                 except Exception as update_err:
-                    logger.warning(f"Error updating display_name on {pk}/{sk}: {update_err}")
+                    if sk_legacy != sk:
+                        try:
+                            table.update_item(
+                                Key={"pk": pk, "sk": sk_legacy},
+                                UpdateExpression="SET display_name = :dn",
+                                ExpressionAttributeValues={":dn": clean_name}
+                            )
+                        except Exception:
+                            logger.warning(f"Error updating display_name on {pk}/{sk}: {update_err}")
+                    else:
+                        logger.warning(f"Error updating display_name on {pk}/{sk}: {update_err}")
     except Exception as ddb_err:
         logger.warning("Could not batch update display_name on DynamoDB entries user=%s error=%s", safe_identifier(user_id), ddb_err)
 
@@ -3366,8 +3462,9 @@ async def delete_user_account(authorization: Optional[str] = Header(None)):
         entry_id = item.get("entry_id")
         if not entry_id:
             continue
-        score = int(item.get("overall_score", 0))
-        sk = f"SCORE#{score:03d}#{entry_id}"
+        score = round(float(item.get("overall_score", 0)), 2)
+        sk = item.get("sk") if item.get("sk", "").startswith("SCORE#") else f"SCORE#{score:06.2f}#{entry_id}"
+        sk_legacy = f"SCORE#{int(score):03d}#{entry_id}"
         periods = item.get("periods", ["ALL"])
         try:
             # Preserve the searchable DynamoDB record if S3 fails so a later
@@ -3382,6 +3479,11 @@ async def delete_user_account(authorization: Optional[str] = Header(None)):
             pk = "PERIOD#ALL" if period == "ALL" else f"PERIOD#{period}"
             try:
                 table.delete_item(Key={"pk": pk, "sk": sk})
+                if sk_legacy != sk:
+                    try:
+                        table.delete_item(Key={"pk": pk, "sk": sk_legacy})
+                    except Exception:
+                        pass
             except Exception as e:
                 cleanup_failures += 1
                 logger.error("Account deletion record failed user=%s entry_id=%s period=%s error_type=%s", safe_identifier(user_id), entry_id, period, type(e).__name__, exc_info=True)
@@ -3401,6 +3503,11 @@ async def delete_user_account(authorization: Optional[str] = Header(None)):
 
         try:
             table.delete_item(Key={"pk": "PERIOD#ALL", "sk": sk})
+            if sk_legacy != sk:
+                try:
+                    table.delete_item(Key={"pk": "PERIOD#ALL", "sk": sk_legacy})
+                except Exception:
+                    pass
         except Exception as e:
             cleanup_failures += 1
             logger.error("Account deletion all-time record failed user=%s entry_id=%s error_type=%s", safe_identifier(user_id), entry_id, type(e).__name__, exc_info=True)

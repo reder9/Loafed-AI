@@ -128,6 +128,62 @@ class TestPydanticSchemas:
         profile = app.UpdateProfileRequest(display_name="Master Baker")
         assert profile.display_name == "Master Baker"
 
-        report = app.LeaderboardReportRequest(entry_id="loaf_12345", reason="Inappropriate image")
+        report = app.LeaderboardReportRequest(entry_id="loaf_12345", reason="Inappropriate image", score=92.24)
         assert report.entry_id == "loaf_12345"
         assert report.reason == "Inappropriate image"
+        assert report.score == 92.24
+
+    def test_loaf_analysis_result_decimal_scores(self):
+        payload = {
+            "is_cat": True,
+            "rejection_reason": None,
+            "cat_name": "Oliver",
+            "overall_score": 92.24,
+            "grade_letter": "A",
+            "loaf_rank": "Master Artisan Loaf",
+            "bread_classification": "Toasted Golden Brioche",
+            "summary_critique": "Solid compactness and aerodynamic form.",
+            "paw_tuck": {
+                "score": 24.55,
+                "status": "Hidden Peet",
+                "critique": "No paws visible.",
+                "observations": ["Undercarriage clear"]
+            },
+            "tail_tuck": {
+                "score": 23.10,
+                "status": "Flank Hug",
+                "critique": "Tail wrapped tightly.",
+                "observations": ["Flush to flank"]
+            },
+            "elbow_compactness": {
+                "score": 22.35,
+                "status": "Tight Fold",
+                "critique": "No flare.",
+                "observations": ["Chest curve smooth"]
+            },
+            "crust_symmetry": {
+                "score": 22.24,
+                "status": "Uniform Crust",
+                "critique": "Even coat coloring.",
+                "observations": ["Dorsal symmetry even"]
+            },
+            "drag_coefficient": 0.05,
+            "oar_detected": False,
+            "face_loaf": False,
+            "multi_angle_bonus": 2.50,
+            "badges": ["Stealth Peet", "Aero Master"],
+            "fun_tips_for_cat": ["Keep resting like this"],
+            "angle_notes": {
+                "front": "Paws tucked",
+                "side": "Sleek contour"
+            },
+            "best_thumbnail_index": 0,
+            "angle_classifications": ["front", "side"]
+        }
+        result = app.LoafAnalysisResult(**payload)
+        assert result.overall_score == 92.24
+        assert result.paw_tuck.score == 24.55
+        assert result.tail_tuck.score == 23.10
+        assert result.elbow_compactness.score == 22.35
+        assert result.crust_symmetry.score == 22.24
+        assert result.multi_angle_bonus == 2.50
