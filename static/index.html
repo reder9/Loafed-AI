@@ -417,15 +417,21 @@
         </div>
 
         <!-- Privacy & Storage Transparency Notice -->
-        <div class="mt-4 p-3 sm:p-3.5 rounded-2xl bg-amber-50/80 border border-amber-200/90 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 text-xs text-stone-700 shadow-2xs">
-          <div class="flex items-center gap-2">
-            <i data-lucide="shield-check" class="w-4 h-4 text-emerald-600 shrink-0"></i>
-            <span><strong>Local History &amp; AI Transparency:</strong> Loafed does not intentionally persist non-published originals on its backend, but inspection history and photos can remain in this browser. Photos are sent to Google Gemini for evaluation; provider handling depends on the API service and key used.</span>
+        <div class="mt-4 p-3.5 sm:p-4 rounded-xl bg-amber-50/70 border border-amber-200/90 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-stone-700 shadow-2xs">
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-lg bg-emerald-100/90 border border-emerald-300/80 text-emerald-800 flex items-center justify-center shrink-0 shadow-2xs">
+              <i data-lucide="shield-check" class="w-4 h-4"></i>
+            </div>
+            <div>
+              <p class="font-bold text-stone-900 text-xs sm:text-sm">Your photos stay private</p>
+              <p class="text-stone-600 text-xs mt-0.5 leading-relaxed">
+                Photos are analyzed in real time and stored only in your browser. Nothing is published or shared unless you choose to submit to the leaderboard.
+              </p>
+            </div>
           </div>
-          <div class="flex items-center gap-1.5 text-stone-500 text-[11px] shrink-0">
-            <i data-lucide="info" class="w-3.5 h-3.5 text-amber-600 shrink-0"></i>
-            <span>Unpublished photos may remain in this browser's inspection history; publishing stores photos for public display.</span>
-          </div>
+          <button type="button" id="uploadPrivacyBtn" class="shrink-0 text-xs font-semibold text-orange-800 hover:text-orange-950 underline underline-offset-2 transition-colors cursor-pointer" aria-label="View Privacy Policy">
+            Privacy details
+          </button>
         </div>
       </div>
 

@@ -3931,6 +3931,8 @@ Certified by Loafed Inspection Engine`;
   }
 
   if (openPrivacyBtn) openPrivacyBtn.addEventListener('click', () => openLegalModal('privacy'));
+  const uploadPrivacyBtn = document.getElementById('uploadPrivacyBtn');
+  if (uploadPrivacyBtn) uploadPrivacyBtn.addEventListener('click', () => openLegalModal('privacy'));
   if (openTermsBtn) openTermsBtn.addEventListener('click', () => openLegalModal('terms'));
   if (tabPrivacyBtn) tabPrivacyBtn.addEventListener('click', () => setLegalTab('privacy'));
   if (tabTermsBtn) tabTermsBtn.addEventListener('click', () => setLegalTab('terms'));
