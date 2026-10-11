@@ -166,7 +166,7 @@
     </div>
 
     <!-- Filter Bar / Tabs Navigation -->
-    <div class="mb-8">
+    <div class="mb-8 flex justify-center">
       <div class="leaderboard-filter-bar">
         <div class="leaderboard-tabs-group" role="tablist" aria-label="Leaderboard filter periods">
           <button id="tabPeriodAll" class="tab-filter-btn active" data-period="all" role="tab" aria-selected="true" aria-controls="leaderboardEntriesList">
@@ -186,6 +186,8 @@
             <span>My Loaves</span>
           </button>
         </div>
+
+        <div class="hidden sm:block w-px h-5 bg-orange-200/80 my-auto shrink-0" aria-hidden="true"></div>
 
         <div class="leaderboard-status-info">
           <div class="leaderboard-status-badge" title="DynamoDB Live Sync">
