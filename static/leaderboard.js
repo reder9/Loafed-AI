@@ -838,9 +838,9 @@ document.addEventListener('DOMContentLoaded', () => {
       if (authTabSignIn) authTabSignIn.className = 'auth-tab-btn active';
       if (authTabSignUp) authTabSignUp.className = 'auth-tab-btn';
       if (authNameField) authNameField.classList.add('hidden');
-      if (authModalTitle) authModalTitle.textContent = 'Sign In to Loafed AI';
+      if (authModalTitle) authModalTitle.textContent = 'Sign In to LoafedAI';
       if (authModalSubtitle) authModalSubtitle.textContent = 'Publish certified cat loaves to the leaderboard and manage your bakery submissions.';
-      if (authSubmitBtnText) authSubmitBtnText.textContent = 'Sign In to Loafed AI';
+      if (authSubmitBtnText) authSubmitBtnText.textContent = 'Sign In to LoafedAI';
       if (authForgotPassLink) authForgotPassLink.classList.remove('hidden');
     } else {
       if (authTabSignUp) authTabSignUp.className = 'auth-tab-btn active';
@@ -1697,7 +1697,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const shareUrl = `${window.location.origin}/loaf?id=${encodeURIComponent(entryId)}`;
     const shareData = {
       title: `${catName || 'Cat Loaf'} — Loafed AI Certified Feline`,
-      text: `Check out ${catName || 'this cat loaf'} audited by Loafed AI with a verified score of ${formatScore(score)} ${grade || ''}!`,
+      text: `Check out ${catName || 'this cat loaf'} audited by LoafedAI with a verified score of ${formatScore(score)} ${grade || ''}!`,
       url: shareUrl
     };
 
@@ -1968,7 +1968,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       return `
-        <div id="loaf-row-${entryId}" class="leaderboard-entry-row p-3 sm:p-4 rounded-2xl bg-white border border-orange-200/90 hover:border-amber-400 shadow-2xs hover:shadow-xs transition-all flex items-center gap-2.5 sm:gap-4 group cursor-pointer" data-entry-id="${entryId}" role="button" tabindex="0" aria-label="View ${catName} scorecard" title="Click to view full inspection scorecard for ${catName}">
+        <div id="loaf-row-${entryId}" class="leaderboard-entry-row p-3 sm:p-4 rounded-2xl bg-white border border-stone-200/90 hover:border-amber-400 shadow-2xs hover:shadow-xs transition-all flex items-center gap-2.5 sm:gap-4 group cursor-pointer" data-entry-id="${entryId}" role="button" tabindex="0" aria-label="View ${catName} scorecard" title="Click to view full inspection scorecard for ${catName}">
           <div class="shrink-0 flex items-center justify-center">
             ${rankBadge}
           </div>
@@ -1979,7 +1979,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <h3 class="font-extrabold text-sm sm:text-base text-stone-900 truncate group-hover:text-orange-950 transition-colors">${catName}</h3>
             <div class="flex items-center gap-1.5 sm:gap-2 text-xs text-stone-600 mt-0.5 flex-wrap">
               <span class="text-orange-950 font-bold truncate">${loafRank}</span>
-              <span class="hidden sm:inline text-stone-300">&bull;</span>
+              <span class="hidden sm:inline text-stone-300">·</span>
               <span class="text-stone-500 text-[11px] truncate hidden sm:inline">${bread}</span>
             </div>
             <div class="text-[11px] text-stone-600 font-medium mt-0.5 truncate">

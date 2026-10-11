@@ -2400,7 +2400,7 @@ Certified by Loafed Inspection Engine`;
         : window.location.origin;
       const shareData = {
         title: `${r.cat_name || 'My Cat'} — Official Loaf Score`,
-        text: `My cat ${r.cat_name || 'loaf'} scored ${formatScore(r.overall_score)}/100 (${r.grade_letter} — ${r.loaf_rank}) on Loafed AI! Can your cat beat this loaf?`,
+        text: `My cat ${r.cat_name || 'loaf'} scored ${formatScore(r.overall_score)}/100 (${r.grade_letter} — ${r.loaf_rank}) on LoafedAI! Can your cat beat this loaf?`,
         url: shareUrl
       };
       if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
@@ -2421,7 +2421,7 @@ Certified by Loafed Inspection Engine`;
       } catch (_) {
         showToast({
           type: 'info',
-          title: 'Loafed AI',
+          title: 'LoafedAI',
           message: shareUrl
         });
       }
@@ -3686,7 +3686,7 @@ Certified by Loafed Inspection Engine`;
                 ${photoTag}
                 ${leaderboardTag}
               </div>
-              <div class="text-[11px] text-stone-600 truncate">${escapeHtml(item.loaf_rank)} &bull; ${escapeHtml(item.bread_classification)}</div>
+              <div class="text-[11px] text-stone-600 truncate">${escapeHtml(item.loaf_rank)} · ${escapeHtml(item.bread_classification)}</div>
               <div class="text-[10px] text-stone-400 mt-0.5">${formattedDate}</div>
             </div>
           </div>
@@ -4220,9 +4220,9 @@ Certified by Loafed Inspection Engine`;
       if (authTabSignIn) authTabSignIn.className = 'auth-tab-btn active';
       if (authTabSignUp) authTabSignUp.className = 'auth-tab-btn';
       if (authNameField) authNameField.classList.add('hidden');
-      if (authModalTitle) authModalTitle.textContent = 'Sign In to Loafed AI';
+      if (authModalTitle) authModalTitle.textContent = 'Sign In to LoafedAI';
       if (authModalSubtitle) authModalSubtitle.textContent = 'Publish certified cat loaves to the leaderboard and manage your bakery submissions.';
-      if (authSubmitBtnText) authSubmitBtnText.textContent = 'Sign In to Loafed AI';
+      if (authSubmitBtnText) authSubmitBtnText.textContent = 'Sign In to LoafedAI';
       if (authForgotPassLink) authForgotPassLink.classList.remove('hidden');
     } else {
       if (authTabSignUp) authTabSignUp.className = 'auth-tab-btn active';
@@ -4255,7 +4255,7 @@ Certified by Loafed Inspection Engine`;
         authPendingLoafBadge.classList.remove('hidden');
       }
     } else {
-      if (authModalTitle) authModalTitle.textContent = defaultMode === 'signup' ? 'Create Baker Account' : 'Sign In to Loafed AI';
+      if (authModalTitle) authModalTitle.textContent = defaultMode === 'signup' ? 'Create Baker Account' : 'Sign In to LoafedAI';
       if (authModalSubtitle) {
         authModalSubtitle.textContent = defaultMode === 'signup' 
           ? 'Join the cat loaf bakery club and register your loaves on the public leaderboard.'
@@ -5233,7 +5233,7 @@ Certified by Loafed Inspection Engine`;
         const grade = (state.currentResult && state.currentResult.grade_letter) || '';
         const shareData = {
           title: `${cat} — Official Loaf Score`,
-          text: `Check out ${cat}'s certified loaf score (${score} ${grade}) on Loafed AI!`,
+          text: `Check out ${cat}'s certified loaf score (${score} ${grade}) on LoafedAI!`,
           url: shareUrl
         };
 

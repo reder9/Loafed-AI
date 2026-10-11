@@ -768,7 +768,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const score = formatScore(data.overall_score);
       const grade = data.grade_letter || '';
       const pageTitle = `${catName} Loaf Scorecard (${score} ${grade}) — Loafed AI`;
-      const pageDescription = `${catName} scored ${score}/100 (${grade}) in a Loafed AI cat-loaf inspection. View the scorecard, posture notes, and certified loaf details.`;
+      const pageDescription = `${catName} scored ${score}/100 (${grade}) in a LoafedAI cat-loaf inspection. View the scorecard, posture notes, and certified loaf details.`;
       const canonicalUrl = `${currentOrigin}/loaf?id=${encodeURIComponent(data.entry_id || entryId)}`;
       document.title = pageTitle;
       const canonicalLink = document.querySelector('link[rel="canonical"]');
@@ -1049,7 +1049,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const shareData = {
       title: `${catName} — Loafed AI Certified Feline`,
-      text: `Check out ${catName} audited by Loafed AI with a verified score of ${score} ${grade}!`,
+      text: `Check out ${catName} audited by LoafedAI with a verified score of ${score} ${grade}!`,
       url: shareUrl
     };
 
