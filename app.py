@@ -2700,44 +2700,8 @@ async def get_loaf_details(entry_id: str):
     if not entry_id or not re.match(r'^[a-zA-Z0-9_\-]+$', entry_id):
         raise HTTPException(status_code=400, detail="Invalid loaf identifier.")
 
-    session = get_boto3_session()
-    ddb = session.resource("dynamodb")
-    table = ddb.Table(DYNAMODB_TABLE_NAME)
-
     item = None
-    # 1. Direct O(1) key lookup
-    try:
-        res = table.get_item(Key={"pk": f"ENTRY#{entry_id}", "sk": "METADATA"})
-        item = res.get("Item")
-    except Exception as e:
-        logger.warning(f"DynamoDB get_item error for ENTRY#{entry_id}: {e}")
-
-    # 2. Query fallback on PERIOD#ALL
-    if not item:
-        try:
-            res = table.query(
-                KeyConditionExpression=Key("pk").eq("PERIOD#ALL"),
-                FilterExpression=Attr("entry_id").eq(entry_id)
-            )
-            items = res.get("Items", [])
-            if items:
-                item = items[0]
-        except Exception as e:
-            logger.warning(f"DynamoDB query fallback error for {entry_id}: {e}")
-
-    # 3. Table scan fallback for legacy items
-    if not item:
-        try:
-            res = table.scan(
-                FilterExpression=Attr("entry_id").eq(entry_id)
-            )
-            items = res.get("Items", [])
-            if items:
-                item = items[0]
-        except Exception as e:
-            logger.warning(f"DynamoDB scan fallback error for {entry_id}: {e}")
-
-    if not item and entry_id in ("hof_buttercup", "hof_chonks", "hof_chonks_79", "hof_chonks_68", "hof_flash"):
+    if entry_id in ("hof_buttercup", "hof_chonks", "hof_chonks_79", "hof_chonks_68", "hof_flash"):
         preset_map = {
             "hof_flash": (PRESET_FLASH, "/static/samples/flash_92_thumb.webp", "Flash", "Caleb Reder"),
             "hof_chonks": (PRESET_CHONKS_79, "/static/samples/chonks_79_thumb.webp", "Chonks", "Caleb Reder"),
@@ -2758,6 +2722,45 @@ async def get_loaf_details(entry_id: str):
             "thumbnail_url": p_thumb,
             "created_at": "2026-10-01T00:00:00Z"
         }
+    else:
+        try:
+            session = get_boto3_session()
+            ddb = session.resource("dynamodb")
+            table = ddb.Table(DYNAMODB_TABLE_NAME)
+
+            # 1. Direct O(1) key lookup
+            try:
+                res = table.get_item(Key={"pk": f"ENTRY#{entry_id}", "sk": "METADATA"})
+                item = res.get("Item")
+            except Exception as e:
+                logger.warning(f"DynamoDB get_item error for ENTRY#{entry_id}: {e}")
+
+            # 2. Query fallback on PERIOD#ALL
+            if not item:
+                try:
+                    res = table.query(
+                        KeyConditionExpression=Key("pk").eq("PERIOD#ALL"),
+                        FilterExpression=Attr("entry_id").eq(entry_id)
+                    )
+                    items = res.get("Items", [])
+                    if items:
+                        item = items[0]
+                except Exception as e:
+                    logger.warning(f"DynamoDB query fallback error for {entry_id}: {e}")
+
+            # 3. Table scan fallback for legacy items
+            if not item:
+                try:
+                    res = table.scan(
+                        FilterExpression=Attr("entry_id").eq(entry_id)
+                    )
+                    items = res.get("Items", [])
+                    if items:
+                        item = items[0]
+                except Exception as e:
+                    logger.warning(f"DynamoDB scan fallback error for {entry_id}: {e}")
+        except Exception as e:
+            logger.warning(f"DynamoDB connection error for {entry_id}: {e}")
 
     if not item or item.get("is_hidden") is True or int(item.get("report_count", 0)) >= 3:
         raise HTTPException(status_code=404, detail="Cat loaf not found or has been removed.")

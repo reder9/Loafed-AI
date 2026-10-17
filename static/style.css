@@ -527,7 +527,7 @@ body {
   border-radius: 0.75rem !important;
   font-size: 0.75rem !important;
   font-weight: 700 !important;
-  color: #78716c !important;
+  color: #44403c !important;
   background-color: transparent !important;
   border: 1px solid transparent !important;
   transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1) !important;
@@ -1101,7 +1101,7 @@ body.user-logged-in #rollSubmitBakerTagBtn {
   border-radius: 0.75rem !important;
   background: rgba(255, 255, 255, 0.95) !important;
   border: 1px solid rgba(251, 146, 60, 0.4) !important;
-  color: #78716c !important;
+  color: #44403c !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -1439,8 +1439,8 @@ button.hidden,
   min-height: 34px !important;
   border-radius: 9999px !important;
   background-color: #fafaf9 !important;
-  border: 1px solid #e7e5e4 !important;
-  color: #78716c !important;
+  border: 1px solid #d6d3d1 !important;
+  color: #44403c !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -1549,7 +1549,7 @@ button.hidden,
   padding: 0 0.875rem !important;
   font-size: 0.6875rem !important;
   font-weight: 700 !important;
-  color: #78716c !important;
+  color: #44403c !important;
   text-transform: uppercase !important;
   letter-spacing: 0.06em !important;
   white-space: nowrap !important;
@@ -1628,7 +1628,7 @@ button.hidden,
 }
 .auth-tab-btn:not(.active) {
   background-color: transparent !important;
-  color: #78716c !important;
+  color: #44403c !important;
 }
 .auth-tab-btn:not(.active):hover {
   color: #ea580c !important;
@@ -1662,7 +1662,7 @@ button.hidden,
   transform: translateY(-50%) !important;
   width: 1.125rem !important;
   height: 1.125rem !important;
-  color: #a8a29e !important;
+  color: #78716c !important;
   pointer-events: none !important;
   display: flex !important;
   align-items: center !important;
@@ -1687,7 +1687,7 @@ button.hidden,
   border-radius: 0.5rem !important;
   background: transparent !important;
   border: none !important;
-  color: #a8a29e !important;
+  color: #57534e !important;
   cursor: pointer !important;
   display: flex !important;
   align-items: center !important;
@@ -2494,3 +2494,24 @@ img, video, canvas {
     box-shadow: 0 0 10px rgba(234, 88, 12, 1);
   }
 }
+
+/* ==========================================================================
+   Accessibility & WCAG 2.1 AA Contrast Safeguards
+   ========================================================================== */
+::placeholder,
+input::placeholder,
+textarea::placeholder,
+.placeholder\:text-stone-400::placeholder {
+  color: #78716c !important;
+  opacity: 1 !important;
+}
+
+/* Elevate low-contrast utility text to guaranteed accessible WCAG ratios */
+.text-stone-400 {
+  color: #57534e !important;
+}
+
+.text-stone-300 {
+  color: #78716c !important;
+}
+

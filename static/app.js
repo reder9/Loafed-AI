@@ -312,7 +312,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ${title ? `<div class="text-xs font-bold text-stone-900 mb-0.5 tracking-tight">${escapeHtml(title)}</div>` : ''}
         <div class="text-xs text-stone-600 leading-relaxed break-words">${escapeHtml(message)}</div>
       </div>
-      <button class="toast-close-btn absolute top-2.5 right-2.5 text-stone-400 hover:text-stone-700 transition-colors p-1 rounded-md hover:bg-stone-100" aria-label="Dismiss">
+      <button class="toast-close-btn absolute top-2.5 right-2.5 text-stone-600 hover:text-stone-900 transition-colors p-1 rounded-md hover:bg-stone-100" aria-label="Dismiss">
         <i data-lucide="x" class="w-3.5 h-3.5"></i>
       </button>
     `;
@@ -992,7 +992,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function updateSubmitButton() {
     if (state.isExamplePreset || state.canSubmit === false) {
       gradeLoafBtn.disabled = true;
-      gradeLoafBtn.className = 'w-full sm:w-auto px-8 py-3.5 rounded-xl font-bold text-sm text-stone-400 bg-stone-200 cursor-not-allowed shadow-none transition-all flex items-center justify-center gap-2 btn-tactile';
+      gradeLoafBtn.className = 'w-full sm:w-auto px-8 py-3.5 rounded-xl font-bold text-sm text-stone-600 bg-stone-200 cursor-not-allowed shadow-none transition-all flex items-center justify-center gap-2 btn-tactile';
       gradeLoafBtn.title = 'Example reference cats cannot be submitted or evaluated. Please upload photos of your own cat!';
       photoCountBadge.textContent = 'Reference Benchmark Loaded (Upload your cat to inspect)';
       photoCountBadge.className = 'font-semibold text-stone-600 bg-stone-100 px-2.5 py-0.5 rounded border border-stone-200';
@@ -1003,7 +1003,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const count = state.photos.length;
     if (count === 0) {
       gradeLoafBtn.disabled = true;
-      gradeLoafBtn.className = 'w-full sm:w-auto px-8 py-3.5 rounded-xl font-bold text-sm text-stone-400 bg-stone-200 cursor-not-allowed shadow-none transition-all flex items-center justify-center gap-2 btn-tactile';
+      gradeLoafBtn.className = 'w-full sm:w-auto px-8 py-3.5 rounded-xl font-bold text-sm text-stone-600 bg-stone-200 cursor-not-allowed shadow-none transition-all flex items-center justify-center gap-2 btn-tactile';
       photoCountBadge.textContent = '0 photos selected';
       photoCountBadge.className = 'font-semibold text-stone-600 bg-orange-50 px-2.5 py-0.5 rounded border border-orange-200';
     } else {
@@ -2062,7 +2062,7 @@ document.addEventListener('DOMContentLoaded', () => {
     (sub.observations || []).forEach(obs => {
       const cleanObs = obs.replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, '').trim();
       const li = document.createElement('li');
-      li.className = 'flex items-start gap-2';
+      li.className = 'flex items-start gap-2 text-stone-700';
       li.innerHTML = `<span class="w-1 h-1 rounded-full bg-orange-400 mt-1.5 shrink-0"></span><span>${escapeHtml(cleanObs)}</span>`;
       obsList.appendChild(li);
     });
@@ -2112,7 +2112,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <span class="text-[10px] bg-amber-100 text-amber-800 font-bold px-1.5 py-0.5 rounded">Omitted</span>
         </div>
         <div class="w-full h-36 sm:h-40 bg-white/80 rounded-xl border border-dashed border-amber-300 flex flex-col items-center justify-center p-3 text-center">
-          <i data-lucide="camera-off" class="w-6 h-6 text-amber-400 mb-1"></i>
+          <i data-lucide="camera-off" class="w-6 h-6 text-amber-700 mb-1"></i>
           <span class="text-xs font-bold text-amber-900">Missing Telemetry</span>
           <span class="text-[10px] text-amber-700 mt-0.5">Submit up to 5 photos for full 360-degree audit bonus</span>
         </div>
@@ -3647,10 +3647,10 @@ Certified by Loafed Inspection Engine`;
 
     if (history.length === 0) {
       historyListContainer.innerHTML = `
-        <div class="py-10 text-center text-stone-400">
-          <i data-lucide="inbox" class="w-8 h-8 mx-auto mb-2 text-stone-300"></i>
-          <p class="text-xs font-semibold text-stone-600">No saved inspections yet</p>
-          <p class="text-[11px] text-stone-400 mt-1">Upload photos and inspect a cat to log your first score.</p>
+        <div class="py-10 text-center text-stone-500">
+          <i data-lucide="inbox" class="w-8 h-8 mx-auto mb-2 text-stone-400"></i>
+          <p class="text-xs font-bold text-stone-700">No saved inspections yet</p>
+          <p class="text-xs text-stone-600 mt-1">Upload photos and inspect a cat to log your first score.</p>
         </div>
       `;
       refreshIcons();
@@ -3678,7 +3678,7 @@ Certified by Loafed Inspection Engine`;
           <div class="flex items-center gap-3 min-w-0">
             <div class="w-11 h-11 rounded-lg bg-white border border-orange-200 flex flex-col items-center justify-center shrink-0 shadow-xs">
               <span class="text-xs font-black text-orange-700">${escapeHtml(formatScore(item.overall_score))}</span>
-              <span class="text-[9px] font-bold text-orange-900/60 leading-none">${escapeHtml(item.grade_letter)}</span>
+              <span class="text-[9px] font-bold text-stone-600 leading-none">${escapeHtml(item.grade_letter)}</span>
             </div>
             <div class="min-w-0">
               <div class="text-xs font-bold text-stone-900 truncate flex items-center gap-1.5 flex-wrap">
@@ -3687,7 +3687,7 @@ Certified by Loafed Inspection Engine`;
                 ${leaderboardTag}
               </div>
               <div class="text-[11px] text-stone-600 truncate">${escapeHtml(item.loaf_rank)} · ${escapeHtml(item.bread_classification)}</div>
-              <div class="text-[10px] text-stone-400 mt-0.5">${formattedDate}</div>
+              <div class="text-[10px] text-stone-600 mt-0.5 font-medium">${formattedDate}</div>
             </div>
           </div>
           <div class="flex items-center gap-1.5 shrink-0">
@@ -3700,7 +3700,7 @@ Certified by Loafed Inspection Engine`;
             <button class="view-history-entry-btn px-2.5 py-1.5 rounded-lg bg-white hover:bg-orange-100 text-orange-950 text-xs font-bold border border-orange-200 transition-colors shadow-2xs" data-id="${item.id}" aria-label="View inspection for ${item.cat_name}">
               View
             </button>
-            <button class="delete-history-entry-btn p-1.5 text-stone-400 hover:text-rose-600 transition-colors" data-id="${item.id}" title="Delete" aria-label="Delete saved inspection for ${item.cat_name}">
+            <button class="delete-history-entry-btn p-1.5 text-stone-600 hover:text-rose-600 transition-colors" data-id="${item.id}" title="Delete" aria-label="Delete saved inspection for ${item.cat_name}">
               <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
             </button>
           </div>
@@ -4332,12 +4332,12 @@ Certified by Loafed Inspection Engine`;
     if (!leaderboardList) return;
     if (!entries || entries.length === 0) {
       leaderboardList.innerHTML = `
-        <div class="py-12 text-center text-stone-500">
+        <div class="py-12 text-center text-stone-600">
           <div class="w-12 h-12 rounded-xl bg-orange-100/70 border border-orange-200 text-orange-600 flex items-center justify-center mx-auto mb-2">
             <i data-lucide="inbox" class="w-6 h-6"></i>
           </div>
-          <p class="text-xs font-bold text-stone-700">No submissions recorded yet</p>
-          <p class="text-[11px] text-stone-500 mt-0.5">${isMine ? 'You have not submitted any loaves to the leaderboard yet.' : 'Be the first baker to audit and submit a cat loaf for this period!'}</p>
+          <p class="text-xs font-bold text-stone-800">No submissions recorded yet</p>
+          <p class="text-xs text-stone-600 mt-0.5">${isMine ? 'You have not submitted any loaves to the leaderboard yet.' : 'Be the first baker to audit and submit a cat loaf for this period!'}</p>
         </div>
       `;
       refreshIcons();
@@ -4367,13 +4367,13 @@ Certified by Loafed Inspection Engine`;
       let actionBtn = '';
       if (isMine) {
         actionBtn = `
-          <button class="delete-loaf-btn p-1.5 rounded-lg text-stone-400 hover:text-red-600 hover:bg-red-50 transition-colors ml-2" data-id="${entry.entry_id}" data-name="${catName}" aria-label="Delete ${catName} submission">
+          <button class="delete-loaf-btn p-1.5 rounded-lg text-stone-600 hover:text-red-600 hover:bg-red-50 transition-colors ml-2" data-id="${entry.entry_id}" data-name="${catName}" aria-label="Delete ${catName} submission">
             <i data-lucide="trash-2" class="w-4 h-4"></i>
           </button>
         `;
       } else {
         actionBtn = `
-          <button class="report-loaf-btn p-1.5 rounded-lg text-stone-300 hover:text-amber-700 hover:bg-orange-50 transition-colors ml-2" data-id="${entry.entry_id}" data-score="${formatScore(score)}" data-name="${catName}" aria-label="Report ${catName} submission" title="Report submission as inappropriate or non-cat">
+          <button class="report-loaf-btn p-1.5 rounded-lg text-stone-600 hover:text-amber-700 hover:bg-orange-50 transition-colors ml-2" data-id="${entry.entry_id}" data-score="${formatScore(score)}" data-name="${catName}" aria-label="Report ${catName} submission" title="Report submission as inappropriate or non-cat">
             <i data-lucide="flag" class="w-4 h-4"></i>
           </button>
         `;
@@ -4390,7 +4390,7 @@ Certified by Loafed Inspection Engine`;
               <h4 class="font-extrabold text-xs sm:text-sm text-stone-900 truncate">${catName}</h4>
               <span class="stamp text-[11px] font-black text-orange-700 bg-white border-orange-700 shrink-0">${formatScore(score)} ${gradeLetter}</span>
             </div>
-            <div class="flex items-center gap-1.5 text-[11px] text-stone-500 mt-0.5 truncate">
+            <div class="flex items-center gap-1.5 text-xs text-stone-600 mt-0.5 truncate font-medium">
               <span class="text-orange-950 font-bold truncate">${loafRank}</span>
               <span>&bull;</span>
               <span class="truncate">by ${bakerName}</span>
@@ -4451,7 +4451,7 @@ Certified by Loafed Inspection Engine`;
     setLeaderboardPeriodTab(period);
     if (!leaderboardList) return;
     leaderboardList.innerHTML = `
-      <div class="py-12 text-center text-stone-400">
+      <div class="py-12 text-center text-stone-600">
         <i data-lucide="loader-2" class="w-6 h-6 animate-spin mx-auto text-orange-600 mb-2"></i>
         <p class="text-xs">Loading loaf rankings...</p>
       </div>
@@ -4461,7 +4461,7 @@ Certified by Loafed Inspection Engine`;
     if (period === 'mine') {
       if (!state.user || !state.idToken) {
         leaderboardList.innerHTML = `
-          <div class="py-12 text-center text-stone-500">
+          <div class="py-12 text-center text-stone-600">
             <div class="w-12 h-12 rounded-xl bg-orange-100/70 border border-orange-200 text-orange-600 flex items-center justify-center mx-auto mb-2">
               <i data-lucide="lock" class="w-6 h-6"></i>
             </div>

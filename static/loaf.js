@@ -49,7 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ${title ? `<div class="text-xs font-bold text-stone-900 mb-0.5 tracking-tight">${escapeHtml(title)}</div>` : ''}
         <div class="text-xs text-stone-600 leading-relaxed break-words">${escapeHtml(message)}</div>
       </div>
-      <button class="toast-close-btn absolute top-2.5 right-2.5 text-stone-400 hover:text-stone-700 transition-colors p-1 rounded-md hover:bg-stone-100" aria-label="Dismiss">
+      <button class="toast-close-btn absolute top-2.5 right-2.5 text-stone-600 hover:text-stone-900 transition-colors p-1 rounded-md hover:bg-stone-100" aria-label="Dismiss">
         <i data-lucide="x" class="w-3.5 h-3.5"></i>
       </button>
     `;

@@ -73,7 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ${title ? `<div class="text-xs font-bold text-stone-900 mb-0.5 tracking-tight">${escapeHtml(title)}</div>` : ''}
         <div class="text-xs text-stone-600 leading-relaxed break-words">${escapeHtml(message)}</div>
       </div>
-      <button class="toast-close-btn absolute top-2.5 right-2.5 text-stone-400 hover:text-stone-700 transition-colors p-1 rounded-md hover:bg-stone-100" aria-label="Dismiss">
+      <button class="toast-close-btn absolute top-2.5 right-2.5 text-stone-600 hover:text-stone-900 transition-colors p-1 rounded-md hover:bg-stone-100" aria-label="Dismiss">
         <i data-lucide="x" class="w-3.5 h-3.5"></i>
       </button>
     `;
@@ -1863,7 +1863,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="w-full">
             <h3 class="font-black ${isFirst ? 'text-base sm:text-lg' : 'text-sm sm:text-base'} text-stone-900 truncate max-w-full">${catName}</h3>
             <p class="text-[11px] sm:text-xs font-bold text-orange-800 truncate max-w-full mt-0.5">${rankTitle}</p>
-            <p class="text-[10px] sm:text-[11px] text-stone-500 mt-0.5 truncate max-w-full">Baked by <span class="font-medium text-stone-700">${bakerName}</span></p>
+            <p class="text-[10px] sm:text-[11px] text-stone-600 mt-0.5 truncate max-w-full font-medium">Baked by <span class="font-bold text-stone-800">${bakerName}</span></p>
           </div>
         </div>
         <div class="pedestal-pillar ${pillarClass}">
@@ -1899,12 +1899,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!entries || entries.length === 0) {
       leaderboardEntriesList.innerHTML = `
-        <div class="py-16 text-center text-stone-500">
+        <div class="py-16 text-center text-stone-600">
           <div class="w-14 h-14 rounded-2xl bg-orange-100/80 border border-orange-200 text-orange-600 flex items-center justify-center mx-auto mb-3 shadow-2xs">
             <i data-lucide="inbox" class="w-7 h-7"></i>
           </div>
           <h3 class="text-sm font-black text-stone-800">No submissions recorded for this period</h3>
-          <p class="text-xs text-stone-500 mt-1 max-w-sm mx-auto">
+          <p class="text-xs text-stone-600 mt-1 max-w-sm mx-auto">
             ${isMine 
               ? 'You have not submitted any cat loaves to the public leaderboard yet. Grade your cat to claim your spot!' 
               : 'Be the first baker to audit a feline loaf and claim the #1 ranking for this period!'}
@@ -1946,10 +1946,10 @@ document.addEventListener('DOMContentLoaded', () => {
       if (isMine) {
         actionBtns = `
           <div class="flex items-center gap-1 shrink-0">
-            <button class="share-loaf-btn p-1.5 sm:p-2 rounded-xl text-stone-400 hover:text-orange-600 hover:bg-orange-50 transition-colors" data-id="${entryId}" data-name="${catName}" data-score="${formatScore(score)}" data-grade="${gradeLetter}" aria-label="Share ${catName} loaf link" title="Share link to this cat loaf">
+            <button class="share-loaf-btn p-1.5 sm:p-2 rounded-xl text-stone-600 hover:text-orange-600 hover:bg-orange-50 transition-colors" data-id="${entryId}" data-name="${catName}" data-score="${formatScore(score)}" data-grade="${gradeLetter}" aria-label="Share ${catName} loaf link" title="Share link to this cat loaf">
               <i data-lucide="share-2" class="w-4 h-4 text-orange-600"></i>
             </button>
-            <button class="delete-loaf-btn p-1.5 sm:p-2 rounded-xl text-stone-400 hover:text-red-600 hover:bg-red-50 transition-colors" data-id="${entryId}" data-name="${catName}" aria-label="Delete ${catName} submission" title="Delete submission">
+            <button class="delete-loaf-btn p-1.5 sm:p-2 rounded-xl text-stone-600 hover:text-red-600 hover:bg-red-50 transition-colors" data-id="${entryId}" data-name="${catName}" aria-label="Delete ${catName} submission" title="Delete submission">
               <i data-lucide="trash-2" class="w-4 h-4"></i>
             </button>
           </div>
@@ -1957,10 +1957,10 @@ document.addEventListener('DOMContentLoaded', () => {
       } else {
         actionBtns = `
           <div class="flex items-center gap-1 shrink-0">
-            <button class="share-loaf-btn p-1.5 sm:p-2 rounded-xl text-stone-400 hover:text-orange-600 hover:bg-orange-50 transition-colors" data-id="${entryId}" data-name="${catName}" data-score="${formatScore(score)}" data-grade="${gradeLetter}" aria-label="Share ${catName} loaf link" title="Share link to this cat loaf">
+            <button class="share-loaf-btn p-1.5 sm:p-2 rounded-xl text-stone-600 hover:text-orange-600 hover:bg-orange-50 transition-colors" data-id="${entryId}" data-name="${catName}" data-score="${formatScore(score)}" data-grade="${gradeLetter}" aria-label="Share ${catName} loaf link" title="Share link to this cat loaf">
               <i data-lucide="share-2" class="w-4 h-4 text-orange-600"></i>
             </button>
-            <button class="report-loaf-btn p-1.5 sm:p-2 rounded-xl text-stone-300 hover:text-amber-700 hover:bg-orange-50 transition-colors" data-id="${entryId}" data-score="${formatScore(score)}" data-name="${catName}" aria-label="Report ${catName} submission" title="Report submission as inappropriate or non-cat">
+            <button class="report-loaf-btn p-1.5 sm:p-2 rounded-xl text-stone-600 hover:text-amber-700 hover:bg-orange-50 transition-colors" data-id="${entryId}" data-score="${formatScore(score)}" data-name="${catName}" aria-label="Report ${catName} submission" title="Report submission as inappropriate or non-cat">
               <i data-lucide="flag" class="w-4 h-4"></i>
             </button>
           </div>
@@ -1979,8 +1979,8 @@ document.addEventListener('DOMContentLoaded', () => {
             <h3 class="font-extrabold text-sm sm:text-base text-stone-900 truncate group-hover:text-orange-950 transition-colors">${catName}</h3>
             <div class="flex items-center gap-1.5 sm:gap-2 text-xs text-stone-600 mt-0.5 flex-wrap">
               <span class="text-orange-950 font-bold truncate">${loafRank}</span>
-              <span class="hidden sm:inline text-stone-300">·</span>
-              <span class="text-stone-500 text-[11px] truncate hidden sm:inline">${bread}</span>
+              <span class="hidden sm:inline text-stone-400">·</span>
+              <span class="text-stone-700 font-semibold text-xs truncate hidden sm:inline">${bread}</span>
             </div>
             <div class="text-[11px] text-stone-600 font-medium mt-0.5 truncate">
               Baked by <span class="font-bold text-stone-800">${bakerName}</span>
@@ -2081,7 +2081,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!leaderboardEntriesList) return;
 
     leaderboardEntriesList.innerHTML = `
-      <div class="py-16 text-center text-stone-400">
+      <div class="py-16 text-center text-stone-600">
         <i data-lucide="loader-2" class="w-7 h-7 animate-spin mx-auto text-orange-600 mb-2"></i>
         <p class="text-xs font-semibold">Loading certified rankings...</p>
       </div>
@@ -2092,12 +2092,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (period === 'mine') {
       if (!state.user || !state.idToken) {
         leaderboardEntriesList.innerHTML = `
-          <div class="py-16 text-center text-stone-500">
+          <div class="py-16 text-center text-stone-600">
             <div class="w-14 h-14 rounded-2xl bg-orange-100/80 border border-orange-200 text-orange-600 flex items-center justify-center mx-auto mb-3 shadow-2xs">
               <i data-lucide="lock" class="w-7 h-7"></i>
             </div>
             <h3 class="text-sm font-black text-stone-800">Sign in to view your submissions</h3>
-            <p class="text-xs text-stone-500 mt-1 max-w-xs mx-auto">
+            <p class="text-xs text-stone-600 mt-1 max-w-xs mx-auto">
               Authenticate with Google or email to see all your certified loaves and manage your entries.
             </p>
             <button id="pageSignInPromptBtn" class="mt-4 px-5 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-bold text-xs shadow-xs transition-all active:scale-95 shimmer-btn btn-tactile">
